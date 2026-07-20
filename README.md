@@ -25,6 +25,8 @@ Points Tracker is an independent project and is not affiliated with or endorsed 
 
 Requirements: Node.js 22 or newer and Chrome.
 
+The codebase uses strict TypeScript across the extension runtime, React popup, adapters, Chrome messaging and storage, build configuration, and tests. Shared domain contracts live in `src/types.ts`.
+
 ```bash
 npm install
 npm run dev
@@ -35,6 +37,8 @@ For a production build:
 ```bash
 npm run check
 ```
+
+`npm run check` runs strict TypeScript validation, ESLint, the full Vitest suite, and the production extension build. Run only the compiler with `npm run typecheck`.
 
 Load `dist` from `chrome://extensions` with Developer mode enabled.
 

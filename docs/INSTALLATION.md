@@ -98,7 +98,7 @@ Confirm that you are signed in on the official account page and let the page fin
 
 ## Developer installation
 
-Developers who want to build from source can clone the repository and run:
+Developers who want to build the strict TypeScript source can clone the repository and run:
 
 ```bash
 npm install
@@ -106,6 +106,8 @@ npm run check
 ```
 
 The verified unpacked extension is written to `dist`. Open `chrome://extensions`, enable **Developer mode**, select **Load unpacked**, and choose the generated `dist` folder.
+
+`npm run check` performs TypeScript validation, linting, tests, and the production build. To run only the compiler, use `npm run typecheck`.
 
 After making source changes, rebuild with:
 

@@ -16,7 +16,7 @@ Scope:
 Result:
 
 - No credentials, private keys, authentication tokens, machine-specific paths, suspicious credential files, or tracked generated artifacts were found.
-- The only broad-pattern match in reachable history was a deliberately synthetic password-field rejection fixture in `tests/storage/backup.test.js`. It tests that imported backups reject unexpected credential-like fields; it does not contain a real credential.
+- The only broad-pattern match in reachable history was a deliberately synthetic password-field rejection fixture in the original `tests/storage/backup.test.js`. It tests that imported backups reject unexpected credential-like fields; it does not contain a real credential.
 - The current fixture uses a one-character placeholder so future scans do not mistake the synthetic value for a credential.
 
 This preliminary scan was repeated after the logo and license decisions were implemented. The final result is recorded below.
@@ -29,5 +29,5 @@ Result:
 
 - No credentials, private keys, authentication tokens, account identifiers, machine-specific paths, suspicious credential files, or tracked generated artifacts were found in the final working tree.
 - No high-confidence secret patterns were found in any commit reachable from the repository's branches or tags.
-- A broader credential-assignment scan again identified only commit `a40d133`'s synthetic password-field rejection fixture in `tests/storage/backup.test.js`. Manual review confirmed that the value is test data and that the parser rejects the field.
+- A broader credential-assignment scan again identified only commit `a40d133`'s synthetic password-field rejection fixture in the original `tests/storage/backup.test.js`. Manual review confirmed that the value is test data and that the parser rejects the field.
 - The removed program-logo assets and `simple-icons` dependency are absent from the application and dependency graph.

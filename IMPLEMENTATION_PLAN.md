@@ -2,7 +2,7 @@
 
 ## Approach
 
-Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a React popup, native extension storage and messaging, and one isolated adapter per loyalty program. Keep parsing, data validation, and persistence in pure JavaScript modules so they can be tested without a live account.
+Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a React popup, native extension storage and messaging, and one isolated adapter per loyalty program. Keep parsing, data validation, and persistence in strict TypeScript modules so they can be tested without a live account.
 
 ## Scope
 
@@ -11,7 +11,8 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 
 ## Action Items
 
-- [x] Select Vite, CRXJS, React, JavaScript, Node, and Vitest as the initial toolchain.
+- [x] Select Vite, CRXJS, React, TypeScript, Node, and Vitest as the maintained toolchain.
+- [x] Enforce strict TypeScript validation across runtime code, adapters, configuration, and tests through `npm run typecheck` and `npm run check`.
 - [x] Scaffold the Manifest V3 entrypoints and exact host permissions.
 - [x] Implement versioned records, validation, manual overrides, and JSON import/export.
 - [x] Implement the capture coordinator with owned-tab tracking, cooldowns, and timeouts.

@@ -34,7 +34,7 @@ Remaining end-to-end checks:
 - The updated date uses `MM/DD/YYYY`.
 - An expired session reveals the login tab and preserves the last good value.
 
-The stable selector and a synthetic regression fixture are recorded in `src/adapters/united.js` and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The stable selector and a synthetic regression fixture are recorded in `src/adapters/united.ts` and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Cathay acceptance — URL and selectors confirmed 07/17/2026
 
@@ -56,7 +56,7 @@ Remaining end-to-end checks:
 - If deriving a date, the source is explicitly the last eligible crediting or debiting date—not a generic transaction date.
 - MFA or CAPTCHA is left for the user and is never bypassed.
 
-The final URL, stable selectors, and a synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/cathay.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, stable selectors, and a synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/cathay.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Air France Flying Blue acceptance — URL and selectors confirmed 07/17/2026
 
@@ -78,7 +78,7 @@ Remaining end-to-end checks:
 - Confirm the extension-created tab closes after capture succeeds.
 - Confirm an expired session preserves the last good value and reveals the login page.
 
-The final URL, stable selectors, and a synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/airfrance.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, stable selectors, and a synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/airfrance.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Virgin Atlantic Flying Club acceptance — selector confirmed 07/17/2026
 
@@ -99,7 +99,7 @@ Remaining end-to-end checks:
 - Confirm the popup displays `Expiration: N/A`.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, selector, and a synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/virginatlantic.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, selector, and a synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/virginatlantic.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Alaska Airlines Atmos Rewards acceptance — balance path confirmed 07/17/2026
 
@@ -123,7 +123,7 @@ Remaining end-to-end checks:
 - Confirm the popup displays `Expiration: N/A`.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, traversal, and a synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/alaska.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, traversal, and a synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/alaska.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## American AAdvantage acceptance — selectors confirmed 07/17/2026
 
@@ -145,7 +145,7 @@ Remaining end-to-end checks:
 - Confirm the cardholder exemption displays `Expiration: N/A`, or an explicit date displays in `MM/DD/YYYY` format.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped selectors, and synthetic regression fixtures are recorded in `src/programs.js`, `src/adapters/american.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped selectors, and synthetic regression fixtures are recorded in `src/programs.ts`, `src/adapters/american.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## EVA Air Infinity MileageLands acceptance — structure confirmed 07/17/2026
 
@@ -168,7 +168,7 @@ Remaining end-to-end checks:
 - Confirm the Expiration cell matches the earliest `Valid Through` row and its mileage amount.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/evaair.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/evaair.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## British Airways Club acceptance — structure confirmed 07/17/2026
 
@@ -191,7 +191,7 @@ Remaining end-to-end checks:
 - Confirm the calculated expiration is 36 months after the first visible statement month, using day `01`.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/britishairways.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/britishairways.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## ANA Mileage Club acceptance — structure confirmed 07/17/2026
 
@@ -214,7 +214,7 @@ Remaining end-to-end checks:
 - Confirm Expiration matches the first displayed `Expiry date` month under Activity details.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/ana.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/ana.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## World of Hyatt acceptance — structure confirmed 07/18/2026
 
@@ -237,7 +237,7 @@ Remaining end-to-end checks:
 - Confirm Expiration displays `N/A`.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/hyatt.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/hyatt.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Hilton Honors acceptance — structure confirmed 07/19/2026
 
@@ -260,7 +260,7 @@ Remaining end-to-end checks:
 - Confirm Expiration displays `24 mo inactivity`.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped fields and selector fallback, and synthetic regression fixture are recorded in `src/programs.js`, `src/adapters/hilton.js`, and `tests/adapters/adapters.test.js`. No production markup or account identifier is stored.
+The final URL, scoped fields and selector fallback, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/hilton.ts`, and `tests/adapters/adapters.test.ts`. No production markup or account identifier is stored.
 
 ## Marriott Bonvoy acceptance — structure confirmed 07/19/2026
 
@@ -287,7 +287,7 @@ Remaining end-to-end checks:
 - Confirm Expiration is 24 months after the first displayed qualifying activity date.
 - Confirm the extension-created tab closes after capture succeeds.
 
-The final URL, scoped traversal, filter preparation, and synthetic regression fixtures are recorded in `src/programs.js`, `src/adapters/marriott.js`, `entrypoints/supported.content.js`, and `tests/adapters/adapters.test.js`. No production markup, transaction description, or account identifier is stored.
+The final URL, scoped traversal, filter preparation, and synthetic regression fixtures are recorded in `src/programs.ts`, `src/adapters/marriott.ts`, `entrypoints/supported.content.ts`, and `tests/adapters/adapters.test.ts`. No production markup, transaction description, or account identifier is stored.
 
 ## Completion gate
 
