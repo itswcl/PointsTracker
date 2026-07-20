@@ -1,0 +1,528 @@
+@font-face {
+  font-family: 'Newsreader Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('../../node_modules/@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 700;
+  src: url('../../node_modules/@fontsource-variable/ibm-plex-sans/files/ibm-plex-sans-latin-wght-normal.woff2') format('woff2-variations');
+}
+
+:root {
+  font-family: 'IBM Plex Sans Variable', sans-serif;
+  color: #1f211c;
+  background: #f2eee3;
+  font-synthesis: none;
+  --paper: #f2eee3;
+  --paper-high: #fbf8ef;
+  --ink: #1f211c;
+  --muted: #6f7167;
+  --line: #d3cdbc;
+  --signal: #dc5a2a;
+  --signal-soft: #f2d4c6;
+  --shadow: 0 18px 48px rgb(38 35 26 / 16%);
+  --ledger-columns: 28px 62px 78px minmax(66px, 1fr) 58px;
+  --ledger-gap: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 720px;
+  min-height: 320px;
+  margin: 0;
+  background:
+    linear-gradient(90deg, rgb(31 33 28 / 3%) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--paper);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  min-height: 320px;
+  padding: 12px 14px 10px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+h2,
+p {
+  margin-top: 0;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 30px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--ink);
+  color: var(--paper-high);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.program-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 18px;
+}
+
+.ledger-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.ledger-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  min-height: 27px;
+  padding: 6px 0 4px;
+}
+
+.ledger-section-heading h2 {
+  font-family: 'Newsreader Variable', serif;
+  font-size: 14px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.ledger-section-heading span {
+  color: var(--muted);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.ledger-header,
+.program-row,
+.ledger-total-row {
+  display: grid;
+  grid-template-columns: var(--ledger-columns);
+  align-items: center;
+  column-gap: var(--ledger-gap);
+}
+
+.ledger-header {
+  min-height: 21px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ledger-sort-button {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.ledger-sort-button svg {
+  width: 8px;
+  height: 8px;
+  fill: none;
+  opacity: 0.35;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  transition: opacity 120ms ease;
+}
+
+.ledger-sort-button[aria-pressed='true'] {
+  color: var(--signal);
+}
+
+.ledger-sort-button[aria-pressed='true'] svg,
+.ledger-sort-button:hover svg {
+  opacity: 1;
+}
+
+.program-row {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0;
+}
+
+.ledger-total-row {
+  min-height: 31px;
+  margin-top: auto;
+  border-top: 1px solid var(--ink);
+  border-bottom: 0;
+}
+
+.ledger-total-label {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ledger-total-balance {
+  font-family: 'Newsreader Variable', serif;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.program-icon {
+  display: block;
+  width: 26px;
+  height: 26px;
+  --brand-mark: var(--ink);
+}
+
+.program-icon--united {
+  --brand-mark: #002244;
+}
+
+.program-icon--airfrance {
+  --brand-mark: #002157;
+}
+
+.program-icon--virginatlantic {
+  --brand-mark: #da0530;
+}
+
+.program-icon--american {
+  --brand-mark: #0078d2;
+}
+
+.program-icon--britishairways {
+  --brand-mark: #2e5c99;
+}
+
+.program-icon--ana {
+  --brand-mark: #13448f;
+}
+
+.program-icon--hilton {
+  --brand-mark: #124d97;
+}
+
+.program-icon--marriott {
+  --brand-mark: #a70023;
+}
+
+.program-icon__svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+.program-icon__tile {
+  fill: #ffffff;
+  stroke: #c7cbd1;
+}
+
+.program-icon__mark {
+  fill: var(--brand-mark);
+}
+
+.program-icon__image {
+  image-rendering: auto;
+}
+
+.program-balance {
+  font-family: 'Newsreader Variable', serif;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 580;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+.record-facts {
+  display: contents;
+}
+
+.record-facts dd {
+  margin: 0;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.program-updated {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.program-actions {
+  display: flex;
+  justify-self: end;
+  gap: 0;
+}
+
+.footer-button,
+.action-button,
+.sheet-close-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.action-button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  place-items: center;
+  color: var(--muted);
+}
+
+.action-button svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.action-button:hover {
+  background: var(--signal-soft);
+  color: var(--ink);
+}
+
+.footer-button {
+  border-bottom: 1px solid transparent;
+  font-weight: 650;
+}
+
+.footer-button:hover {
+  border-bottom-color: currentColor;
+}
+
+.error-note,
+.form-error {
+  color: #a43f1f;
+}
+
+.program-row > .error-note {
+  grid-column: 2 / -1;
+}
+
+.error-note,
+.form-error {
+  margin: 5px 0 0;
+  font-size: 8px;
+  line-height: 1.4;
+}
+
+.notice {
+  margin: 7px 0 0;
+  border-left: 2px solid var(--signal);
+  padding-left: 9px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  color: var(--muted);
+}
+
+.app-footer p {
+  margin-bottom: 0;
+  font-size: 8px;
+}
+
+.app-footer div {
+  display: flex;
+  gap: 12px;
+}
+
+.footer-button {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.sheet-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(31 33 28 / 38%);
+}
+
+.edit-sheet {
+  width: 100%;
+  border-radius: 18px 18px 0 0;
+  padding: 15px;
+  background: var(--paper-high);
+  box-shadow: var(--shadow);
+  animation: sheet-in 160ms ease-out both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edit-sheet {
+    animation: none;
+  }
+}
+
+.sheet-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.sheet-close-button {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: serif;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.sheet-close-button:hover {
+  background: var(--signal-soft);
+}
+
+.edit-sheet form {
+  display: grid;
+  gap: 9px;
+}
+
+.edit-sheet label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.edit-sheet input,
+.edit-sheet select {
+  width: 100%;
+  height: 33px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0 10px;
+  background: white;
+  color: var(--ink);
+  font-size: 11px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.secondary-button {
+  background: transparent;
+  color: var(--ink);
+}
+
+.loading-state,
+.fatal-state {
+  display: grid;
+  width: 720px;
+  min-height: 260px;
+  place-items: center;
+  padding: 24px;
+  color: var(--muted);
+  font-family: 'Newsreader Variable', serif;
+  font-size: 16px;
+}
+
+.fatal-state {
+  color: #a43f1f;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
