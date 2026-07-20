@@ -13,10 +13,9 @@ describe('JSON backups', () => {
     expect(() => parseBackup('{')).toThrow('not valid JSON');
 
     const candidate = JSON.parse(serializeBackup(createInitialState()));
-    candidate.data.records.cathay.password = 'do-not-import';
+    candidate.data.records.cathay.password = 'x';
     expect(() => parseBackup(JSON.stringify(candidate))).toThrow(
       'invalid or unexpected data',
     );
   });
 });
-

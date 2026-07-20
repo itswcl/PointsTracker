@@ -15,13 +15,16 @@ The adapter framework is implemented, but production selectors must be confirmed
 
 Configured official page:
 
-`https://www.united.com/en/us/account/activity/`
+`https://www.united.com/en/us/myunited`
 
-Confirmed production selector:
+Confirmed production selectors, newest first:
 
-`[aria-labelledby="accountBalanceAriaLabel"] [data-test-name="balance_value"]`
+- `[class*="MileageBalance__milesContainer"] [class*="MileageBalance__totalMiles"]`
+- `[aria-labelledby="accountBalanceAriaLabel"] [data-test-name="balance_value"]`
 
-This selector is scoped to the accessible Account balance list and intentionally excludes the separate pooled-miles amount in the account header.
+The primary selector is scoped to the My United MileageBalance component. The second selector supports the earlier accessible Account balance list. Both intentionally exclude pooled miles in the account header and lifetime miles in Premier progress.
+
+United's balance endpoint requires a bearer authorization header managed by the page. Because the extension must never read or copy credentials or authorization tokens, United is an explicit rendered-HTML fallback rather than an API capture.
 
 Remaining end-to-end checks:
 

@@ -1,16 +1,12 @@
-# Local Program Marks
+# Program Names and Brand Assets
 
-The popup bundles compact airline and hotel marks locally. It does not load remote images at runtime and does not request additional host permissions for artwork.
+The popup identifies supported loyalty programs with recognizable names or abbreviations such as UA, Cathay, ANA, Hyatt, and Hilton. Full official names remain available to assistive technology and as hover text. The popup does not bundle or display airline, hotel, or loyalty-program logos and does not load remote artwork at runtime.
 
-## Sources
+## Public distribution status
 
-- United Airlines, Air France, Virgin Atlantic, American Airlines, British Airways, ANA, Hilton, and Marriott use SVG paths from `simple-icons` 16.26.0. The package metadata traces each mark to the corresponding program website or newsroom.
-- Cathay Pacific uses the official web-clip icon published by Cathay Pacific at `https://www.cathaypacific.com/content/dam/header-footer-lrp/cx-web-clip-icon.png`.
-- Alaska Airlines uses the official favicon published at `https://resource.alaskaair.net/favicon.ico`.
-- EVA Air uses the favicon rendered by its official Infinity MileageLands account page at `https://eservice.evaair.com/flyeva/eva/ffp/frequent-flyer.aspx`.
-- World of Hyatt uses the official square SVG published at `https://www.hyatt.com/hds/images/4.3.0/brands/world/logos/logo.svg`, bundled locally as `assets/program-logos/hyatt.svg`.
+Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, or loyalty program. Program names may be protected trademarks and remain the property of their respective owners. Their use identifies supported loyalty programs and does not imply sponsorship, partnership, or endorsement.
 
-The source images for Cathay, Alaska, and EVA are embedded as local data URLs in `src/program-icon-images.js`; Hyatt's SVG is bundled as a local asset. Program names and marks may be protected trademarks. Their use here is limited to identifying accounts in this private personal ledger; it does not imply program endorsement.
+The program-logo assets and the `simple-icons` dependency were removed before public distribution. Any future addition of third-party marks or artwork must be reviewed and documented here before release.
 
 ## Extension icon
 

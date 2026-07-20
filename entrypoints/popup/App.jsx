@@ -1,14 +1,4 @@
 import { useRef, useState } from 'react';
-import {
-  siAirfrance,
-  siAna,
-  siAmericanairlines,
-  siBritishairways,
-  siHilton,
-  siMarriott,
-  siUnitedairlines,
-  siVirginatlantic,
-} from 'simple-icons';
 import { formatBalance, parseBalance } from '../../src/domain/balances.js';
 import { formatDateKey, formatMonthKey } from '../../src/domain/dates.js';
 import {
@@ -17,7 +7,6 @@ import {
 } from '../../src/domain/records.js';
 import { MESSAGE_TYPES } from '../../src/messaging.js';
 import { PROGRAM_CATEGORIES, PROGRAM_LIST } from '../../src/programs.js';
-import { PROGRAM_ICON_IMAGES } from '../../src/program-icon-images.js';
 import { parseBackup, serializeBackup } from '../../src/storage/backup.js';
 import { usePointsState } from './use-points-state.js';
 
@@ -29,17 +18,6 @@ const ERROR_LABELS = Object.freeze({
   login_required: 'Sign in is required to update this balance.',
   tab_open_failed: 'The account page could not be opened.',
   verification_required: 'Verification is required in the account tab.',
-});
-
-const PROGRAM_VECTOR_MARKS = Object.freeze({
-  united: siUnitedairlines.path,
-  airfrance: siAirfrance.path,
-  virginatlantic: siVirginatlantic.path,
-  american: siAmericanairlines.path,
-  britishairways: siBritishairways.path,
-  ana: siAna.path,
-  hilton: siHilton.path,
-  marriott: siMarriott.path,
 });
 
 function expirationLabel(expiration) {
@@ -123,43 +101,6 @@ function RestoreIcon() {
   );
 }
 
-function ProgramIcon({ program }) {
-  const image = PROGRAM_ICON_IMAGES[program.id];
-  const vectorPath = PROGRAM_VECTOR_MARKS[program.id];
-
-  return (
-    <span
-      className={`program-icon program-icon--${program.id}`}
-      title={program.name}
-      aria-hidden="true"
-    >
-      <svg
-        className="program-icon__svg"
-        viewBox="0 0 28 28"
-        data-program-icon={program.id}
-        focusable="false"
-      >
-        <rect className="program-icon__tile" x="1" y="1" width="26" height="26" rx="7" />
-        {image ? (
-          <image
-            className="program-icon__image"
-            href={image}
-            x="3"
-            y="3"
-            width="22"
-            height="22"
-            preserveAspectRatio="xMidYMid meet"
-          />
-        ) : (
-          <svg x="4" y="4" width="20" height="20" viewBox="0 0 24 24">
-            <path className="program-icon__mark" d={vectorPath} />
-          </svg>
-        )}
-      </svg>
-    </span>
-  );
-}
-
 function ActionButton({ label, children, ...buttonProps }) {
   return (
     <button
@@ -182,10 +123,14 @@ function ProgramRow({ program, record, onEdit, onRefresh, onUseAutomatic }) {
 
   return (
     <article className="program-row" aria-labelledby={`${program.id}-name`}>
-      <h2 className="visually-hidden" id={`${program.id}-name`}>
-        {program.name}
+      <h2
+        className="program-name"
+        id={`${program.id}-name`}
+        title={program.name}
+        aria-label={program.name}
+      >
+        {program.displayName}
       </h2>
-      <ProgramIcon program={program} />
       <strong className="program-balance">{formatBalance(display.balance)}</strong>
       <dl className="record-facts">
         <div>
@@ -225,7 +170,7 @@ function ProgramRow({ program, record, onEdit, onRefresh, onUseAutomatic }) {
 function LedgerHeader({ groupLabel, sortMode, onChangeSort }) {
   return (
     <div className="ledger-header">
-      <span aria-hidden="true" />
+      <span>Program</span>
       <button
         className="ledger-sort-button"
         type="button"

@@ -18,6 +18,28 @@ function page(html) {
 }
 
 describe('United adapter', () => {
+  it('captures the current My United MileageBalance component', () => {
+    const result = inspectUnited(
+      page(`
+        <div class="app-components-MyUnited-AccountSummaryDetails-MileageBalance-MileageBalance__milesContainer--hash">
+          <h3>MILES</h3>
+          <div class="app-components-MyUnited-AccountSummaryDetails-MileageBalance-MileageBalance__totalMiles--hash">
+            <span>45</span>
+          </div>
+          <div class="app-components-MyUnited-AccountSummaryDetails-MileageBalance-MileageBalance__milesNeverExpire--hash">
+            Miles never expire
+          </div>
+        </div>
+      `),
+      'https://www.united.com/en/us/myunited',
+    );
+
+    expect(result).toMatchObject({
+      kind: 'success',
+      capture: { balance: 45 },
+    });
+  });
+
   it('captures the scoped account balance instead of pooled miles', () => {
     const result = inspectUnited(
       page(`
@@ -59,6 +81,19 @@ describe('United adapter', () => {
       'https://www.united.com/en/us/account/activity/',
     );
     expect(result.kind).toBe('not_found');
+  });
+
+  it('recognizes the signed-out My United page', () => {
+    const result = inspectUnited(
+      page('<form action="/login"><button>Sign in</button></form>'),
+      'https://www.united.com/en/us/myunited',
+    );
+
+    expect(result).toMatchObject({
+      kind: 'login_required',
+      authState: 'signed_out',
+      reason: 'login_required',
+    });
   });
 });
 

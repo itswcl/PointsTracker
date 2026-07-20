@@ -219,28 +219,14 @@ describe('popup', () => {
     expect(screen.getByText('07/05/2028')).toBeInTheDocument();
     expect(screen.getByText('24 mo inactivity')).toBeInTheDocument();
     expect(screen.getAllByText('N/A')).toHaveLength(5);
-    expect(container.querySelectorAll('[data-program-icon]')).toHaveLength(12);
-    expect(
-      container.querySelector('[data-program-icon="united"] .program-icon__mark'),
-    ).toBeInTheDocument();
-    expect(
-      container
-        .querySelector('[data-program-icon="cathay"] .program-icon__image')
-        .getAttribute('href'),
-    ).toMatch(/^data:image\/png;base64,/);
-    expect(
-      container.querySelector('[data-program-icon="hyatt"] .program-icon__image'),
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-program-icon="hilton"] .program-icon__mark'),
-    ).toBeInTheDocument();
-    expect(
-      container.querySelector('[data-program-icon="marriott"] .program-icon__mark'),
-    ).toBeInTheDocument();
-    expect(container.querySelector('.program-icon text')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.program-name')).toHaveLength(12);
+    expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
+    expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');
+    expect(container.querySelector('[aria-labelledby="evaair-name"] .program-name')).toHaveTextContent('EVA');
+    expect(container.querySelector('[aria-labelledby="hyatt-name"] .program-name')).toHaveTextContent('Hyatt');
     expect(
       screen.getByRole('heading', { name: 'United MileagePlus' }),
-    ).toHaveClass('visually-hidden');
+    ).toHaveClass('program-name');
     expect(screen.queryByText('No expiration')).not.toBeInTheDocument();
     expect(
       screen.queryByText(/username|password|member number/i),
@@ -425,8 +411,7 @@ describe('popup', () => {
     expect(
       Array.from(americanRow.children).map((child) => child.className),
     ).toEqual([
-      'visually-hidden',
-      'program-icon program-icon--american',
+      'program-name',
       'program-balance',
       'record-facts',
       'program-actions',

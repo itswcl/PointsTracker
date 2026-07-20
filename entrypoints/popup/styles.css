@@ -27,8 +27,8 @@
   --signal: #dc5a2a;
   --signal-soft: #f2d4c6;
   --shadow: 0 18px 48px rgb(38 35 26 / 16%);
-  --ledger-columns: 28px 62px 78px minmax(66px, 1fr) 58px;
-  --ledger-gap: 6px;
+  --ledger-columns: 67px 60px 72px 66px 52px;
+  --ledger-gap: 5px;
 }
 
 * {
@@ -216,75 +216,29 @@ button:disabled {
 }
 
 .ledger-total-balance {
+  grid-column: 2 / 4;
   font-family: 'Newsreader Variable', serif;
-  font-size: 17px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   letter-spacing: -0.025em;
   line-height: 1;
 }
 
-.program-icon {
-  display: block;
-  width: 26px;
-  height: 26px;
-  --brand-mark: var(--ink);
-}
-
-.program-icon--united {
-  --brand-mark: #002244;
-}
-
-.program-icon--airfrance {
-  --brand-mark: #002157;
-}
-
-.program-icon--virginatlantic {
-  --brand-mark: #da0530;
-}
-
-.program-icon--american {
-  --brand-mark: #0078d2;
-}
-
-.program-icon--britishairways {
-  --brand-mark: #2e5c99;
-}
-
-.program-icon--ana {
-  --brand-mark: #13448f;
-}
-
-.program-icon--hilton {
-  --brand-mark: #124d97;
-}
-
-.program-icon--marriott {
-  --brand-mark: #a70023;
-}
-
-.program-icon__svg {
-  display: block;
-  width: 26px;
-  height: 26px;
-}
-
-.program-icon__tile {
-  fill: #ffffff;
-  stroke: #c7cbd1;
-}
-
-.program-icon__mark {
-  fill: var(--brand-mark);
-}
-
-.program-icon__image {
-  image-rendering: auto;
+.program-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 650;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .program-balance {
+  min-width: 0;
   font-family: 'Newsreader Variable', serif;
-  font-size: 17px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   font-weight: 580;
   letter-spacing: -0.025em;
@@ -296,17 +250,19 @@ button:disabled {
 }
 
 .record-facts dd {
+  min-width: 0;
   margin: 0;
-  font-size: 9px;
+  font-size: 8px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .program-updated {
+  min-width: 0;
   justify-self: end;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 8px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;

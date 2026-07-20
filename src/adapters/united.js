@@ -7,6 +7,8 @@ import {
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
+  '[class*="MileageBalance__milesContainer"] [class*="MileageBalance__totalMiles"]',
+  '[class*="MileageBalance__totalMiles"]',
   '[aria-labelledby="accountBalanceAriaLabel"] [data-test-name="balance_value"]',
   '[data-testid="mileageplus-balance"]',
   '[data-testid="mileage-balance"]',
@@ -17,6 +19,8 @@ const BALANCE_SELECTORS = Object.freeze([
 ]);
 
 const AUTHENTICATED_SELECTORS = Object.freeze([
+  '[class*="MileageBalance__milesContainer"]',
+  '[class*="MileageBalance__milesNeverExpire"]',
   '#accountBalanceAriaLabel',
   '[data-testid="account-summary"]',
   '[data-testid="account-menu-button"]',
