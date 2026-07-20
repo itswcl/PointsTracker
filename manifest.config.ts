@@ -4,7 +4,7 @@ export const manifest = {
   manifest_version: 3,
   name: 'Points Tracker',
   description: 'Track airline and hotel loyalty balances and expiration dates locally.',
-  version: '1.0.0',
+  version: '1.1.0',
   minimum_chrome_version: '120',
   icons: {
     16: 'assets/icons/icon-16.png',
