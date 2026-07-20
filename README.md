@@ -4,6 +4,19 @@ A local-only Chrome extension for viewing airline and hotel loyalty balances and
 
 The extension never asks for or stores usernames, passwords, cookies, account numbers, or transaction history. Data is stored only in the current Chrome profile.
 
+## Install in Chrome — no coding required
+
+1. [Download the ready-to-install ZIP](https://github.com/itswcl/PointsTracker/releases/latest/download/points-tracker-chrome.zip).
+2. Open your **Downloads** folder and double-click the ZIP to unzip it.
+3. In Chrome, open `chrome://extensions`.
+4. Turn on **Developer mode** in the upper-right corner.
+5. Select **Load unpacked**, then choose the unzipped `points-tracker-chrome` folder.
+6. Select Chrome's puzzle-piece **Extensions** button and pin **Points Tracker**.
+
+Keep the unzipped folder on your computer after installation. Chrome uses the files in that folder to run the extension.
+
+See the [beginner installation guide](./docs/INSTALLATION.md) for pictures-in-words directions, first use, updates, and troubleshooting.
+
 ## Independent project
 
 Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, or loyalty program. All airline, hotel, and loyalty-program names and marks belong to their respective owners and are used only to identify the programs supported by the extension.
