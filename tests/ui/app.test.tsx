@@ -235,7 +235,10 @@ describe('popup', () => {
         local: storageArea,
         onChanged: eventTarget(),
       },
-      runtime: { sendMessage: vi.fn(async () => ({ ok: true })) },
+      runtime: {
+        getManifest: vi.fn(() => ({ version: '1.2.1' })),
+        sendMessage: vi.fn(async () => ({ ok: true })),
+      },
     });
   });
 
@@ -278,6 +281,18 @@ describe('popup', () => {
     expect(screen.getByText('UA000001')).toBeInTheDocument();
     expect(screen.getByText('CX000002')).toBeInTheDocument();
     expect(screen.getByText('MB000013')).toBeInTheDocument();
+    expect(
+      screen.getByText('Stored only in this Chrome profile. · v1.2.1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Check updates' }),
+    ).toHaveAttribute(
+      'href',
+      'https://github.com/itswcl/PointsTracker/releases/latest',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Check updates' }),
+    ).toHaveAttribute('target', '_blank');
     expect(container.querySelectorAll('.program-name')).toHaveLength(13);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
     expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');

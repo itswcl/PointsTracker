@@ -36,7 +36,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.2.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.2.1` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.

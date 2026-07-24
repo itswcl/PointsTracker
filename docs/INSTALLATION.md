@@ -61,12 +61,13 @@ Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Al
 
 Installing a newer copy does not automatically transfer the locally saved ledger. Before updating:
 
-1. Open Points Tracker and select **Export** to save a backup.
-2. Download and unzip the newest `points-tracker-chrome.zip`.
-3. Open `chrome://extensions`.
-4. Select **Remove** on the old Points Tracker card.
-5. Select **Load unpacked** and choose the newly unzipped folder.
-6. Open Points Tracker and select **Import** to restore your backup.
+1. Open Points Tracker and select **Check updates** to open the latest GitHub release. Compare its version with the installed version shown in the footer.
+2. If a newer version is available, select **Export** to save a backup.
+3. Download and unzip the newest `points-tracker-chrome.zip`.
+4. Open `chrome://extensions`.
+5. Select **Remove** on the old Points Tracker card.
+6. Select **Load unpacked** and choose the newly unzipped folder.
+7. Open Points Tracker and select **Import** to restore your backup.
 
 ## Troubleshooting
 

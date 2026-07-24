@@ -63,6 +63,7 @@ Chrome Web Store and public-repository readiness are tracked in [docs/CHROME_WEB
 ## Implementation status
 
 - Version 1.2.0 adds locally stored Member # capture for all thirteen programs, same-tab secondary-page capture for Flying Blue, British Airways, and ANA, Delta SkyMiles support, interrupted-refresh recovery, and a slightly larger compact popup.
+- Version 1.2.1 adds the installed extension version to the footer and provides a permission-free **Check updates** link to the latest GitHub release.
 - React popup, local records, separate airline and hotel balance totals, manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
 - United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott adapters have tested parser contracts.
 - Production member-number sources have been confirmed for all thirteen programs. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.

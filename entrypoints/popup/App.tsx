@@ -33,6 +33,9 @@ import type {
 } from '../../src/types.js';
 import { usePointsState } from './use-points-state.js';
 
+const LATEST_RELEASE_URL =
+  'https://github.com/itswcl/PointsTracker/releases/latest';
+
 const ERROR_LABELS: Readonly<Record<string, string>> = Object.freeze({
   balance_not_found: 'Balance not found on the account page.',
   capture_interrupted: 'The previous refresh was interrupted. Try again.',
@@ -618,6 +621,7 @@ export function App() {
     group,
     programs: PROGRAM_LIST.filter((program) => program.category === group.id),
   }));
+  const extensionVersion = chrome.runtime.getManifest().version;
 
   return (
     <main className="app-shell">
@@ -640,8 +644,16 @@ export function App() {
       {notice ? <p className="notice" role="status">{notice}</p> : null}
 
       <footer className="app-footer">
-        <p>Stored only in this Chrome profile.</p>
+        <p>Stored only in this Chrome profile. · v{extensionVersion}</p>
         <div>
+          <a
+            className="footer-button"
+            href={LATEST_RELEASE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Check updates
+          </a>
           <button className="footer-button" type="button" onClick={exportBackup}>
             Export
           </button>
