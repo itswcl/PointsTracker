@@ -32,6 +32,10 @@ interface StateRepositoryLike {
     programId: ProgramId,
     capture: AutomaticCapture,
   ): Promise<PointsState>;
+  saveAutomaticMemberNumber(
+    programId: ProgramId,
+    memberNumber: string,
+  ): Promise<PointsState>;
   setStatus(
     programId: ProgramId,
     status: RecordStatus,
@@ -64,6 +68,7 @@ interface CaptureCoordinatorOptions {
 interface ActiveCapture {
   tabId: number;
   timeoutId: ReturnType<typeof setTimeout>;
+  stage: 'primary' | 'member_number';
 }
 
 interface RefreshOptions {
@@ -89,6 +94,16 @@ export function createCaptureCoordinator({
   cooldownMs = DEFAULT_COOLDOWN_MS,
 }: CaptureCoordinatorOptions) {
   const activeCaptures = new Map<ProgramId, ActiveCapture>();
+
+  function resetCaptureTimeout(
+    programId: ProgramId,
+    capture: ActiveCapture,
+  ): void {
+    clearTimeout(capture.timeoutId);
+    capture.timeoutId = setTimeout(() => {
+      void failCapture(programId, 'capture_timeout');
+    }, timeoutMs);
+  }
 
   function clearCapture(programId: ProgramId): ActiveCapture | null {
     const capture = activeCaptures.get(programId);
@@ -169,10 +184,14 @@ export function createCaptureCoordinator({
       });
       if (typeof tab.id !== 'number') throw new Error('missing_tab_id');
 
-      const timeoutId = setTimeout(() => {
-        void failCapture(programId, 'capture_timeout');
-      }, timeoutMs);
-      activeCaptures.set(programId, { tabId: tab.id, timeoutId });
+      const capture: ActiveCapture = {
+        tabId: tab.id,
+        timeoutId: setTimeout(() => {
+          void failCapture(programId, 'capture_timeout');
+        }, timeoutMs),
+        stage: 'primary',
+      };
+      activeCaptures.set(programId, capture);
       return { ok: true, tabId: tab.id };
     } catch {
       await stateRepository.setStatus(programId, 'error', 'tab_open_failed');
@@ -193,7 +212,67 @@ export function createCaptureCoordinator({
     const result = message.result;
 
     if (result.kind === 'success') {
+      if (
+        owned?.programId === program.id &&
+        owned.capture.stage === 'member_number'
+      ) {
+        if (result.capture.memberNumber) {
+          await stateRepository.saveAutomaticMemberNumber(
+            program.id,
+            result.capture.memberNumber,
+          );
+        }
+        await closeOwnedTab(program.id);
+        return { ok: true, captured: true };
+      }
+
       await stateRepository.saveAutomaticCapture(program.id, result.capture);
+      if (
+        owned?.programId === program.id &&
+        result.capture.memberNumber === null &&
+        program.memberNumberUrl
+      ) {
+        owned.capture.stage = 'member_number';
+        resetCaptureTimeout(program.id, owned.capture);
+        await stateRepository.setStatus(program.id, 'updating');
+        try {
+          await browserApi.tabs.update(owned.capture.tabId, {
+            url: program.memberNumberUrl,
+            active: false,
+          });
+          return {
+            ok: true,
+            captured: true,
+            continued: 'member_number',
+          };
+        } catch {
+          await failCapture(program.id, 'tab_open_failed');
+          return { ok: false, error: 'tab_open_failed' };
+        }
+      }
+
+      if (
+        owned?.programId === program.id &&
+        result.capture.memberNumber === null &&
+        !message.final
+      ) {
+        await stateRepository.setStatus(program.id, 'updating');
+        return {
+          ok: true,
+          captured: true,
+          continued: 'member_number_wait',
+        };
+      }
+
+      if (owned?.programId === program.id) await closeOwnedTab(program.id);
+      return { ok: true, captured: true };
+    }
+
+    if (result.kind === 'member_number_found') {
+      await stateRepository.saveAutomaticMemberNumber(
+        program.id,
+        result.capture.memberNumber,
+      );
       if (owned?.programId === program.id) await closeOwnedTab(program.id);
       return { ok: true, captured: true };
     }

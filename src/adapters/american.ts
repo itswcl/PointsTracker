@@ -5,6 +5,7 @@ import {
   pageHasVerification,
   pathIncludes,
   readDate,
+  readMemberNumber,
 } from './shared.js';
 import { parseBalance } from '../domain/balances.js';
 
@@ -17,6 +18,20 @@ const EXPIRATION_SELECTORS = Object.freeze([
   '[data-testid="award-miles-balance-section"] [class*="miles-expiring"]',
   '[data-testid="award-miles-expiration"]',
   '[data-points-tracker="american-expiration"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="american-member-number"]' },
+  { selector: '[data-testid="aadvantage-number"]' },
+  {
+    selector:
+      '[data-testid="member-details-section"] [class*="_aadvantage-number_"]',
+  },
+  {
+    selector: '[data-testid="member-details-section"]',
+    pattern:
+      /\bAAdvantage(?:®)?\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 const AUTHENTICATED_SELECTORS = Object.freeze([
@@ -55,12 +70,14 @@ export function inspectAmerican(document: Document, rawUrl: string) {
     const expirationDate = readDate(document, EXPIRATION_SELECTORS);
     const expirationText = firstAllowedText(document, EXPIRATION_SELECTORS);
     const cardholderExemption = hasCardholderExpirationExemption(expirationText);
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
 
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: expirationDate
           ? {
               type: 'activity_based',

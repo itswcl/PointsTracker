@@ -41,12 +41,31 @@ describe('typed extension messaging', () => {
           authState: 'authenticated',
           capture: {
             balance: 125400,
+            memberNumber: 'UA000001',
             expiration: {
               type: 'never',
               date: null,
               note: 'No expiration',
             },
           },
+          reason: null,
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('accepts a member-number-only observation from a secondary account page', () => {
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'ana',
+        pageUrl:
+          'https://cam.ana.co.jp/psz/amcj/jsp/renew/amcMemberReference/amcMemberReferenceOS_e.jsp',
+        final: false,
+        result: {
+          kind: 'member_number_found',
+          authState: 'authenticated',
+          capture: { memberNumber: 'NH000009' },
           reason: null,
         },
       }),

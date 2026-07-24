@@ -8,11 +8,11 @@ Points Tracker
 
 ## Short summary
 
-Track airline and hotel loyalty balances and expiration dates locally.
+Track airline and hotel member numbers, balances, and expiration dates locally.
 
 ## Detailed description
 
-Points Tracker provides one compact ledger for supported airline and hotel loyalty balances and expiration information.
+Points Tracker provides one compact ledger for supported airline and hotel loyalty member numbers, balances, and expiration information.
 
 - Refresh a program after signing in directly on its official website.
 - Use manual entry whenever a loyalty website changes or automatic capture is unavailable.
@@ -20,7 +20,7 @@ Points Tracker provides one compact ledger for supported airline and hotel loyal
 - Keep airline and hotel totals separate.
 - Export or import a local JSON backup when you choose.
 
-Points Tracker does not ask for loyalty-site credentials. It stores ledger values only in the current Chrome profile and has no backend, analytics, advertising, or telemetry.
+Points Tracker does not ask for loyalty-site credentials. It stores the displayed loyalty member number and ledger values only in the current Chrome profile and has no backend, analytics, advertising, or telemetry.
 
 ## Independent-product disclaimer
 
@@ -30,5 +30,5 @@ Points Tracker is an independent project and is not affiliated with or endorsed 
 
 - Replace this note with final support, homepage, and privacy-policy URLs.
 - Confirm supported programs and page-dependent limitations against the submitted build.
-- Use synthetic balances and dates in all screenshots.
+- Use synthetic member numbers, balances, and dates in all screenshots.
 - Keep the listing consistent with the manifest permissions and Privacy-tab disclosures.

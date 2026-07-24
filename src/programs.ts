@@ -48,6 +48,8 @@ const PROGRAM_DEFINITIONS = {
     currencyName: 'miles',
     accountUrl: 'https://wwws.airfrance.us/profile/flying-blue/miles-overview',
     loginUrl: 'https://wwws.airfrance.us/profile/flying-blue/miles-overview',
+    memberNumberUrl:
+      'https://wwws.airfrance.us/profile/flying-blue/dashboard',
     hosts: ['wwws.airfrance.us'],
     defaultExpiration: {
       type: 'unknown',
@@ -61,8 +63,8 @@ const PROGRAM_DEFINITIONS = {
     name: 'Virgin Atlantic Flying Club',
     displayName: 'Virgin Atlantic',
     currencyName: 'points',
-    accountUrl: 'https://www.virginatlantic.com/en-US',
-    loginUrl: 'https://www.virginatlantic.com/en-US',
+    accountUrl: 'https://www.virginatlantic.com/flying-club/account/overview',
+    loginUrl: 'https://www.virginatlantic.com/flying-club/account/overview',
     hosts: ['www.virginatlantic.com'],
     defaultExpiration: {
       type: 'never',
@@ -125,6 +127,8 @@ const PROGRAM_DEFINITIONS = {
       'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/executive-statements/',
     loginUrl:
       'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/executive-statements/',
+    memberNumberUrl:
+      'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/',
     hosts: ['www.britishairways.com'],
     defaultExpiration: {
       type: 'activity_based',
@@ -142,11 +146,28 @@ const PROGRAM_DEFINITIONS = {
       'https://stmt.cam.ana.co.jp/psz/amcj/jsp/renew/mile/reference_e.jsp#month',
     loginUrl:
       'https://stmt.cam.ana.co.jp/psz/amcj/jsp/renew/mile/reference_e.jsp#month',
-    hosts: ['stmt.cam.ana.co.jp'],
+    memberNumberUrl:
+      'https://cam.ana.co.jp/psz/amcj/jsp/renew/amcMemberReference/amcMemberReferenceOS_e.jsp',
+    hosts: ['stmt.cam.ana.co.jp', 'cam.ana.co.jp'],
     defaultExpiration: {
       type: 'unknown',
       date: null,
       note: 'Expiry month shown for the latest activity when available',
+    },
+  },
+  [PROGRAM_IDS.DELTA]: {
+    id: PROGRAM_IDS.DELTA,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'Delta SkyMiles',
+    displayName: 'Delta',
+    currencyName: 'miles',
+    accountUrl: 'https://www.delta.com/myskymiles/overview',
+    loginUrl: 'https://www.delta.com/myskymiles/overview',
+    hosts: ['www.delta.com'],
+    defaultExpiration: {
+      type: 'never',
+      date: null,
+      note: 'No expiration',
     },
   },
   [PROGRAM_IDS.HYATT]: {

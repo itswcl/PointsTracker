@@ -1,16 +1,29 @@
 import { parseBalance } from '../domain/balances.js';
 import { parseDisplayedMonth } from '../domain/dates.js';
+import { normalizeMemberNumber } from '../domain/member-numbers.js';
 import type { MonthKey } from '../types.js';
 import {
   hasAllowedElement,
   inspectionResult,
+  memberNumberInspection,
   pageHasVerification,
   pathIncludes,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_LABEL = 'Mileage balance (Total)';
 const EXPIRY_LABEL = 'Expiry date';
 const ACTIVITY_ROOT_SELECTOR = '#meisai';
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="ana-member-number"]' },
+  { selector: '[data-testid="membership-number"]' },
+  {
+    selector: 'dl',
+    pattern:
+      /\b(?:ANA\s+Mileage\s+Club|AMC|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+]);
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
   'form[action*="login"]',
@@ -60,6 +73,47 @@ function readTotalBalance(document: Document): number | null {
   return parseBalance(numericText);
 }
 
+function readMainCardNumber(document: Document): string | null {
+  const mainCardLabels = new Set(['メインカード', 'Main card']);
+  const numberLabels = new Set(['お客様番号', 'ANA Number']);
+  const root = document.querySelector('#camContentsArea');
+  const heading = root
+    ? Array.from(root.querySelectorAll('h2')).find(
+        (candidate) => mainCardLabels.has(normalizedText(candidate)),
+      )
+    : null;
+  const table =
+    heading?.nextElementSibling?.tagName === 'TABLE'
+      ? heading.nextElementSibling
+      : null;
+  if (table) {
+    const headings = Array.from(table.querySelectorAll('th'));
+    const numberIndex = headings.findIndex(
+      (candidate) => numberLabels.has(normalizedText(candidate)),
+    );
+    if (numberIndex >= 0) {
+      for (const row of table.querySelectorAll('tr')) {
+        const value = row.querySelectorAll('td')[numberIndex];
+        if (!isAllowedDisplayElement(value)) continue;
+        const memberNumber = normalizeMemberNumber(normalizedText(value));
+        if (memberNumber) return memberNumber;
+      }
+    }
+  }
+
+  for (const label of document.querySelectorAll(
+    'dl.mw2025_code > dt, dl.mw1803_code > dt',
+  )) {
+    if (!numberLabels.has(normalizedText(label))) continue;
+    const value = label.nextElementSibling;
+    if (value?.tagName !== 'DD' || !isAllowedDisplayElement(value)) continue;
+    const memberNumber = normalizeMemberNumber(normalizedText(value));
+    if (memberNumber) return memberNumber;
+  }
+
+  return null;
+}
+
 function readLatestExpiryMonth(document: Document): ExpiryReadiness {
   const root = document.querySelector(ACTIVITY_ROOT_SELECTOR);
   if (!root) return { ready: false, month: null };
@@ -90,6 +144,9 @@ function readLatestExpiryMonth(document: Document): ExpiryReadiness {
 
 export function inspectAna(document: Document, rawUrl: string) {
   const balance = readTotalBalance(document);
+  const memberNumber =
+    readMainCardNumber(document) ??
+    readMemberNumber(document, MEMBER_NUMBER_RULES);
   if (balance !== null) {
     const expiration = readLatestExpiryMonth(document);
     if (!expiration.ready) {
@@ -99,12 +156,12 @@ export function inspectAna(document: Document, rawUrl: string) {
         reason: 'expiration_not_found',
       });
     }
-
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: expiration.month
           ? {
               type: 'fixed_date',
@@ -121,6 +178,8 @@ export function inspectAna(document: Document, rawUrl: string) {
       },
     });
   }
+
+  if (memberNumber) return memberNumberInspection(memberNumber);
 
   if (pageHasVerification(document, rawUrl)) {
     return inspectionResult({

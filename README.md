@@ -1,8 +1,8 @@
 # Points Tracker
 
-A local-only Chrome extension for viewing airline and hotel loyalty balances and expiration information in one compact two-column popup. Supported programs include United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, World of Hyatt, Hilton Honors, and Marriott Bonvoy.
+A local-only Chrome extension for viewing airline and hotel loyalty member numbers, balances, and expiration information in one compact two-column popup. Supported programs include United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, and Marriott Bonvoy.
 
-The extension never asks for or stores usernames, passwords, cookies, account numbers, or transaction history. Data is stored only in the current Chrome profile.
+The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, or transaction history. It stores only the displayed loyalty member number and ledger values in the current Chrome profile.
 
 ## Install in Chrome — no coding required
 
@@ -54,29 +54,32 @@ Chrome Web Store and public-repository readiness are tracked in [docs/CHROME_WEB
 
 ## Privacy boundary
 
-- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Hyatt, Hilton, and Marriott
+- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott
 - No cookie, password, history, or network interception permissions
 - No backend, analytics, or data uploads
 - No raw account-page HTML stored
-- Plain local JSON backup contains balances and dates only
+- Plain local JSON backup contains member numbers, balances, and dates
 
 ## Implementation status
 
+- Version 1.2.0 adds locally stored Member # capture for all thirteen programs, same-tab secondary-page capture for Flying Blue, British Airways, and ANA, Delta SkyMiles support, interrupted-refresh recovery, and a slightly larger compact popup.
 - React popup, local records, separate airline and hotel balance totals, manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
-- United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Hyatt, Hilton, and Marriott adapters have tested parser contracts.
+- United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott adapters have tested parser contracts.
+- Production member-number sources have been confirmed for all thirteen programs. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.
 - United's My United account URL and production balance selector are confirmed.
 - Cathay's authenticated account URL and production selectors are confirmed; remaining rebuilt-extension checks are tracked in [docs/LIVE_ACCEPTANCE.md](./docs/LIVE_ACCEPTANCE.md).
-- Air France Flying Blue's authenticated miles-overview URL and production selectors are confirmed.
-- Virgin Atlantic Flying Club's logged-in homepage balance selector is confirmed.
+- Air France Flying Blue's authenticated miles-overview data and membership-card number are confirmed.
+- Virgin Atlantic Flying Club's logged-in account-overview balance and member-number selectors are confirmed.
 - Alaska Airlines' logged-in homepage balance path is confirmed.
 - American AAdvantage's account-summary balance and expiration-message selectors are confirmed.
 - EVA Air's self-award balance and expiring-mileage table structure are confirmed.
 - British Airways' Avios balance and newest statement-month structure are confirmed.
 - ANA's total-mileage definition list and latest-activity expiry column are confirmed.
+- Delta SkyMiles' overview balance selector is confirmed; SkyMiles display expiration as `N/A`.
 - World of Hyatt's `Current Point Balance` layout is confirmed; this personal cardholder profile is configured to display expiration as `N/A`.
 - Hilton Honors' account summary fields `totalPointsFmt` and `pointsExpiration` are confirmed; the visible `honorsPointsBlock` and 24-month inactivity policy remain fallbacks.
 - Marriott Bonvoy's member-status balance and `All Qualifying` activity filter are confirmed; expiration is derived by adding 24 months to the newest qualifying activity, while Lifetime Elite displays `N/A`.
-- Manual entry is the reliable fallback until live selectors are confirmed.
+- Manual entry remains the fallback if a supported website changes.
 
 ## License
 

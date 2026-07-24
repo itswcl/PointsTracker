@@ -5,13 +5,13 @@ Date: 07/17/2026
 
 ## Purpose
 
-Points Tracker is a private, personal Chrome extension that consolidates loyalty-program balances and expiration information. The MVP reduces the need to remember where each balance is shown while avoiding credential collection or storage.
+Points Tracker is a private, personal Chrome extension that consolidates loyalty-program member numbers, balances, and expiration information. The MVP reduces the need to remember where each account detail is shown while avoiding credential collection or storage.
 
 ## Understanding Summary
 
 - The MVP is for one person using one Chrome profile.
-- It supports twelve airline and hotel loyalty programs, including World of Hyatt, Hilton Honors, and Marriott Bonvoy.
-- The toolbar popup shows the current balance, expiration status or date, and updated date.
+- It supports thirteen airline and hotel loyalty programs, including Delta SkyMiles, World of Hyatt, Hilton Honors, and Marriott Bonvoy.
+- The toolbar popup shows the current balance, loyalty member number, and expiration status or date.
 - Dates use `MM/DD/YYYY`; no relative timestamps or time of day are displayed.
 - The user signs in normally on each official website. The extension never requests or stores credentials.
 - After recognizing an authenticated visit, the extension may open a known official account-detail page in an inactive tab, capture the required fields, and close that extension-created tab.
@@ -31,9 +31,9 @@ Points Tracker is a private, personal Chrome extension that consolidates loyalty
 ## Assumptions
 
 - The MVP tracks one account per program.
-- It stores only program name, currency name, balance, expiration information, capture source, status, and updated date.
+- It stores only program name, currency name, loyalty member number, balance, expiration information, capture source, status, and capture date.
 - Everything remains in `chrome.storage.local` in the current Chrome profile.
-- Plain local storage and unencrypted JSON backups are acceptable because no credentials or account identifiers are stored.
+- Plain local storage and unencrypted JSON backups are accepted for this personal tool, but backups contain loyalty member numbers and must be treated as personal documents.
 - A normal refresh should complete within roughly 30 seconds.
 - The extension works only while Chrome is running and the user has a valid website session.
 - Supported-program website changes may require adapter maintenance.
@@ -59,7 +59,7 @@ Reading only the page the user manually opens requires fewer automated steps, bu
 
 The extension contains five primary components:
 
-1. **Popup** — displays all program records and exposes refresh, official-page, edit, import, and export actions.
+1. **Popup** — displays all program records and exposes refresh, edit, import, and export actions.
 2. **Capture coordinator** — starts capture attempts, creates and tracks inactive tabs, prevents loops, applies timeouts, and closes only extension-created tabs.
 3. **Program adapters** — contain program-specific URLs, authenticated markers, parsers, and validators.
 4. **Page reader** — runs only on approved account pages and returns the allowlisted structured result.
@@ -71,10 +71,11 @@ The extension contains five primary components:
 2. A supported-domain page reader recognizes an authenticated state without inspecting login form values.
 3. The capture coordinator checks its session and cooldown state to avoid duplicate work.
 4. The coordinator opens the adapter's official account-detail page in an inactive tab.
-5. The adapter waits for the rendered balance and expiration information.
-6. A valid result is saved locally and the extension-created tab is closed.
-7. An invalid or failed result leaves the last successful data intact and records a minimal error category.
-8. The popup displays the current value and updated date.
+5. The adapter waits for the rendered loyalty member number, balance, and expiration information.
+6. For Flying Blue, British Airways, or ANA, the coordinator saves the primary balance and expiration, then navigates that same extension-owned tab to the program's separate official member-number page.
+7. A valid result is saved locally and the extension-created tab is closed.
+8. An invalid or failed result leaves the last successful data intact and records a minimal error category.
+9. The popup displays the current member number, balance, and expiration.
 
 ## Data Model
 
@@ -82,7 +83,9 @@ Each program record contains:
 
 - Program name
 - Points or miles currency name
+- Automatically captured loyalty member number
 - Automatically captured balance
+- Optional manual member-number override
 - Optional manual balance override
 - Expiration type
 - Optional expiration date
@@ -100,7 +103,7 @@ Expiration types are:
 - `activity_based`: expiration depends on qualifying account activity.
 - `unknown`: the extension cannot safely determine an expiration status or date.
 
-United MileagePlus miles, Virgin Points, and Atmos Rewards points currently do not expire. Cathay Asia Miles generally use an activity-based policy that extends the balance after eligible activity. Flying Blue exposes a personal valid-until date on its miles-overview page. Program policies are adapter knowledge, but a personal expiration date is displayed only when the account provides it or provides enough information to derive it safely.
+United MileagePlus miles, Virgin Points, Atmos Rewards points, and Delta SkyMiles currently do not expire. Cathay Asia Miles generally use an activity-based policy that extends the balance after eligible activity. Flying Blue exposes a personal valid-until date on its miles-overview page. Program policies are adapter knowledge, but a personal expiration date is displayed only when the account provides it or provides enough information to derive it safely.
 
 References:
 
@@ -139,23 +142,19 @@ Failed capture attempts never overwrite the last successful record. Diagnostics 
 
 ## Popup Presentation
 
-The popup uses a compact single-line ticker ledger separated by rules. Each airline is represented by a local airline mark, while its full name remains available to screen readers and icon tooltips. Program actions are accessible icons, and refresh is available only per program so one click cannot open multiple account pages:
+The popup uses a compact single-line ticker ledger separated by rules. Each program uses a short recognizable text label, while its full name remains available to screen readers and tooltips. Program actions are accessible icons, and refresh is available only per program so one click cannot open multiple account pages:
 
 ```text
-        Balance  Expiration  Actions                 Updated
-[UA]    125,400  N/A         [refresh] [open] [edit] 07/17/2026
-[CX]     84,500  12/14/2026  [refresh] [open] [edit] 07/17/2026
-[AF]    210,500  05/15/2027  [refresh] [open] [edit] 07/17/2026
-[VS]    163,250  N/A         [refresh] [open] [edit] 07/17/2026
-[AS]    422,100  N/A         [refresh] [open] [edit] 07/17/2026
-[AA]    176,400  N/A         [refresh] [open] [edit] 07/17/2026
-[BR]     96,575  50 · 07/2028 [refresh] [open] [edit] 07/17/2026
-[BA]     42,300  01/01/2029  [refresh] [open] [edit] 07/17/2026
+Program  Balance  Member #   Expiration   Actions
+UA       125,400  UA000001   N/A          [refresh] [edit]
+Cathay    84,500  CX000002   12/14/2026   [refresh] [edit]
+AirFrance 210,500 AF000003   05/15/2027   [refresh] [edit]
+EVA       96,575  BR000007   50 · 07/2028 [refresh] [edit]
 ```
 
 If no exact status or date is available, the popup displays `Expiration: Unknown`. A failed refresh displays a concise error and relevant recovery actions while retaining the prior value.
 
-The ledger uses compact local airline marks with accessible full names. SVG paths or official small-site icons are bundled into the extension, so the popup makes no remote image requests and keeps the row width predictable.
+The ledger uses compact program names with accessible full names. The popup makes no remote image requests and keeps the row width predictable.
 
 The Balance and Expiration headers are mutually exclusive toggles. Balance sorts highest to lowest; Expiration sorts dated records from earliest to latest, with `Unknown` and `N/A` retained at the bottom. Clicking the active header restores the original program order.
 
@@ -172,22 +171,22 @@ The extension must not:
 - Access general browsing history
 - Intercept network requests
 - Store raw account-page HTML
-- Store member names or account numbers
+- Store member names or any account identifier other than the displayed loyalty member number
 - Upload data or diagnostics
 - Include remote analytics
 - Execute remotely downloaded code
 
-The page reader uses allowlisted display elements for balance and expiration data and does not query form inputs. Local Chrome storage and exported JSON are not encrypted vaults; this limitation is accepted for the non-credential MVP data.
+The page reader uses allowlisted display elements for loyalty member number, balance, and expiration data and does not query form inputs. Local Chrome storage and exported JSON are not encrypted vaults; this limitation is accepted for the non-credential personal ledger data.
 
 ## Export and Import
 
-The MVP provides plain JSON export and import. The file contains only approved program records and no credentials, account identifiers, raw HTML, or diagnostics containing page content. Import validates its structure and values before changing local data.
+The MVP provides plain JSON export and import. The file contains approved program records, including loyalty member numbers, but no credentials, member names, raw HTML, or diagnostics containing page content. Import validates its structure and values before changing local data.
 
 ## Testing Strategy
 
 ### Adapter tests
 
-Use synthetic, redacted page fragments to verify balance and expiration extraction. Tests also confirm that parsers do not query login fields or unrelated profile content.
+Use synthetic, redacted page fragments to verify member-number, balance, and expiration extraction. Tests also confirm that parsers do not query login fields or unrelated profile content.
 
 ### Workflow tests
 
@@ -195,7 +194,7 @@ Verify inactive-tab creation, capture success, timeouts, cooldowns, tab ownershi
 
 ### Privacy tests
 
-Verify that storage and exports contain only approved fields and that no credentials, cookies, account identifiers, raw HTML, or network responses are captured.
+Verify that storage and exports contain only approved fields and that no credentials, cookies, member names, raw HTML, or network responses are captured.
 
 ### Manual acceptance tests
 
@@ -218,10 +217,11 @@ Before implementation, perform a narrow live discovery pass after the user logs 
 - Exact authenticated account-detail URLs
 - Stable signs that login succeeded
 - Stable rendered balance elements
+- Stable rendered loyalty member-number elements
 - Cathay expiration or qualifying-activity information exposed by the account
 - Verification and session-expiry states
 
-The discovery pass must not save credentials, private page snapshots, raw account HTML, or account identifiers.
+The discovery pass must not save credentials, private page snapshots, or raw account HTML. Any real member number may be validated only in the live browser and saved solely by the local extension, never in source fixtures or reports.
 
 ## Decision Log
 

@@ -17,6 +17,7 @@ import {
   getDisplayRecord,
   isExpirationType,
 } from '../../src/domain/records.js';
+import { normalizeMemberNumber } from '../../src/domain/member-numbers.js';
 import { MESSAGE_TYPES } from '../../src/messaging.js';
 import { PROGRAM_CATEGORIES, PROGRAM_LIST } from '../../src/programs.js';
 import { parseBackup, serializeBackup } from '../../src/storage/backup.js';
@@ -34,6 +35,7 @@ import { usePointsState } from './use-points-state.js';
 
 const ERROR_LABELS: Readonly<Record<string, string>> = Object.freeze({
   balance_not_found: 'Balance not found on the account page.',
+  capture_interrupted: 'The previous refresh was interrupted. Try again.',
   capture_tab_closed: 'The update tab was closed before capture finished.',
   capture_timeout: 'The account page took too long to respond.',
   expiration_not_found: 'Expiration details did not load on the account page.',
@@ -206,6 +208,12 @@ function ProgramRow({
         {program.displayName}
       </h2>
       <strong className="program-balance">{formatBalance(display.balance)}</strong>
+      <span
+        className="program-member-number"
+        title={display.memberNumber ?? 'Member number not captured'}
+      >
+        {display.memberNumber ?? '—'}
+      </span>
       <dl className="record-facts">
         <div>
           <dt className="visually-hidden">Expiration</dt>
@@ -232,9 +240,6 @@ function ProgramRow({
           </ActionButton>
         ) : null}
       </div>
-      <time className="program-updated" dateTime={display.updatedOn ?? undefined}>
-        {formatDateKey(display.updatedOn)}
-      </time>
 
       {errorText ? <p className="error-note">{errorText}</p> : null}
     </article>
@@ -271,6 +276,7 @@ function LedgerHeader({
           <path d="m2 3.5 3 3 3-3" />
         </svg>
       </button>
+      <span>Member #</span>
       <button
         className="ledger-sort-button"
         type="button"
@@ -288,7 +294,6 @@ function LedgerHeader({
         </svg>
       </button>
       <span aria-hidden="true" />
-      <span>Updated</span>
     </div>
   );
 }
@@ -374,6 +379,9 @@ function EditPanel({
   const [balanceText, setBalanceText] = useState(
     display.balance === null ? '' : String(display.balance),
   );
+  const [memberNumberText, setMemberNumberText] = useState(
+    display.memberNumber ?? '',
+  );
   const [expirationType, setExpirationType] = useState<ExpirationType>(
     display.expiration.type,
   );
@@ -387,6 +395,15 @@ function EditPanel({
       setFormError('Enter a whole-number balance of zero or more.');
       return;
     }
+    const memberNumber = memberNumberText.trim()
+      ? normalizeMemberNumber(memberNumberText)
+      : null;
+    if (memberNumberText.trim() && memberNumber === null) {
+      setFormError(
+        'Enter a member number using letters, numbers, spaces, hyphens, or *.',
+      );
+      return;
+    }
     const validExpirationDate = isValidDateKey(expirationDate)
       ? expirationDate
       : null;
@@ -397,6 +414,7 @@ function EditPanel({
 
     void onSave(program.id, {
       balance,
+      memberNumber,
       expiration: {
         type: expirationType,
         date:
@@ -430,6 +448,17 @@ function EditPanel({
               value={balanceText}
               onChange={(event) => setBalanceText(event.target.value)}
               placeholder="0"
+            />
+          </label>
+
+          <label>
+            Member number
+            <input
+              autoComplete="off"
+              value={memberNumberText}
+              onChange={(event) => setMemberNumberText(event.target.value)}
+              placeholder="Optional"
+              maxLength={32}
             />
           </label>
 

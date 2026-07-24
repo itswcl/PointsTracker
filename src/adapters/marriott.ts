@@ -1,10 +1,12 @@
 import { parseBalance } from '../domain/balances.js';
 import { addMonths, parseDisplayedDate } from '../domain/dates.js';
+import { normalizeMemberNumber } from '../domain/member-numbers.js';
 import {
   hasAllowedElement,
   inspectionResult,
   pageHasVerification,
   pathIncludes,
+  readMemberNumber,
 } from './shared.js';
 
 const STATUS_ROOT_SELECTOR = '.member-status-outer-container';
@@ -12,6 +14,17 @@ const ACTIVITY_FILTER_SELECTOR = '#dropdownactivity-filter';
 const SELECTED_FILTER_SELECTOR = '#dropdown-selected-valueactivity-filter';
 const QUALIFYING_OPTION_SELECTOR = '#option-9';
 const ACTIVITY_ROW_SELECTOR = '[role="table"] [role="row"]';
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="marriott-member-number"]' },
+  { selector: '[data-testid="bonvoy-number"]' },
+  { selector: '[data-testid="member-number"]' },
+  {
+    selector: STATUS_ROOT_SELECTOR,
+    pattern:
+      /\b(?:Marriott\s+Bonvoy|Bonvoy|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+]);
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
   'form[action*="login"]',
@@ -33,6 +46,49 @@ function isAllowedDisplayElement(element: Element | null | undefined): element i
 
 function statusRoot(document: Document): Element | null {
   return document.querySelector(STATUS_ROOT_SELECTOR);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function childRecord(
+  value: Record<string, unknown> | null,
+  key: string,
+): Record<string, unknown> | null {
+  if (!value) return null;
+  const child = value[key];
+  return isRecord(child) ? child : null;
+}
+
+function readHydratedMemberNumber(document: Document): string | null {
+  const script = document.querySelector('script#__NEXT_DATA__');
+  if (!script?.textContent) return null;
+
+  try {
+    const pageData = JSON.parse(script.textContent) as unknown;
+    if (!isRecord(pageData)) return null;
+    const props = childRecord(pageData, 'props');
+    const pageProps = childRecord(props, 'pageProps');
+    const sessionData = childRecord(pageProps, 'sessionData');
+    const cacheData = childRecord(sessionData, 'cacheData');
+    const cache = childRecord(cacheData, 'data');
+    const primary = normalizeMemberNumber(cache?.rewardsId);
+    if (primary) return primary;
+
+    const dataLayer = childRecord(pageProps, 'dataLayer');
+    const rows = dataLayer?.data;
+    if (!Array.isArray(rows)) return null;
+    for (const row of rows) {
+      if (!isRecord(row)) continue;
+      const fallback = normalizeMemberNumber(row.mr_id);
+      if (fallback) return fallback;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 function readMemberBalance(document: Document): number | null {
@@ -94,12 +150,16 @@ export function prepareMarriott(document: Document): boolean {
 export function inspectMarriott(document: Document, rawUrl: string) {
   const balance = readMemberBalance(document);
   if (balance !== null) {
+    const memberNumber =
+      readHydratedMemberNumber(document) ??
+      readMemberNumber(document, MEMBER_NUMBER_RULES);
     if (hasLifetimeEliteStatus(document)) {
       return inspectionResult({
         kind: 'success',
         authState: 'authenticated',
         capture: {
           balance,
+          memberNumber,
           expiration: {
             type: 'never',
             date: null,
@@ -124,6 +184,7 @@ export function inspectMarriott(document: Document, rawUrl: string) {
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'activity_based',
           date: expirationDate,

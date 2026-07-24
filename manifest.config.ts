@@ -3,8 +3,8 @@ import { defineManifest } from '@crxjs/vite-plugin';
 export const manifest = {
   manifest_version: 3,
   name: 'Points Tracker',
-  description: 'Track airline and hotel loyalty balances and expiration dates locally.',
-  version: '1.1.0',
+  description: 'Track loyalty member numbers, balances, and expiration dates locally.',
+  version: '1.2.0',
   minimum_chrome_version: '120',
   icons: {
     16: 'assets/icons/icon-16.png',
@@ -23,6 +23,8 @@ export const manifest = {
     'https://eservice.evaair.com/*',
     'https://www.britishairways.com/*',
     'https://stmt.cam.ana.co.jp/*',
+    'https://cam.ana.co.jp/*',
+    'https://www.delta.com/*',
     'https://www.hyatt.com/*',
     'https://www.hilton.com/*',
     'https://www.marriott.com/*',
@@ -52,6 +54,8 @@ export const manifest = {
         'https://eservice.evaair.com/*',
         'https://www.britishairways.com/*',
         'https://stmt.cam.ana.co.jp/*',
+        'https://cam.ana.co.jp/*',
+        'https://www.delta.com/*',
         'https://www.hyatt.com/*',
         'https://www.hilton.com/*',
         'https://www.marriott.com/*',

@@ -10,9 +10,9 @@ This checklist is tailored to Points Tracker 1.0 and was reviewed against the Ch
 
 ## Public GitHub readiness
 
-- [x] Source scan found no credentials, API keys, authentication tokens, private keys, account identifiers, live account payloads, or machine-specific paths.
+- [x] Source scan found no credentials, API keys, authentication tokens, private keys, real account identifiers, live account payloads, or machine-specific paths.
 - [x] `node_modules`, `dist`, coverage output, ZIP packages, and `.DS_Store` files are excluded from Git.
-- [x] The repository stores no Chrome profile data, cookies, passwords, account numbers, or raw account-page HTML.
+- [x] The repository contains no Chrome profile data, cookies, passwords, real member numbers, or raw account-page HTML.
 - [x] Test balances, dates, and member numbers are synthetic fixtures.
 - [x] The original Points Tracker toolbar artwork contains no private information.
 - [x] The popup uses recognizable program labels and contains no third-party airline, hotel, or loyalty-program logo assets.
@@ -36,7 +36,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.1.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.2.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
@@ -52,27 +52,28 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 
 ## Single purpose and permissions
 
-- [x] Single purpose: show airline and hotel loyalty balances and expiration information in a local ledger.
+- [x] Single purpose: show airline and hotel loyalty member numbers, balances, and expiration information in a local ledger.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to the twelve supported account-site hosts rather than `<all_urls>`.
+- [x] Host access is restricted to fourteen exact account-host patterns for the thirteen supported programs rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
 | --- | --- |
-| `storage` | Saves balances, expiration dates, update dates, and manual overrides only in the user's current Chrome profile. |
-| United host | Reads the MileagePlus balance from the user's logged-in United account page when the user refreshes United. |
-| Cathay host | Reads the Asia Miles balance and expiration information from the user's logged-in Cathay account page. |
-| Air France host | Reads the Flying Blue balance and expiration information from the user's logged-in Air France profile. |
-| Virgin Atlantic host | Reads the Flying Club balance from the user's logged-in Virgin Atlantic homepage. |
-| Alaska Airlines host | Reads the Atmos Rewards balance from the user's logged-in Alaska Airlines homepage. |
-| American Airlines host | Reads the AAdvantage balance and expiration status from the user's logged-in account summary. |
-| EVA Air host | Reads the Infinity MileageLands balance and expiring-mile table from the user's logged-in account page. |
-| British Airways host | Reads the Avios balance and latest qualifying activity from the user's logged-in statement page. |
-| ANA host | Reads the Mileage Club balance and expiration details from the user's logged-in mileage statement. |
-| Hyatt host | Reads the World of Hyatt balance from the user's logged-in account overview. |
-| Hilton host | Reads `totalPointsFmt` and `pointsExpiration` from the logged-in Hilton account summary, with visible-page fallbacks. |
-| Marriott host | Reads the Bonvoy balance and newest qualifying activity from the user's logged-in activity page. |
+| `storage` | Saves loyalty member numbers, balances, expiration dates, capture dates, and manual overrides only in the user's current Chrome profile. |
+| United host | Reads the MileagePlus member number and balance from the user's logged-in United account page when the user refreshes United. |
+| Cathay host | Reads the Asia Miles member number, balance, and expiration information from the user's logged-in Cathay account page. |
+| Air France host | Reads the Flying Blue balance and expiration information, then reuses the same extension tab for the membership-card number when needed. |
+| Virgin Atlantic host | Reads the Flying Club member number and balance from the user's logged-in account overview. |
+| Alaska Airlines host | Reads the Atmos Rewards member number and balance from the user's logged-in Alaska Airlines homepage. |
+| American Airlines host | Reads the AAdvantage member number, balance, and expiration status from the user's logged-in account summary. |
+| EVA Air host | Reads the Infinity MileageLands member number, balance, and expiring-mile table from the user's logged-in account page. |
+| British Airways host | Reads the Avios balance and latest qualifying activity, then reuses the same extension tab for the membership number when needed. |
+| ANA hosts | Reads the Mileage Club balance and expiration details from the official statement host, then reuses the same extension tab for the member number on ANA's separate official reference host. |
+| Delta host | Reads the SkyMiles member number and balance from the user's logged-in SkyMiles overview page. |
+| Hyatt host | Reads the World of Hyatt member number and balance from the user's logged-in account overview. |
+| Hilton host | Reads the Honors member number, `totalPointsFmt`, and `pointsExpiration` from the logged-in account summary, with focused visible-page fallbacks. |
+| Marriott host | Reads the Bonvoy member number, balance, and newest qualifying activity from the user's logged-in activity page. |
 
 - [~] Decide whether required host permissions should become `optional_host_permissions`, requested only when the user enables or refreshes a program. The current exact-host list supports existing functionality, but optional permissions would produce a smaller initial access warning and a stronger least-privilege story.
 - [ ] Confirm that every requested host still has a working adapter immediately before submission.
@@ -82,17 +83,17 @@ Official references: [minimum-permission and user-data FAQ](https://developer.ch
 ## Privacy and user-data disclosure
 
 - [ ] Publish a privacy policy at a public URL that works without authentication. A private GitHub repository URL is not sufficient.
-- [ ] State exactly what is processed: program identifier, points or miles balance, expiration date or month, expiration amount when available, last-updated date, and user-entered manual overrides.
+- [ ] State exactly what is processed: program identifier, loyalty member number, points or miles balance, expiration date or month, expiration amount when available, capture date, and user-entered manual overrides.
 - [ ] State that webpage content is processed only on the listed loyalty-program hosts and only to provide the ledger's user-facing functionality.
 - [ ] State that data is stored only with `chrome.storage.local` in the user's Chrome profile.
 - [ ] State that JSON export happens only when the user explicitly downloads a backup.
-- [ ] State that the extension does not collect or store usernames, passwords, cookies, authentication tokens, account numbers, transaction history, or raw page HTML.
+- [ ] State that the extension does not collect or store usernames, passwords, cookies, authentication tokens, member names, transaction history, or raw page HTML. State clearly that the displayed loyalty member number is stored locally.
 - [ ] State that the extension has no backend, analytics, advertising, telemetry, sale of data, third-party sharing, or developer access to user records.
 - [ ] Include an affirmative Chrome Web Store Limited Use statement.
 - [ ] Link the privacy policy in the Developer Dashboard Privacy tab.
 - [ ] In the Privacy tab, disclose at least the processing of **website content**. Review the dashboard's current category definitions before submission and keep every checkbox consistent with the code and privacy policy.
 - [ ] Do not claim that no user data is handled merely because processing and storage remain local; Chrome's policy treats local webpage processing as user-data handling.
-- [ ] Add a short in-product or first-use disclosure explaining that refresh reads the balance and expiration from the selected loyalty account page and stores only those ledger values locally.
+- [ ] Add a short in-product or first-use disclosure explaining that refresh reads the displayed loyalty member number, balance, and expiration from the selected account page and stores only those ledger values locally.
 
 Official references: [fill out privacy fields](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy/), [privacy and Limited Use policy](https://developer.chrome.com/docs/webstore/program-policies/policies), [user-data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq).
 

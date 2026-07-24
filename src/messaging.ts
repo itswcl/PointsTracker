@@ -1,6 +1,7 @@
 import { isProgramId } from './programs.js';
 import type { InspectionResult, ProgramId } from './types.js';
 import { validateCapture } from './domain/records.js';
+import { isValidMemberNumber } from './domain/member-numbers.js';
 
 export const MESSAGE_TYPES = {
   PAGE_OBSERVED: 'points-tracker/page-observed',
@@ -45,6 +46,15 @@ function isInspectionResult(value: unknown): value is InspectionResult {
   }
   if (value.kind === 'success') {
     return validateCapture(value.capture) && value.reason === null;
+  }
+  if (value.kind === 'member_number_found') {
+    return (
+      value.authState === 'authenticated' &&
+      isRecord(value.capture) &&
+      Object.keys(value.capture).length === 1 &&
+      isValidMemberNumber(value.capture.memberNumber) &&
+      value.reason === null
+    );
   }
   return (
     ['login_required', 'not_found', 'verification_required'].includes(

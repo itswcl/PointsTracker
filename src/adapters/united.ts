@@ -4,6 +4,7 @@ import {
   pageHasVerification,
   pathIncludes,
   readBalance,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
@@ -16,6 +17,27 @@ const BALANCE_SELECTORS = Object.freeze([
   '[data-points-tracker="united-balance"]',
   '.account-summary__mileage-balance',
   '[aria-label*="MileagePlus miles"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="united-member-number"]' },
+  { selector: '[data-testid="mileageplus-number"]' },
+  { selector: '[data-test-name="member_number"]' },
+  {
+    selector: '[class*="AccountSummary-accountSummary__mpNumber"]',
+    pattern:
+      /\bMileagePlus(?:®)?\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '[class*="MileagePlusNumber"]',
+    pattern:
+      /\bMileagePlus(?:®)?(?:\s+member(?:ship)?)?\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '[data-testid="account-summary"]',
+    pattern:
+      /\bMileagePlus(?:®)?(?:\s+member(?:ship)?)?\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 const AUTHENTICATED_SELECTORS = Object.freeze([
@@ -37,11 +59,13 @@ const LOGIN_PAGE_SELECTORS = Object.freeze([
 export function inspectUnited(document: Document, rawUrl: string) {
   const balance = readBalance(document, BALANCE_SELECTORS);
   if (balance !== null) {
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'never',
           date: null,

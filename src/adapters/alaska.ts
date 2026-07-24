@@ -1,4 +1,5 @@
 import { parseBalance } from '../domain/balances.js';
+import { normalizeMemberNumber } from '../domain/member-numbers.js';
 import {
   hasAllowedElement,
   inspectionResult,
@@ -48,14 +49,41 @@ function readAtmosBalance(document: Document): number | null {
   return null;
 }
 
+function readAtmosMemberNumber(document: Document): string | null {
+  for (const section of guestInfoSections(document)) {
+    const rows = section.shadowRoot?.querySelectorAll('.guest-datapoint') ?? [];
+    for (const row of rows) {
+      const paragraphs = Array.from(row.children).filter(
+        (child) => child.tagName === 'P',
+      );
+      const label = paragraphs[0]?.textContent?.trim().toLowerCase();
+      if (
+        label !== 'atmos rewards number:' &&
+        label !== 'atmos rewards number'
+      ) {
+        continue;
+      }
+
+      const valueElement = paragraphs.at(-1);
+      if (!(valueElement instanceof HTMLElement) || valueElement.isContentEditable) {
+        return null;
+      }
+      return normalizeMemberNumber(valueElement.textContent);
+    }
+  }
+  return null;
+}
+
 export function inspectAlaska(document: Document, rawUrl: string) {
   const balance = readAtmosBalance(document);
   if (balance !== null) {
+    const memberNumber = readAtmosMemberNumber(document);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'never',
           date: null,

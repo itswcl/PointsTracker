@@ -11,17 +11,19 @@ const coordinator = createCaptureCoordinator({
   sessionRepository,
 });
 
-void stateRepository.ensureState();
+const ready = stateRepository
+  .ensureState()
+  .then(() => stateRepository.recoverInterruptedCaptures());
 
 chrome.runtime.onInstalled.addListener(() => {
-  void stateRepository.ensureState();
+  void ready;
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!isPointsTrackerMessage(message)) return false;
 
-  coordinator
-    .handleMessage(message, sender)
+  ready
+    .then(() => coordinator.handleMessage(message, sender))
     .then(sendResponse)
     .catch(() => sendResponse({ ok: false, error: 'unexpected_error' }));
   return true;

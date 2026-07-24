@@ -3,8 +3,10 @@ import { addMonths, parseDisplayedMonth } from '../domain/dates.js';
 import {
   hasAllowedElement,
   inspectionResult,
+  memberNumberInspection,
   pageHasVerification,
   pathIncludes,
+  readMemberNumber,
 } from './shared.js';
 
 const STATEMENTS_SELECTOR = '[data-testid="executive-statements"]';
@@ -12,6 +14,16 @@ const BALANCE_SELECTOR = '[data-testid="avios-card-value"]';
 const MONTH_SELECTOR = 'span[data-testid="text-custom--text-custom"]';
 const FULL_MONTH_YEAR =
   /^(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}$/i;
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="british-airways-member-number"]' },
+  { selector: '[data-testid="membership-number"]' },
+  {
+    selector: '[data-testid="executive-statements"]',
+    pattern:
+      /\b(?:British\s+Airways\s+Club|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+]);
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
   'form[action*="login"]',
@@ -63,17 +75,18 @@ function readNewestActivityMonth(document: Document) {
 
 export function inspectBritishAirways(document: Document, rawUrl: string) {
   const balance = readAviosBalance(document);
+  const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
   if (balance !== null) {
     const activityMonth = readNewestActivityMonth(document);
     const expirationDate = activityMonth
       ? addMonths(`${activityMonth}-01`, 36)
       : null;
-
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'activity_based',
           date: expirationDate,
@@ -84,6 +97,8 @@ export function inspectBritishAirways(document: Document, rawUrl: string) {
       },
     });
   }
+
+  if (memberNumber) return memberNumberInspection(memberNumber);
 
   if (pageHasVerification(document, rawUrl)) {
     return inspectionResult({

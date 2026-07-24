@@ -13,6 +13,8 @@ describe('extension permission boundary', () => {
       'https://eservice.evaair.com/*',
       'https://www.britishairways.com/*',
       'https://stmt.cam.ana.co.jp/*',
+      'https://cam.ana.co.jp/*',
+      'https://www.delta.com/*',
       'https://www.hyatt.com/*',
       'https://www.hilton.com/*',
       'https://www.marriott.com/*',

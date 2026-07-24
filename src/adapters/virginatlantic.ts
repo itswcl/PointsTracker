@@ -4,12 +4,28 @@ import {
   pageHasVerification,
   pathIncludes,
   readBalance,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
   '#sign-in-menu [class*="accountOverviewPoints"] span:last-child',
   '[data-testid="flying-club-balance"]',
   '[data-points-tracker="virgin-atlantic-balance"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="virgin-atlantic-member-number"]' },
+  {
+    selector:
+      '[data-testid="membership-number"], [data-testid="flying-club-number"]',
+    pattern:
+      /\b(?:Flying\s+Club|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '#sign-in-menu',
+    pattern:
+      /\b(?:Flying\s+Club|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 const AUTHENTICATED_SELECTORS = Object.freeze([
@@ -28,11 +44,13 @@ const LOGIN_PAGE_SELECTORS = Object.freeze([
 export function inspectVirginAtlantic(document: Document, rawUrl: string) {
   const balance = readBalance(document, BALANCE_SELECTORS);
   if (balance !== null) {
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'never',
           date: null,

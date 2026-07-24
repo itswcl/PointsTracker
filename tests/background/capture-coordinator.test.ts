@@ -61,6 +61,7 @@ describe('capture coordinator', () => {
           authState: 'authenticated',
           capture: {
             balance: 125400,
+            memberNumber: 'UA000001',
             expiration: { type: 'never', date: null, note: 'No expiration' },
           },
           reason: null,
@@ -75,10 +76,82 @@ describe('capture coordinator', () => {
     coordinator.destroy();
   });
 
+  it('keeps a one-page capture open until its member number renders', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    const refresh = await coordinator.refreshProgram('virginatlantic', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'virginatlantic',
+        pageUrl:
+          'https://www.virginatlantic.com/flying-club/account/overview',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 163250,
+            memberNumber: null,
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        virginatlantic: {
+          automatic: { balance: 163250, memberNumber: null },
+          status: 'updating',
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).not.toHaveBeenCalled();
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'virginatlantic',
+        pageUrl:
+          'https://www.virginatlantic.com/flying-club/account/overview',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 163250,
+            memberNumber: 'VS000004',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        virginatlantic: {
+          automatic: { balance: 163250, memberNumber: 'VS000004' },
+          status: 'fresh',
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
   it('reveals verification tabs and preserves the previous value', async () => {
     const { browserApi, coordinator, stateRepository } = setup();
     await stateRepository.saveAutomaticCapture('cathay', {
       balance: 84500,
+      memberNumber: 'CX000002',
       expiration: { type: 'activity_based', date: '2026-12-14', note: null },
     });
     const refresh = await coordinator.refreshProgram('cathay', { force: true });
@@ -107,6 +180,71 @@ describe('capture coordinator', () => {
       active: true,
     });
     expect(browserApi.tabs.remove).not.toHaveBeenCalled();
+    coordinator.destroy();
+  });
+
+  it('reuses one owned tab to merge a secondary member-number page', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    const refresh = await coordinator.refreshProgram('britishairways', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'britishairways',
+        pageUrl:
+          'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/executive-statements/',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 42300,
+            memberNumber: null,
+            expiration: {
+              type: 'activity_based',
+              date: '2029-01-01',
+              note: 'Derived from newest activity',
+            },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(browserApi.tabs.update).toHaveBeenCalledWith(tabId, {
+      url: 'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/',
+      active: false,
+    });
+    expect(browserApi.tabs.remove).not.toHaveBeenCalled();
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'britishairways',
+        pageUrl:
+          'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/',
+        final: false,
+        result: {
+          kind: 'member_number_found',
+          authState: 'authenticated',
+          capture: { memberNumber: 'BA000008' },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    const state = await stateRepository.getState();
+    expect(state.records.britishairways.automatic).toMatchObject({
+      balance: 42300,
+      memberNumber: 'BA000008',
+      expiration: { date: '2029-01-01' },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
     coordinator.destroy();
   });
 });

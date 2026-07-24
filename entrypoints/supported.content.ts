@@ -4,6 +4,7 @@ import {
 } from '../src/adapters/index.js';
 import { MESSAGE_TYPES } from '../src/messaging.js';
 import { detectProgramFromUrl } from '../src/programs.js';
+import { shouldFinishObservation } from '../src/background/observation-policy.js';
 
 const OBSERVATION_WINDOW_MS = 12_000;
 const MUTATION_DEBOUNCE_MS = 300;
@@ -48,7 +49,13 @@ if (program) {
       // Extension reloads can invalidate an existing content script context.
     }
 
-    if (result.kind === 'success') {
+    if (
+      shouldFinishObservation(
+        result,
+        final,
+        activeProgram.memberNumberUrl !== undefined,
+      )
+    ) {
       finished = true;
       cleanup();
     }
@@ -60,7 +67,11 @@ if (program) {
       void inspectAndSend(false);
     }, MUTATION_DEBOUNCE_MS);
   });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
 
   void inspectAndSend(false);
 

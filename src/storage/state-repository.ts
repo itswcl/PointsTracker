@@ -1,11 +1,13 @@
 import {
   STORAGE_KEY,
   applyAutomaticCapture,
+  applyAutomaticMemberNumber,
   applyManualOverride,
   clearManualOverride,
   createInitialState,
   markRecordStatus,
   normalizeState,
+  recoverInterruptedCaptures,
 } from '../domain/records.js';
 import type {
   AutomaticCapture,
@@ -42,6 +44,10 @@ export class StateRepository {
     return this.setState(createInitialState());
   }
 
+  recoverInterruptedCaptures(): Promise<PointsState> {
+    return this.update((state) => recoverInterruptedCaptures(state));
+  }
+
   async update(
     mutator: (current: PointsState) => PointsState,
   ): Promise<PointsState> {
@@ -56,6 +62,16 @@ export class StateRepository {
   ): Promise<PointsState> {
     return this.update((state) =>
       applyAutomaticCapture(state, programId, capture, date),
+    );
+  }
+
+  saveAutomaticMemberNumber(
+    programId: ProgramId,
+    memberNumber: string,
+    date?: Date,
+  ): Promise<PointsState> {
+    return this.update((state) =>
+      applyAutomaticMemberNumber(state, programId, memberNumber, date),
     );
   }
 

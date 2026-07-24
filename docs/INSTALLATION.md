@@ -49,13 +49,13 @@ The Points Tracker icon should now remain visible in the Chrome toolbar.
 2. Select the pencil icon beside a program to enter a balance manually.
 3. Select the refresh icon beside a program to open its official account page.
 4. Sign in normally on the airline or hotel website. Never enter your loyalty-site password into Points Tracker.
-5. After the official page loads, Points Tracker attempts to read only the displayed balance and expiration information.
+5. After the official page loads, Points Tracker attempts to read only the displayed loyalty member number, balance, and expiration information.
 
 If a website changes and automatic refresh does not work, your last saved value remains available and you can update it with the pencil icon.
 
 ## Chrome's permission message
 
-Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Hyatt, Hilton, and Marriott account hosts only. The production manifest requests `storage` plus host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `www.hyatt.com`, `www.hilton.com`, and `www.marriott.com`. It does not request cookie, history, password, or network-interception permissions.
+Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott account hosts only. The production manifest requests `storage` plus host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, and `www.marriott.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. It does not request cookie, history, password, or network-interception permissions.
 
 ## Updating Points Tracker
 
@@ -92,9 +92,9 @@ Confirm that you are signed in on the official account page and let the page fin
 
 ## Backups
 
-- **Export** downloads a plain JSON file containing only the approved records.
+- **Export** downloads a plain JSON file containing the approved member numbers, balances, and expiration records.
 - **Import** accepts only the current versioned schema and rejects unexpected fields.
-- The file is not encrypted. Treat it like any other personal local document.
+- The file is not encrypted and contains your loyalty member numbers. Treat it like any other personal local document.
 
 ## Developer installation
 

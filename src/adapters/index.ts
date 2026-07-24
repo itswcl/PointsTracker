@@ -10,6 +10,7 @@ import { inspectAmerican } from './american.js';
 import { inspectAna } from './ana.js';
 import { inspectBritishAirways } from './britishairways.js';
 import { inspectCathay } from './cathay.js';
+import { inspectDelta } from './delta.js';
 import { inspectEvaAir } from './evaair.js';
 import { inspectHyatt } from './hyatt.js';
 import { inspectHilton } from './hilton.js';
@@ -28,6 +29,7 @@ const INSPECTORS = {
   [PROGRAM_IDS.EVA_AIR]: inspectEvaAir,
   [PROGRAM_IDS.BRITISH_AIRWAYS]: inspectBritishAirways,
   [PROGRAM_IDS.ANA]: inspectAna,
+  [PROGRAM_IDS.DELTA]: inspectDelta,
   [PROGRAM_IDS.HYATT]: inspectHyatt,
   [PROGRAM_IDS.HILTON]: inspectHilton,
   [PROGRAM_IDS.MARRIOTT]: inspectMarriott,

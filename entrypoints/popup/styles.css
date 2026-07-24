@@ -27,7 +27,7 @@
   --signal: #dc5a2a;
   --signal-soft: #f2d4c6;
   --shadow: 0 18px 48px rgb(38 35 26 / 16%);
-  --ledger-columns: 67px 60px 72px 66px 52px;
+  --ledger-columns: 58px 55px 72px 68px 54px;
   --ledger-gap: 5px;
 }
 
@@ -69,7 +69,7 @@ select:focus-visible {
 .eyebrow {
   margin: 0 0 4px;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -82,7 +82,7 @@ p {
 
 h2 {
   margin-bottom: 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
@@ -96,7 +96,7 @@ h2 {
   background: var(--ink);
   color: var(--paper-high);
   cursor: pointer;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 650;
 }
 
@@ -128,7 +128,7 @@ button:disabled {
 
 .ledger-section-heading h2 {
   font-family: 'Newsreader Variable', serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 620;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -136,7 +136,7 @@ button:disabled {
 
 .ledger-section-heading span {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
 }
@@ -154,7 +154,7 @@ button:disabled {
   min-height: 21px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -209,7 +209,7 @@ button:disabled {
 
 .ledger-total-label {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -218,7 +218,7 @@ button:disabled {
 .ledger-total-balance {
   grid-column: 2 / 4;
   font-family: 'Newsreader Variable', serif;
-  font-size: 16px;
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   letter-spacing: -0.025em;
@@ -228,7 +228,7 @@ button:disabled {
 .program-name {
   min-width: 0;
   overflow: hidden;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 650;
   line-height: 1.15;
   text-overflow: ellipsis;
@@ -238,7 +238,7 @@ button:disabled {
 .program-balance {
   min-width: 0;
   font-family: 'Newsreader Variable', serif;
-  font-size: 14px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
   font-weight: 580;
   letter-spacing: -0.025em;
@@ -252,19 +252,20 @@ button:disabled {
 .record-facts dd {
   min-width: 0;
   margin: 0;
-  font-size: 8px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   white-space: nowrap;
 }
 
-.program-updated {
+.program-member-number {
   min-width: 0;
-  justify-self: end;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -328,7 +329,7 @@ button:disabled {
 .error-note,
 .form-error {
   margin: 5px 0 0;
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1.4;
 }
 
@@ -337,7 +338,7 @@ button:disabled {
   border-left: 2px solid var(--signal);
   padding-left: 9px;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .app-footer {
@@ -352,7 +353,7 @@ button:disabled {
 
 .app-footer p {
   margin-bottom: 0;
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .app-footer div {
@@ -362,7 +363,7 @@ button:disabled {
 
 .footer-button {
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
 }
 
 .sheet-backdrop {
@@ -408,7 +409,7 @@ button:disabled {
   height: 28px;
   border-radius: 50%;
   font-family: serif;
-  font-size: 22px;
+  font-size: 23px;
   line-height: 1;
 }
 
@@ -425,7 +426,7 @@ button:disabled {
   display: grid;
   gap: 5px;
   color: var(--muted);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -440,7 +441,7 @@ button:disabled {
   padding: 0 10px;
   background: white;
   color: var(--ink);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: normal;
   text-transform: none;
 }
@@ -466,7 +467,7 @@ button:disabled {
   padding: 24px;
   color: var(--muted);
   font-family: 'Newsreader Variable', serif;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .fatal-state {

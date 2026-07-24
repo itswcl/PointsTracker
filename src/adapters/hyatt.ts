@@ -4,9 +4,25 @@ import {
   inspectionResult,
   pageHasVerification,
   pathIncludes,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_LABEL = 'Current Point Balance';
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="hyatt-member-number"]' },
+  {
+    selector:
+      '[class*="MemberCard_memberInfoContainer__"] > .be-text-section-3',
+  },
+  { selector: '[data-testid="world-of-hyatt-number"]' },
+  { selector: '[data-testid="member-number"]' },
+  {
+    selector: '[data-testid="account-overview"], [class*="memberNumber"]',
+    pattern:
+      /\b(?:World\s+of\s+Hyatt|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+]);
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
   'form[action*="login"]',
@@ -48,11 +64,13 @@ function readCurrentPointBalance(document: Document): number | null {
 export function inspectHyatt(document: Document, rawUrl: string) {
   const balance = readCurrentPointBalance(document);
   if (balance !== null) {
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'never',
           date: null,

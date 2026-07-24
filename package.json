@@ -1,10 +1,10 @@
 {
   "name": "points-tracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "license": "MIT",
   "private": true,
   "type": "module",
-  "description": "A local-only Chrome extension for loyalty point balances and expiration dates.",
+  "description": "A local-only Chrome extension for loyalty member numbers, point balances, and expiration dates.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

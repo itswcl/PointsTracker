@@ -6,6 +6,7 @@ import {
   pathIncludes,
   readBalance,
   readDate,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
@@ -33,6 +34,22 @@ const LAST_ACTIVITY_SELECTORS = Object.freeze([
   '[data-points-tracker="cathay-last-activity"]',
 ]);
 
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="cathay-member-number"]' },
+  { selector: '[data-testid="membership-number"]' },
+  { selector: '[data-testid="member-number"]' },
+  {
+    selector: '.mpo_membership-number-and-status .mpo_membership-box',
+    pattern:
+      /\bMembership\s+number\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '.member-panel',
+    pattern:
+      /\b(?:Cathay|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+]);
+
 const AUTHENTICATED_SELECTORS = Object.freeze([
   '.mpo_miles-details',
   '[data-testid="member-account-summary"]',
@@ -53,12 +70,14 @@ export function inspectCathay(document: Document, rawUrl: string) {
     const displayedExpiration = readDate(document, EXPIRATION_SELECTORS);
     const lastActivity = readDate(document, LAST_ACTIVITY_SELECTORS);
     const derivedExpiration = lastActivity ? addMonths(lastActivity, 18) : null;
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
 
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'activity_based',
           date: displayedExpiration ?? derivedExpiration,

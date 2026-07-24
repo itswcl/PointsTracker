@@ -1,5 +1,18 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { App } from '../../entrypoints/popup/App.jsx';
 import {
   applyAutomaticCapture,
@@ -7,6 +20,7 @@ import {
   STORAGE_KEY,
 } from '../../src/domain/records.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
+import type { FakeStorageArea } from '../helpers/fake-storage.js';
 
 function eventTarget() {
   return {
@@ -24,12 +38,19 @@ function requiredElement<T extends Element>(
 }
 
 describe('popup', () => {
+  let storageArea: FakeStorageArea;
+
+  afterEach(() => {
+    cleanup();
+  });
+
   beforeEach(() => {
     let state = applyAutomaticCapture(
       createInitialState(),
       'united',
       {
         balance: 125400,
+        memberNumber: 'UA000001',
         expiration: { type: 'never', date: null, note: 'No expiration' },
       },
       new Date(2026, 6, 17),
@@ -39,6 +60,7 @@ describe('popup', () => {
       'cathay',
       {
         balance: 84500,
+        memberNumber: 'CX000002',
         expiration: {
           type: 'activity_based',
           date: '2026-12-14',
@@ -52,6 +74,7 @@ describe('popup', () => {
       'airfrance',
       {
         balance: 210500,
+        memberNumber: 'AF000003',
         expiration: {
           type: 'fixed_date',
           date: '2027-05-15',
@@ -65,6 +88,7 @@ describe('popup', () => {
       'virginatlantic',
       {
         balance: 163250,
+        memberNumber: 'VS000004',
         expiration: {
           type: 'never',
           date: null,
@@ -78,6 +102,7 @@ describe('popup', () => {
       'alaska',
       {
         balance: 422100,
+        memberNumber: 'AS000005',
         expiration: {
           type: 'never',
           date: null,
@@ -91,6 +116,7 @@ describe('popup', () => {
       'american',
       {
         balance: 176400,
+        memberNumber: 'AA000006',
         expiration: {
           type: 'never',
           date: null,
@@ -104,6 +130,7 @@ describe('popup', () => {
       'evaair',
       {
         balance: 96575,
+        memberNumber: 'BR000007',
         expiration: {
           type: 'fixed_date',
           date: null,
@@ -119,6 +146,7 @@ describe('popup', () => {
       'britishairways',
       {
         balance: 42300,
+        memberNumber: 'BA000008',
         expiration: {
           type: 'activity_based',
           date: '2029-01-01',
@@ -132,6 +160,7 @@ describe('popup', () => {
       'ana',
       {
         balance: 77500,
+        memberNumber: 'NH000009',
         expiration: {
           type: 'fixed_date',
           date: null,
@@ -143,9 +172,24 @@ describe('popup', () => {
     );
     state = applyAutomaticCapture(
       state,
+      'delta',
+      {
+        balance: 119300,
+        memberNumber: 'DL000010',
+        expiration: {
+          type: 'never',
+          date: null,
+          note: 'No expiration',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
       'hyatt',
       {
         balance: 55000,
+        memberNumber: 'HY000011',
         expiration: {
           type: 'never',
           date: null,
@@ -159,6 +203,7 @@ describe('popup', () => {
       'hilton',
       {
         balance: 180000,
+        memberNumber: 'HH000012',
         expiration: {
           type: 'activity_based',
           date: null,
@@ -173,6 +218,7 @@ describe('popup', () => {
       'marriott',
       {
         balance: 340000,
+        memberNumber: 'MB000013',
         expiration: {
           type: 'activity_based',
           date: '2028-07-05',
@@ -183,16 +229,17 @@ describe('popup', () => {
       new Date(2026, 6, 17),
     );
 
+    storageArea = createFakeStorageArea({ [STORAGE_KEY]: state });
     vi.stubGlobal('chrome', {
       storage: {
-        local: createFakeStorageArea({ [STORAGE_KEY]: state }),
+        local: storageArea,
         onChanged: eventTarget(),
       },
       runtime: { sendMessage: vi.fn(async () => ({ ok: true })) },
     });
   });
 
-  it('renders compact balances and fixed date formatting without identifiers', async () => {
+  it('renders compact balances, member numbers, and fixed date formatting', async () => {
     const { container } = render(<App />);
 
     expect(await screen.findByText('125,400')).toBeInTheDocument();
@@ -207,27 +254,31 @@ describe('popup', () => {
     expect(screen.getByText('96,575')).toBeInTheDocument();
     expect(screen.getByText('42,300')).toBeInTheDocument();
     expect(screen.getByText('77,500')).toBeInTheDocument();
+    expect(screen.getByText('119,300')).toBeInTheDocument();
     expect(screen.getByText('55,000')).toBeInTheDocument();
     expect(screen.getByText('180,000')).toBeInTheDocument();
     expect(screen.getByText('340,000')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Airline' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Hotel' })).toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,398,525',
+      'Total1,517,825',
     );
     expect(screen.getByLabelText('Hotel total balance')).toHaveTextContent(
       'Total575,000',
     );
     expect(screen.getByText('50 · 07/2028')).toBeInTheDocument();
     expect(screen.getByText('10/2028')).toBeInTheDocument();
-    expect(screen.getAllByText('07/17/2026')).toHaveLength(12);
+    expect(screen.queryByText('07/17/2026')).not.toBeInTheDocument();
     expect(screen.getByText('12/14/2026')).toBeInTheDocument();
     expect(screen.getByText('05/15/2027')).toBeInTheDocument();
     expect(screen.getByText('01/01/2029')).toBeInTheDocument();
     expect(screen.getByText('07/05/2028')).toBeInTheDocument();
     expect(screen.getByText('24 mo inactivity')).toBeInTheDocument();
-    expect(screen.getAllByText('N/A')).toHaveLength(5);
-    expect(container.querySelectorAll('.program-name')).toHaveLength(12);
+    expect(screen.getAllByText('N/A')).toHaveLength(6);
+    expect(screen.getByText('UA000001')).toBeInTheDocument();
+    expect(screen.getByText('CX000002')).toBeInTheDocument();
+    expect(screen.getByText('MB000013')).toBeInTheDocument();
+    expect(container.querySelectorAll('.program-name')).toHaveLength(13);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
     expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');
     expect(container.querySelector('[aria-labelledby="evaair-name"] .program-name')).toHaveTextContent('EVA');
@@ -236,9 +287,9 @@ describe('popup', () => {
       screen.getByRole('heading', { name: 'United MileagePlus' }),
     ).toHaveClass('program-name');
     expect(screen.queryByText('No expiration')).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/username|password|member number/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/username|password/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Member #')).toHaveLength(2);
+    expect(screen.queryByText('Updated')).not.toBeInTheDocument();
     expect(screen.queryByText('Points / 02')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Refresh all' })).not.toBeInTheDocument();
     expect(screen.queryByText('Current')).not.toBeInTheDocument();
@@ -271,6 +322,9 @@ describe('popup', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Refresh ANA Mileage Club' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Refresh Delta SkyMiles' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Refresh World of Hyatt' }),
@@ -315,6 +369,7 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'delta-name',
       'hyatt-name',
       'hilton-name',
       'marriott-name',
@@ -338,6 +393,7 @@ describe('popup', () => {
       'virginatlantic-name',
       'alaska-name',
       'american-name',
+      'delta-name',
       'hyatt-name',
       'hilton-name',
       'marriott-name',
@@ -364,6 +420,7 @@ describe('popup', () => {
       'american-name',
       'virginatlantic-name',
       'united-name',
+      'delta-name',
       'evaair-name',
       'cathay-name',
       'ana-name',
@@ -394,6 +451,7 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'delta-name',
       'marriott-name',
       'hilton-name',
       'hyatt-name',
@@ -420,6 +478,7 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'delta-name',
       'marriott-name',
       'hyatt-name',
       'hilton-name',
@@ -434,9 +493,40 @@ describe('popup', () => {
     ).toEqual([
       'program-name',
       'program-balance',
+      'program-member-number',
       'record-facts',
       'program-actions',
-      'program-updated',
     ]);
+  });
+
+  it('allows a member number to be corrected with the manual fallback', async () => {
+    render(<App />);
+    await screen.findByText('UA000001');
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit United MileagePlus' }),
+    );
+    const memberNumberInput = screen.getByLabelText('Member number');
+    fireEvent.change(memberNumberInput, {
+      target: { value: 'UA000099' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save override' }));
+
+    await waitFor(() => {
+      expect(storageArea.snapshot()).toMatchObject({
+        [STORAGE_KEY]: {
+          records: {
+            united: {
+              manualOverride: {
+                memberNumber: 'UA000099',
+              },
+            },
+          },
+        },
+      });
+    });
+    expect(
+      screen.queryByRole('dialog', { name: 'United MileagePlus' }),
+    ).not.toBeInTheDocument();
   });
 });

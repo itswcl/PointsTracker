@@ -1,5 +1,6 @@
 import { parseBalance } from '../domain/balances.js';
 import { parseDisplayedDate } from '../domain/dates.js';
+import { normalizeMemberNumber } from '../domain/member-numbers.js';
 import type {
   AuthState,
   AutomaticCapture,
@@ -7,6 +8,7 @@ import type {
   DateKey,
   InspectionFailure,
   InspectionFailureKind,
+  InspectionMemberNumber,
   InspectionSuccess,
 } from '../types.js';
 
@@ -17,6 +19,12 @@ const DATE_CANDIDATES = [
   /\b\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}\b/,
   /\b[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}\b/,
 ] as const;
+const MAX_MEMBER_NUMBER_MATCHES_PER_RULE = 12;
+
+export interface MemberNumberRule {
+  readonly selector: string;
+  readonly pattern?: RegExp;
+}
 
 function isAllowedDisplayElement(
   element: Element | null,
@@ -66,6 +74,29 @@ export function readDate(
     const date = candidate ? parseDisplayedDate(candidate) : null;
     if (date) return date;
   }
+  return null;
+}
+
+export function readMemberNumber(
+  document: Document,
+  rules: readonly MemberNumberRule[],
+): string | null {
+  for (const rule of rules) {
+    const elements = Array.from(
+      document.querySelectorAll(rule.selector),
+    ).slice(0, MAX_MEMBER_NUMBER_MATCHES_PER_RULE);
+
+    for (const element of elements) {
+      if (!isAllowedDisplayElement(element)) continue;
+      const text = element.textContent?.replace(/\s+/g, ' ').trim();
+      if (!text) continue;
+
+      const candidate = rule.pattern ? text.match(rule.pattern)?.[1] : text;
+      const memberNumber = normalizeMemberNumber(candidate);
+      if (memberNumber) return memberNumber;
+    }
+  }
+
   return null;
 }
 
@@ -130,5 +161,16 @@ export function inspectionResult(
     authState: input.authState ?? 'unknown',
     capture: null,
     reason: input.reason ?? null,
+  };
+}
+
+export function memberNumberInspection(
+  memberNumber: string,
+): InspectionMemberNumber {
+  return {
+    kind: 'member_number_found',
+    authState: 'authenticated',
+    capture: { memberNumber },
+    reason: null,
   };
 }

@@ -6,12 +6,28 @@ import {
   inspectionResult,
   pageHasVerification,
   pathIncludes,
+  readMemberNumber,
 } from './shared.js';
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
   'form[action*="login"]',
   'form[action*="sign-in"]',
   '[data-testid="login-form"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="eva-member-number"]' },
+  { selector: '[data-testid="membership-number"]' },
+  {
+    selector: 'dl.margin-t-4 > dd.text-4.margin-b-4',
+    pattern:
+      /\b(?:Infinity\s+MileageLands|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '#memberInfo, [id*="member-info"], [class*="member-info"]',
+    pattern:
+      /\b(?:Infinity\s+MileageLands|membership|member)\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 interface ExpiringTranche {
@@ -74,11 +90,13 @@ export function inspectEvaAir(document: Document, rawUrl: string) {
   const balance = readSelfAwardBalance(document);
   if (balance !== null) {
     const earliestExpiration = readEarliestExpiration(document);
+    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: earliestExpiration
           ? {
               type: 'fixed_date',

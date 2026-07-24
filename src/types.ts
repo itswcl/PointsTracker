@@ -8,6 +8,7 @@ export const PROGRAM_IDS = {
   EVA_AIR: 'evaair',
   BRITISH_AIRWAYS: 'britishairways',
   ANA: 'ana',
+  DELTA: 'delta',
   HYATT: 'hyatt',
   HILTON: 'hilton',
   MARRIOTT: 'marriott',
@@ -61,29 +62,34 @@ export interface ProgramDefinition {
   readonly currencyName: string;
   readonly accountUrl: string;
   readonly loginUrl: string;
+  readonly memberNumberUrl?: string;
   readonly hosts: readonly string[];
   readonly defaultExpiration: Expiration;
 }
 
 export interface AutomaticCapture {
   readonly balance: number;
+  readonly memberNumber: string | null;
   readonly expiration: Expiration;
 }
 
 export interface AutomaticRecord {
   balance: number | null;
+  memberNumber: string | null;
   expiration: NormalizedExpiration;
   updatedOn: DateKey | null;
 }
 
 export interface ManualOverride {
   balance: number;
+  memberNumber: string | null;
   expiration: NormalizedExpiration;
   editedOn: DateKey;
 }
 
 export interface ManualOverrideInput {
   readonly balance: number;
+  readonly memberNumber: string | null;
   readonly expiration: Expiration;
 }
 
@@ -91,6 +97,7 @@ export type RecordStatus = 'not_updated' | 'fresh' | 'updating' | 'error';
 
 export type CaptureError =
   | 'balance_not_found'
+  | 'capture_interrupted'
   | 'capture_tab_closed'
   | 'capture_timeout'
   | 'expiration_not_found'
@@ -115,6 +122,7 @@ export interface PointsState {
 
 export interface DisplayRecord {
   balance: number | null;
+  memberNumber: string | null;
   expiration: NormalizedExpiration;
   updatedOn: DateKey | null;
   source: 'manual' | 'automatic';
@@ -135,6 +143,15 @@ export interface InspectionSuccess {
   reason: null;
 }
 
+export interface InspectionMemberNumber {
+  kind: 'member_number_found';
+  authState: 'authenticated';
+  capture: {
+    memberNumber: string;
+  };
+  reason: null;
+}
+
 export interface InspectionFailure {
   kind: InspectionFailureKind;
   authState: AuthState;
@@ -142,7 +159,10 @@ export interface InspectionFailure {
   reason: CaptureError | null;
 }
 
-export type InspectionResult = InspectionSuccess | InspectionFailure;
+export type InspectionResult =
+  | InspectionSuccess
+  | InspectionMemberNumber
+  | InspectionFailure;
 export type ProgramInspector = (
   document: Document,
   rawUrl: string,

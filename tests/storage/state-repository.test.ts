@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { STORAGE_KEY } from '../../src/domain/records.js';
+import {
+  markRecordStatus,
+  STORAGE_KEY,
+} from '../../src/domain/records.js';
 import { StateRepository } from '../../src/storage/state-repository.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
 
@@ -12,6 +15,7 @@ describe('StateRepository', () => {
       'cathay',
       {
         balance: 84500,
+        memberNumber: 'CX000002',
         expiration: {
           type: 'activity_based',
           date: '2026-12-14',
@@ -26,9 +30,27 @@ describe('StateRepository', () => {
     expect(snapshot[STORAGE_KEY]).toMatchObject({
       records: {
         cathay: {
-          manualOverride: { balance: 84500 },
+          manualOverride: {
+            balance: 84500,
+            memberNumber: 'CX000002',
+          },
         },
       },
     });
+  });
+
+  it('persists recovery for a refresh interrupted by a worker restart', async () => {
+    const storage = createFakeStorageArea();
+    const repository = new StateRepository(storage);
+    const initial = await repository.ensureState();
+    await repository.setState(markRecordStatus(initial, 'united', 'updating'));
+
+    const recovered = await repository.recoverInterruptedCaptures();
+
+    expect(recovered.records.united).toMatchObject({
+      status: 'error',
+      error: 'capture_interrupted',
+    });
+    expect(storage.snapshot()[STORAGE_KEY]).toMatchObject(recovered);
   });
 });

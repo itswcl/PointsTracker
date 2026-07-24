@@ -1,10 +1,12 @@
 import {
   hasAllowedElement,
   inspectionResult,
+  memberNumberInspection,
   pageHasVerification,
   pathIncludes,
   readBalance,
   readDate,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
@@ -17,6 +19,25 @@ const EXPIRATION_SELECTORS = Object.freeze([
   '.bw-fb-miles-overview__totals .bw-fb-miles-overview__totals-label',
   '[data-testid="flying-blue-expiration"]',
   '[data-points-tracker="airfrance-expiration"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="airfrance-member-number"]' },
+  {
+    selector:
+      '[data-testid="bwpr-flyingblue-membership__card"] .bw-fb-membership-card__number-text strong',
+  },
+  { selector: '[data-testid="flying-blue-number"]' },
+  {
+    selector: '[class*="flying-blue-number"], [class*="flyingBlueNumber"]',
+    pattern:
+      /\bFlying\s+Blue\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
+  {
+    selector: '.bw-profile-recognition-box',
+    pattern:
+      /\bFlying\s+Blue\s*(?:number|no\.?|#)\s*:?\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 const AUTHENTICATED_SELECTORS = Object.freeze([
@@ -33,6 +54,7 @@ const LOGIN_PAGE_SELECTORS = Object.freeze([
 
 export function inspectAirFrance(document: Document, rawUrl: string) {
   const balance = readBalance(document, BALANCE_SELECTORS);
+  const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
   if (balance !== null) {
     const expirationDate = readDate(document, EXPIRATION_SELECTORS);
 
@@ -41,6 +63,7 @@ export function inspectAirFrance(document: Document, rawUrl: string) {
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: expirationDate ? 'fixed_date' : 'unknown',
           date: expirationDate,
@@ -51,6 +74,8 @@ export function inspectAirFrance(document: Document, rawUrl: string) {
       },
     });
   }
+
+  if (memberNumber) return memberNumberInspection(memberNumber);
 
   if (pageHasVerification(document, rawUrl)) {
     return inspectionResult({

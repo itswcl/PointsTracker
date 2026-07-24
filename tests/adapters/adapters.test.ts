@@ -5,6 +5,7 @@ import { inspectAmerican } from '../../src/adapters/american.js';
 import { inspectAna } from '../../src/adapters/ana.js';
 import { inspectBritishAirways } from '../../src/adapters/britishairways.js';
 import { inspectCathay } from '../../src/adapters/cathay.js';
+import { inspectDelta } from '../../src/adapters/delta.js';
 import { inspectEvaAir } from '../../src/adapters/evaair.js';
 import { inspectHyatt } from '../../src/adapters/hyatt.js';
 import { inspectHilton } from '../../src/adapters/hilton.js';
@@ -21,6 +22,10 @@ describe('United adapter', () => {
   it('captures the current My United MileageBalance component', () => {
     const result = inspectUnited(
       page(`
+        <div class="app-components-MyUnited-AccountSummaryDetails-AccountSummary-accountSummary__mpNumber--hash">
+          <span>MileagePlus Number</span>
+          UA000001
+        </div>
         <div class="app-components-MyUnited-AccountSummaryDetails-MileageBalance-MileageBalance__milesContainer--hash">
           <h3>MILES</h3>
           <div class="app-components-MyUnited-AccountSummaryDetails-MileageBalance-MileageBalance__totalMiles--hash">
@@ -36,7 +41,7 @@ describe('United adapter', () => {
 
     expect(result).toMatchObject({
       kind: 'success',
-      capture: { balance: 45 },
+      capture: { balance: 45, memberNumber: 'UA000001' },
     });
   });
 
@@ -102,6 +107,16 @@ describe('Cathay adapter', () => {
   it('captures the scoped Asia Miles values instead of header or Status Points values', () => {
     const result = inspectCathay(
       page(`
+        <div class="mpo_membership-number-and-status">
+          <div class="mpo_membership-box">
+            <div class="mpo_membership-box-heading">Membership number</div>
+            <div class="mpo_membership-box-value">CX000002</div>
+          </div>
+          <div class="mpo_membership-box">
+            <div class="mpo_membership-box-heading">Membership status</div>
+            <div class="mpo_membership-box-value mpo_membership-status">Green member</div>
+          </div>
+        </div>
         <div class="member-panel">99,999 miles</div>
         <div class="mpo_miles-details">
           <div class="mpo_miles-details-cur-points"><b>84,500</b></div>
@@ -118,6 +133,7 @@ describe('Cathay adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 84500,
+      memberNumber: 'CX000002',
       expiration: { type: 'activity_based', date: '2027-08-31' },
     });
   });
@@ -179,7 +195,26 @@ describe('Air France adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 210500,
+      memberNumber: null,
       expiration: { type: 'fixed_date', date: '2027-05-15' },
+    });
+  });
+
+  it('captures the member number from the authenticated Flying Blue dashboard', () => {
+    const result = inspectAirFrance(
+      page(`
+        <section data-testid="bwpr-flyingblue-membership__card">
+          <div class="bw-fb-membership-card__number-text">
+            Flying Blue number: <strong>AF000003</strong>
+          </div>
+        </section>
+      `),
+      'https://wwws.airfrance.us/profile/flying-blue/dashboard',
+    );
+
+    expect(result).toMatchObject({
+      kind: 'member_number_found',
+      capture: { memberNumber: 'AF000003' },
     });
   });
 
@@ -197,6 +232,9 @@ describe('Virgin Atlantic adapter', () => {
   it('captures only the logged-in Flying Club balance', () => {
     const result = inspectVirginAtlantic(
       page(`
+        <p data-testid="membership-number">
+          Flying Club number: VS000004
+        </p>
         <div>Book a flight with 8,000 points</div>
         <li id="logged-in-menu-item">
           <menu id="sign-in-menu">
@@ -208,11 +246,12 @@ describe('Virgin Atlantic adapter', () => {
           </menu>
         </li>
       `),
-      'https://www.virginatlantic.com/en-US',
+      'https://www.virginatlantic.com/flying-club/account/overview',
     );
 
     expect(result.capture).toMatchObject({
       balance: 163250,
+      memberNumber: 'VS000004',
       expiration: { type: 'never', date: null },
     });
   });
@@ -253,8 +292,60 @@ describe('Alaska adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 422100,
+      memberNumber: '999999999',
       expiration: { type: 'never', date: null },
     });
+  });
+});
+
+describe('Delta adapter', () => {
+  it('captures only the scoped available-miles balance', () => {
+    const result = inspectDelta(
+      page(`
+        <div class="skymiles-medallion-banner__details__container__right">
+          SKYMILES # DL000010
+        </div>
+        <div>Lifetime miles flown 800,000</div>
+        <div class="skymiles-landing-page-tracker__container__wrap__content">
+          <div class="skymiles-landing-page-tracker__container__wrap__content__subheading">
+            MILLION MILER STATUS
+          </div>
+          <span class="skymiles-landing-page-tracker__container__wrap__content__number">
+            800,000
+          </span>
+        </div>
+        <div class="skymiles-landing-page-tracker__container__wrap__content">
+          <div class="skymiles-landing-page-tracker__container__wrap__content__subheading">
+            MILES AVAILABLE
+          </div>
+          <span class="sr-only">123,450 MILES AVAILABLE</span>
+          <span class="skymiles-landing-page-tracker__container__wrap__content__number">
+            123,450
+          </span>
+        </div>
+      `),
+      'https://www.delta.com/myskymiles/overview',
+    );
+
+    expect(result.capture).toMatchObject({
+      balance: 123450,
+      memberNumber: 'DL000010',
+      expiration: { type: 'never', date: null },
+    });
+  });
+
+  it('never reads a matching credential input', () => {
+    const result = inspectDelta(
+      page(`
+        <input
+          class="skymiles-landing-page-tracker__container__wrap__content__number"
+          value="999999"
+        />
+      `),
+      'https://www.delta.com/myskymiles/overview',
+    );
+
+    expect(result.kind).toBe('not_found');
   });
 });
 
@@ -262,7 +353,11 @@ describe('American adapter', () => {
   it('captures an explicit expiration date before applying any exemption', () => {
     const result = inspectAmerican(
       page(`
-        <div data-testid="member-details-section">AAdvantage number 999999999</div>
+        <div data-testid="member-details-section">
+          <span>AAdvantage® member</span>
+          <div class="_aadvantage-number_fixture"># 999999999</div>
+          <span>Member since 2020</span>
+        </div>
         <section data-testid="award-miles-balance-section">
           <div data-testid="award-miles-balance-text">Award miles balance176,400Award Miles</div>
           <div class="_miles-expiring_fixture">Miles expire on September 30, 2027</div>
@@ -274,6 +369,7 @@ describe('American adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 176400,
+      memberNumber: '999999999',
       expiration: { type: 'activity_based', date: '2027-09-30' },
     });
   });
@@ -311,6 +407,27 @@ describe('EVA Air adapter', () => {
   it('captures the self-award balance and earliest expiring mileage tranche', () => {
     const result = inspectEvaAir(
       page(`
+        <dl><dt>Unrelated account detail 01</dt></dl>
+        <dl><dt>Unrelated account detail 02</dt></dl>
+        <dl><dt>Unrelated account detail 03</dt></dl>
+        <dl><dt>Unrelated account detail 04</dt></dl>
+        <dl><dt>Unrelated account detail 05</dt></dl>
+        <dl><dt>Unrelated account detail 06</dt></dl>
+        <dl><dt>Unrelated account detail 07</dt></dl>
+        <dl><dt>Unrelated account detail 08</dt></dl>
+        <dl><dt>Unrelated account detail 09</dt></dl>
+        <dl><dt>Unrelated account detail 10</dt></dl>
+        <dl><dt>Unrelated account detail 11</dt></dl>
+        <dl><dt>Unrelated account detail 12</dt></dl>
+        <dl><dt>Unrelated account detail 13</dt></dl>
+        <dl class="margin-t-4">
+          <dd class="text-4 margin-b-4">
+            <span>Membership Number:</span>
+            <span>BR000007</span>
+          </dd>
+          <dt>Your Green Card Validity:</dt>
+          <dd>Validity period is Permanent</dd>
+        </dl>
         <div>Status Miles 888,888</div>
         <div class="container-3">
           <h2>Overview of Award Miles</h2>
@@ -337,6 +454,7 @@ describe('EVA Air adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 96575,
+      memberNumber: 'BR000007',
       expiration: {
         type: 'fixed_date',
         date: null,
@@ -368,7 +486,23 @@ describe('British Airways adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 42300,
+      memberNumber: null,
       expiration: { type: 'activity_based', date: '2029-01-01' },
+    });
+  });
+
+  it('captures the member number from the authenticated account overview', () => {
+    const result = inspectBritishAirways(
+      page(`
+        <span>Membership number:</span>
+        <span data-testid="membership-number">BA000008</span>
+      `),
+      'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/',
+    );
+
+    expect(result).toMatchObject({
+      kind: 'member_number_found',
+      capture: { memberNumber: 'BA000008' },
     });
   });
 });
@@ -411,11 +545,35 @@ describe('ANA adapter', () => {
 
     expect(result.capture).toMatchObject({
       balance: 77500,
+      memberNumber: null,
       expiration: {
         type: 'fixed_date',
         date: null,
         month: '2029-03',
       },
+    });
+  });
+
+  it('captures the ANA Number from the English Main card table', () => {
+    const result = inspectAna(
+      page(`
+        <div id="camContentsArea">
+          <h2>Main card</h2>
+          <table>
+            <thead><tr><th>ANA Number</th><th>Card</th></tr></thead>
+            <tbody><tr><td>NH000009</td><td>ANA Mileage Club Card</td></tr></tbody>
+          </table>
+          <dl class="mw1803_code">
+            <dt>ANA Number</dt><dd>NH000009</dd>
+          </dl>
+        </div>
+      `),
+      'https://cam.ana.co.jp/psz/amcj/jsp/renew/amcMemberReference/amcMemberReferenceOS_e.jsp',
+    );
+
+    expect(result).toMatchObject({
+      kind: 'member_number_found',
+      capture: { memberNumber: 'NH000009' },
     });
   });
 
@@ -443,6 +601,9 @@ describe('World of Hyatt adapter', () => {
   it('captures the point balance from either responsive label layout', () => {
     const result = inspectHyatt(
       page(`
+        <div class="MemberCard_memberInfoContainer__fixture">
+          <span class="be-text-section-3">123456789H</span>
+        </div>
         <div>Base Points 999,999</div>
         <section>
           <span>Current Point Balance</span>
@@ -460,6 +621,7 @@ describe('World of Hyatt adapter', () => {
       kind: 'success',
       capture: {
         balance: 57250,
+        memberNumber: '123456789H',
         expiration: { type: 'never', date: null },
       },
     });
@@ -496,6 +658,7 @@ describe('Hilton Honors adapter', () => {
                         "data": {
                           "guest": {
                             "hhonors": {
+                              "hhonorsNumber": "HH000012",
                               "summary": {
                                 "totalPointsFmt": "187,250",
                                 "pointsExpiration": "2028-07-18"
@@ -519,6 +682,7 @@ describe('Hilton Honors adapter', () => {
       kind: 'success',
       capture: {
         balance: 187250,
+        memberNumber: 'HH000012',
         expiration: {
           type: 'activity_based',
           date: '2028-07-18',
@@ -536,6 +700,9 @@ describe('Hilton Honors adapter', () => {
           <div>Status nights 88</div>
           <div data-testid="honorsPointsBlock">187,250</div>
         </div>
+        <div data-testid="honorsNumberBlock">
+          Hilton Honors # 123456789
+        </div>
         <article data-testid="usePointsWrapper"><strong>999,999 Points</strong></article>
       `),
       'https://www.hilton.com/en/hilton-honors/guest/my-account/',
@@ -545,6 +712,7 @@ describe('Hilton Honors adapter', () => {
       kind: 'success',
       capture: {
         balance: 187250,
+        memberNumber: '123456789',
         expiration: {
           type: 'activity_based',
           date: null,
@@ -568,6 +736,26 @@ describe('Marriott Bonvoy adapter', () => {
   it('captures the member total and derives expiration from newest qualifying activity', () => {
     const result = inspectMarriott(
       page(`
+        <script id="__NEXT_DATA__" type="application/json">
+          {
+            "props": {
+              "pageProps": {
+                "sessionData": {
+                  "cacheData": {
+                    "data": {
+                      "rewardsId": "123456789"
+                    }
+                  }
+                },
+                "dataLayer": {
+                  "data": [
+                    { "mr_id": "123456789" }
+                  ]
+                }
+              }
+            }
+          }
+        </script>
         <div class="member-status-outer-container">
           <h3>Platinum Elite</h3>
           <h3>340,000 Points</h3>
@@ -589,6 +777,7 @@ describe('Marriott Bonvoy adapter', () => {
       kind: 'success',
       capture: {
         balance: 340000,
+        memberNumber: '123456789',
         expiration: {
           type: 'activity_based',
           date: '2028-07-05',

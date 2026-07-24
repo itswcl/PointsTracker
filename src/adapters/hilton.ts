@@ -1,11 +1,13 @@
 import { parseBalance } from '../domain/balances.js';
 import { parseDisplayedDate } from '../domain/dates.js';
+import { normalizeMemberNumber } from '../domain/member-numbers.js';
 import {
   hasAllowedElement,
   inspectionResult,
   pageHasVerification,
   pathIncludes,
   readBalance,
+  readMemberNumber,
 } from './shared.js';
 
 const BALANCE_SELECTORS = Object.freeze([
@@ -16,6 +18,16 @@ const BALANCE_SELECTORS = Object.freeze([
 const ACCOUNT_SELECTORS = Object.freeze([
   '[data-testid="pointsBlock"]',
   '[data-testid="memberInfoBlock"]',
+]);
+
+const MEMBER_NUMBER_RULES = Object.freeze([
+  { selector: '[data-points-tracker="hilton-member-number"]' },
+  { selector: '[data-testid="honors-number"]' },
+  {
+    selector: '[data-testid="honorsNumberBlock"]',
+    pattern:
+      /\bHilton\s+Honors\s*#\s*([A-Z0-9*][A-Z0-9*-]{2,31})\b/i,
+  },
 ]);
 
 const LOGIN_PAGE_SELECTORS = Object.freeze([
@@ -36,23 +48,51 @@ function childRecord(
   return isRecord(child) ? child : null;
 }
 
-function readAccountSummary(
+interface HiltonAccountData {
+  summary: Record<string, unknown> | null;
+  memberNumber: string | null;
+}
+
+function memberNumberFromRecord(
+  record: Record<string, unknown> | null,
+): string | null {
+  if (!record) return null;
+  for (const key of [
+    'hhonorsNumber',
+    'honorsNumber',
+    'memberNumber',
+    'membershipNumber',
+  ]) {
+    const memberNumber = normalizeMemberNumber(record[key]);
+    if (memberNumber) return memberNumber;
+  }
+  return null;
+}
+
+function readAccountData(
   document: Document,
-): Record<string, unknown> | null {
+): HiltonAccountData {
   const dataScript = document.querySelector('script#__NEXT_DATA__');
-  if (!dataScript?.textContent) return null;
+  if (!dataScript?.textContent) {
+    return { summary: null, memberNumber: null };
+  }
 
   try {
     const pageData = JSON.parse(dataScript.textContent) as unknown;
-    if (!isRecord(pageData)) return null;
+    if (!isRecord(pageData)) {
+      return { summary: null, memberNumber: null };
+    }
     const props = childRecord(pageData, 'props');
     const pageProps = props ? childRecord(props, 'pageProps') : null;
     const dehydratedState = pageProps
       ? childRecord(pageProps, 'dehydratedState')
       : null;
     const queries = dehydratedState?.queries;
-    if (!Array.isArray(queries)) return null;
+    if (!Array.isArray(queries)) {
+      return { summary: null, memberNumber: null };
+    }
 
+    let memberNumber: string | null = null;
     for (const query of queries) {
       if (!isRecord(query)) continue;
       const state = childRecord(query, 'state');
@@ -60,28 +100,42 @@ function readAccountSummary(
       const guest = data ? childRecord(data, 'guest') : null;
       const hhonors = guest ? childRecord(guest, 'hhonors') : null;
       const summary = hhonors ? childRecord(hhonors, 'summary') : null;
-      if (summary) return summary;
+      memberNumber ??=
+        memberNumberFromRecord(hhonors) ??
+        memberNumberFromRecord(summary);
+      if (summary) {
+        return {
+          summary,
+          memberNumber,
+        };
+      }
     }
+    return { summary: null, memberNumber };
   } catch {
-    return null;
+    return { summary: null, memberNumber: null };
   }
 
-  return null;
+  return { summary: null, memberNumber: null };
 }
 
 export function inspectHilton(document: Document, rawUrl: string) {
-  const accountSummary = readAccountSummary(document);
+  const accountData = readAccountData(document);
+  const accountSummary = accountData.summary;
   const balance =
     parseBalance(accountSummary?.totalPointsFmt) ??
     readBalance(document, BALANCE_SELECTORS);
   if (balance !== null) {
     const expirationDate = parseDisplayedDate(accountSummary?.pointsExpiration);
+    const memberNumber =
+      accountData.memberNumber ??
+      readMemberNumber(document, MEMBER_NUMBER_RULES);
 
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
+        memberNumber,
         expiration: {
           type: 'activity_based',
           date: expirationDate,
