@@ -36,7 +36,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.2.1` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.3.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
@@ -55,7 +55,7 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 - [x] Single purpose: show airline and hotel loyalty member numbers, balances, and expiration information in a local ledger.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to fourteen exact account-host patterns for the thirteen supported programs rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
+- [x] Host access is restricted to fourteen exact account-host patterns for the thirteen supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
@@ -74,6 +74,7 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 | Hyatt host | Reads the World of Hyatt member number and balance from the user's logged-in account overview. |
 | Hilton host | Reads the Honors member number, `totalPointsFmt`, and `pointsExpiration` from the logged-in account summary, with focused visible-page fallbacks. |
 | Marriott host | Reads the Bonvoy member number, balance, and newest qualifying activity from the user's logged-in activity page. |
+| GitHub API host | Checks the latest public Points Tracker release no more than once every 24 hours and sends no loyalty data. |
 
 - [~] Decide whether required host permissions should become `optional_host_permissions`, requested only when the user enables or refreshes a program. The current exact-host list supports existing functionality, but optional permissions would produce a smaller initial access warning and a stronger least-privilege story.
 - [ ] Confirm that every requested host still has a working adapter immediately before submission.
@@ -83,12 +84,13 @@ Official references: [minimum-permission and user-data FAQ](https://developer.ch
 ## Privacy and user-data disclosure
 
 - [ ] Publish a privacy policy at a public URL that works without authentication. A private GitHub repository URL is not sufficient.
-- [ ] State exactly what is processed: program identifier, loyalty member number, points or miles balance, expiration date or month, expiration amount when available, capture date, and user-entered manual overrides.
+- [ ] State exactly what is processed: program identifier, loyalty member number, points or miles balance, expiration date or month, expiration amount when available, capture date, user-entered manual overrides, and the non-personal update-check timestamp/latest release version.
 - [ ] State that webpage content is processed only on the listed loyalty-program hosts and only to provide the ledger's user-facing functionality.
 - [ ] State that data is stored only with `chrome.storage.local` in the user's Chrome profile.
 - [ ] State that JSON export happens only when the user explicitly downloads a backup.
 - [ ] State that the extension does not collect or store usernames, passwords, cookies, authentication tokens, member names, transaction history, or raw page HTML. State clearly that the displayed loyalty member number is stored locally.
 - [ ] State that the extension has no backend, analytics, advertising, telemetry, sale of data, third-party sharing, or developer access to user records.
+- [ ] State that the extension contacts GitHub's public release API no more than once every 24 hours and does not include loyalty data in that request.
 - [ ] Include an affirmative Chrome Web Store Limited Use statement.
 - [ ] Link the privacy policy in the Developer Dashboard Privacy tab.
 - [ ] In the Privacy tab, disclose at least the processing of **website content**. Review the dashboard's current category definitions before submission and keep every checkbox consistent with the code and privacy policy.

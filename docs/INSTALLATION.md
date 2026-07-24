@@ -55,13 +55,13 @@ If a website changes and automatic refresh does not work, your last saved value 
 
 ## Chrome's permission message
 
-Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott account hosts only. The production manifest requests `storage` plus host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, and `www.marriott.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. It does not request cookie, history, password, or network-interception permissions.
+Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott account hosts, plus GitHub's public API for checking releases. The production manifest requests `storage` plus exact host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, `www.marriott.com`, and `api.github.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. GitHub receives an anonymous request for the latest public release no more than once every 24 hours; no loyalty data is included. The extension does not request cookie, history, password, or network-interception permissions.
 
 ## Updating Points Tracker
 
 Installing a newer copy does not automatically transfer the locally saved ledger. Before updating:
 
-1. Open Points Tracker and select **Check updates** to open the latest GitHub release. Compare its version with the installed version shown in the footer.
+1. Open Points Tracker. If a newer release is available, an update banner appears automatically; select **Update**. You can also select **Check updates** to open the latest GitHub release manually.
 2. If a newer version is available, select **Export** to save a backup.
 3. Download and unzip the newest `points-tracker-chrome.zip`.
 4. Open `chrome://extensions`.

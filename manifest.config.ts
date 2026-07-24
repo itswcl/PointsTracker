@@ -4,7 +4,7 @@ export const manifest = {
   manifest_version: 3,
   name: 'Points Tracker',
   description: 'Track loyalty member numbers, balances, and expiration dates locally.',
-  version: '1.2.1',
+  version: '1.3.0',
   minimum_chrome_version: '120',
   icons: {
     16: 'assets/icons/icon-16.png',
@@ -28,6 +28,7 @@ export const manifest = {
     'https://www.hyatt.com/*',
     'https://www.hilton.com/*',
     'https://www.marriott.com/*',
+    'https://api.github.com/*',
   ],
   action: {
     default_title: 'Points Tracker',

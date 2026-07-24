@@ -18,6 +18,7 @@ describe('extension permission boundary', () => {
       'https://www.hyatt.com/*',
       'https://www.hilton.com/*',
       'https://www.marriott.com/*',
+      'https://api.github.com/*',
     ]);
     expect(manifest.host_permissions).not.toContain('<all_urls>');
     expect(manifest.permissions).toEqual(['storage']);
@@ -35,5 +36,8 @@ describe('extension permission boundary', () => {
       32: 'assets/icons/icon-32.png',
       48: 'assets/icons/icon-48.png',
     });
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).not.toContain('https://api.github.com/*');
   });
 });

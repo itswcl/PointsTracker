@@ -19,6 +19,10 @@ import {
   createInitialState,
   STORAGE_KEY,
 } from '../../src/domain/records.js';
+import {
+  LATEST_RELEASE_URL,
+  UPDATE_CACHE_KEY,
+} from '../../src/update-check.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
 import type { FakeStorageArea } from '../helpers/fake-storage.js';
 
@@ -229,14 +233,20 @@ describe('popup', () => {
       new Date(2026, 6, 17),
     );
 
-    storageArea = createFakeStorageArea({ [STORAGE_KEY]: state });
+    storageArea = createFakeStorageArea({
+      [STORAGE_KEY]: state,
+      [UPDATE_CACHE_KEY]: {
+        checkedAt: Date.now(),
+        latestVersion: '1.3.0',
+      },
+    });
     vi.stubGlobal('chrome', {
       storage: {
         local: storageArea,
         onChanged: eventTarget(),
       },
       runtime: {
-        getManifest: vi.fn(() => ({ version: '1.2.1' })),
+        getManifest: vi.fn(() => ({ version: '1.3.0' })),
         sendMessage: vi.fn(async () => ({ ok: true })),
       },
     });
@@ -282,7 +292,7 @@ describe('popup', () => {
     expect(screen.getByText('CX000002')).toBeInTheDocument();
     expect(screen.getByText('MB000013')).toBeInTheDocument();
     expect(
-      screen.getByText('Stored only in this Chrome profile. · v1.2.1'),
+      screen.getByText('Stored only in this Chrome profile. · v1.3.0'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Check updates' }),
@@ -293,6 +303,9 @@ describe('popup', () => {
     expect(
       screen.getByRole('link', { name: 'Check updates' }),
     ).toHaveAttribute('target', '_blank');
+    expect(
+      screen.queryByRole('status', { name: 'Update available' }),
+    ).not.toBeInTheDocument();
     expect(container.querySelectorAll('.program-name')).toHaveLength(13);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
     expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');
@@ -512,6 +525,28 @@ describe('popup', () => {
       'record-facts',
       'program-actions',
     ]);
+  });
+
+  it('asks the user to update when a newer cached release is available', async () => {
+    await storageArea.set({
+      [UPDATE_CACHE_KEY]: {
+        checkedAt: Date.now(),
+        latestVersion: '1.4.0',
+      },
+    });
+
+    render(<App />);
+
+    const alert = await screen.findByRole('status', {
+      name: 'Update available',
+    });
+    expect(alert).toHaveTextContent('Version 1.4.0 is available.');
+    expect(
+      screen.getByRole('link', { name: 'Update to version 1.4.0' }),
+    ).toHaveAttribute('href', LATEST_RELEASE_URL);
+    expect(
+      screen.getByRole('link', { name: 'Update to version 1.4.0' }),
+    ).toHaveAttribute('target', '_blank');
   });
 
   it('allows a member number to be corrected with the manual fallback', async () => {

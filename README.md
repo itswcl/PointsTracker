@@ -2,7 +2,7 @@
 
 A local-only Chrome extension for viewing airline and hotel loyalty member numbers, balances, and expiration information in one compact two-column popup. Supported programs include United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, and Marriott Bonvoy.
 
-The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, or transaction history. It stores only the displayed loyalty member number and ledger values in the current Chrome profile.
+The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, or transaction history. It stores only the displayed loyalty member number and ledger values, plus a non-personal update-check timestamp and latest public release version, in the current Chrome profile.
 
 ## Preview
 
@@ -60,16 +60,18 @@ Chrome Web Store and public-repository readiness are tracked in [docs/CHROME_WEB
 
 ## Privacy boundary
 
-- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott
+- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, and GitHub's public release API
 - No cookie, password, history, or network interception permissions
 - No backend, analytics, or data uploads
 - No raw account-page HTML stored
+- Anonymous GitHub release check no more than once every 24 hours; no loyalty data is included
 - Plain local JSON backup contains member numbers, balances, and dates
 
 ## Implementation status
 
 - Version 1.2.0 adds locally stored Member # capture for all thirteen programs, same-tab secondary-page capture for Flying Blue, British Airways, and ANA, Delta SkyMiles support, interrupted-refresh recovery, and a slightly larger compact popup.
 - Version 1.2.1 adds the installed extension version to the footer and provides a permission-free **Check updates** link to the latest GitHub release.
+- Version 1.3.0 checks GitHub's public latest-release endpoint no more than once every 24 hours and shows a compact update banner only when a newer version is available.
 - React popup, local records, separate airline and hotel balance totals, manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
 - United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott adapters have tested parser contracts.
 - Production member-number sources have been confirmed for all thirteen programs. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.

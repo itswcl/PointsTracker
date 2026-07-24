@@ -31,10 +31,9 @@ import type {
   ProgramId,
   ProgramRecord,
 } from '../../src/types.js';
+import { LATEST_RELEASE_URL } from '../../src/update-check.js';
 import { usePointsState } from './use-points-state.js';
-
-const LATEST_RELEASE_URL =
-  'https://github.com/itswcl/PointsTracker/releases/latest';
+import { useUpdateCheck } from './use-update-check.js';
 
 const ERROR_LABELS: Readonly<Record<string, string>> = Object.freeze({
   balance_not_found: 'Balance not found on the account page.',
@@ -532,6 +531,8 @@ export function App() {
     [PROGRAM_CATEGORIES.HOTEL]: null,
   });
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const extensionVersion = chrome.runtime.getManifest().version;
+  const availableUpdateVersion = useUpdateCheck(extensionVersion);
 
   async function refreshProgram(programId: ProgramId): Promise<void> {
     setNotice(null);
@@ -621,8 +622,6 @@ export function App() {
     group,
     programs: PROGRAM_LIST.filter((program) => program.category === group.id),
   }));
-  const extensionVersion = chrome.runtime.getManifest().version;
-
   return (
     <main className="app-shell">
       <section className="program-list" aria-label="Loyalty balances">
@@ -642,6 +641,25 @@ export function App() {
       </section>
 
       {notice ? <p className="notice" role="status">{notice}</p> : null}
+
+      {availableUpdateVersion ? (
+        <aside
+          className="update-alert"
+          role="status"
+          aria-label="Update available"
+        >
+          <p>Version {availableUpdateVersion} is available.</p>
+          <a
+            className="update-alert-action"
+            href={LATEST_RELEASE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Update to version ${availableUpdateVersion}`}
+          >
+            Update
+          </a>
+        </aside>
+      ) : null}
 
       <footer className="app-footer">
         <p>Stored only in this Chrome profile. · v{extensionVersion}</p>

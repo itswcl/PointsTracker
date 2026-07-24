@@ -341,6 +341,46 @@ button:disabled {
   font-size: 9px;
 }
 
+.update-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  border: 1px solid #d99b81;
+  border-left: 3px solid var(--signal);
+  padding: 6px 8px;
+  background: var(--signal-soft);
+  font-size: 10px;
+}
+
+.update-alert p {
+  margin: 0;
+  font-weight: 650;
+}
+
+.update-alert-action {
+  flex: none;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--ink);
+  color: var(--paper-high);
+  font-size: 9px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.update-alert-action:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.update-alert-action:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
 .app-footer {
   display: flex;
   align-items: center;

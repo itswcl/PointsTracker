@@ -19,8 +19,9 @@ Points Tracker provides one compact ledger for supported airline and hotel loyal
 - Sort airline and hotel programs by balance or expiration.
 - Keep airline and hotel totals separate.
 - Export or import a local JSON backup when you choose.
+- Receive a compact notice when a newer public release is available.
 
-Points Tracker does not ask for loyalty-site credentials. It stores the displayed loyalty member number and ledger values only in the current Chrome profile and has no backend, analytics, advertising, or telemetry.
+Points Tracker does not ask for loyalty-site credentials. It stores the displayed loyalty member number and ledger values, plus a non-personal update-check timestamp and latest public release version, only in the current Chrome profile. It has no backend, analytics, advertising, or telemetry. It contacts GitHub's public release API no more than once every 24 hours to compare version numbers; the request contains no loyalty data.
 
 ## Independent-product disclaimer
 
