@@ -4,6 +4,12 @@ A local-only Chrome extension for viewing airline and hotel loyalty member numbe
 
 The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, or transaction history. It stores only the displayed loyalty member number and ledger values in the current Chrome profile.
 
+## Preview
+
+![Points Tracker popup showing synthetic airline and hotel loyalty data](./docs/assets/points-tracker-demo.png)
+
+_All balances, member numbers, and expiration dates shown above are fictional demo data._
+
 ## Install in Chrome — no coding required
 
 1. [Download the ready-to-install ZIP](https://github.com/itswcl/PointsTracker/releases/latest/download/points-tracker-chrome.zip).
