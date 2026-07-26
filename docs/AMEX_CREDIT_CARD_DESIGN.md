@@ -5,9 +5,12 @@
 - Add `Credit Card` as a third top-level ledger category.
 - Display the category as the first popup column, followed by Airline and Hotel.
 - Model each row as an issuer rewards program rather than an individual card.
-- Add `Amex`, `Chase`, `Citi`, and `Bilt` as balance-only program rows.
+- Add `Amex`, `Capital One`, `Chase`, `Citi`, and `Bilt` as balance-only
+  program rows.
 - Amex reads rendered `Available Points` at
   `https://global.americanexpress.com/rewards`.
+- Capital One reads the rendered whole-number value paired with the exact
+  `Miles` label at `https://myaccounts.capitalone.com/accountSummary`.
 - Chase sums every rendered card balance at
   `https://ultimaterewardspoints.chase.com/account-selector`, but stores only the
   combined Ultimate Rewards total.
@@ -36,7 +39,8 @@
 - Credit Card balances may be signed because a rewards program can display a
   negative total; airline and hotel balance validation remains nonnegative.
 - The category is included in the coordinated version 1.4.0 release after all
-  four planned issuer adapters were completed.
+  four initially planned issuer adapters were completed. Capital One is a
+  follow-up addition to the same balance-only category.
 
 ## Approaches considered
 
@@ -61,11 +65,11 @@ future programs need different combinations of fields.
 
 ## Final design
 
-Add a `credit_card` category with `amex`, `chase`, `citi`, and `bilt` program
-definitions and exact official account URLs.
+Add a `credit_card` category with `amex`, `capitalone`, `chase`, `citi`, and
+`bilt` program definitions and exact official account URLs.
 
 Program definitions expose typed capabilities for member-number and expiration
-visibility. Existing airline and hotel programs enable both. All four Credit
+visibility. Existing airline and hotel programs enable both. All five Credit
 Card programs disable both, store `memberNumber: null`, and use an internal
 unknown expiration placeholder that is not rendered or editable.
 
@@ -76,11 +80,13 @@ and actions ledger with balance-only sorting and its own total. The manual
 editor shows only the selected Credit Card balance field.
 
 Each adapter reads only allowlisted rendered HTML scoped to its exact account
-label or control. Chase deduplicates responsive card rows before summing them;
-Citi rejects conflicting responsive totals; Bilt clicks only the exact points
-pill and reads the exact menu value. Promotional values, hidden duplicates, and
-form controls are rejected. Login, verification, timeout, and missing-balance
-failures follow the existing recovery behavior.
+label or control. Capital One pairs one whole-number value with the exact
+`Miles` label and excludes the adjacent Rewards cash container. Chase
+deduplicates responsive card rows before summing them; Citi rejects conflicting
+responsive totals; Bilt clicks only the exact points pill and reads the exact
+menu value. Promotional values, hidden duplicates, and form controls are
+rejected. Login, verification, timeout, and missing-balance failures follow the
+existing recovery behavior.
 
 No private API host, cookie, token, network interception, raw HTML, card detail,
 or transaction data is requested or stored.
@@ -92,8 +98,8 @@ or transaction data is requested or stored.
 - Verify Chase sums every rendered card balance without storing per-card data.
 - Reject promotional point values and credential inputs.
 - Detect login and verification states.
-- Register the Credit Card category and all four adapters.
-- Normalize older state and backups with empty records for all four programs.
+- Register the Credit Card category and all five adapters.
+- Normalize older state and backups with empty records for all five programs.
 - Verify exact webpage access and unchanged credential-adjacent
   permissions.
 - Verify the three-column popup, Credit Card total, balance sorting, and

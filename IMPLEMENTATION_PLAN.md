@@ -6,7 +6,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 
 ## Scope
 
-- In: United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, Marriott Bonvoy, IHG One Rewards, Wyndham Rewards, American Express Membership Rewards, Chase Ultimate Rewards, Citi ThankYou Rewards, Bilt Rewards, automatic account-page balance capture, member-number/expiration capture where applicable, manual overrides, local storage, JSON backup, compact popup, failure recovery, tests, and unpacked installation.
+- In: United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, Marriott Bonvoy, IHG One Rewards, Wyndham Rewards, American Express Membership Rewards, Capital One Miles, Chase Ultimate Rewards, Citi ThankYou Rewards, Bilt Rewards, automatic account-page balance capture, member-number/expiration capture where applicable, manual overrides, local storage, JSON backup, compact popup, failure recovery, tests, and unpacked installation.
 - Out: credentials, cookies, network interception, cloud services, alerts, recommendations, transaction history, P2, and Chrome Web Store publishing.
 
 ## Action Items
@@ -19,7 +19,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 - [x] Implement the capture coordinator with owned-tab tracking, cooldowns, and timeouts.
 - [x] Reveal login-required refresh tabs immediately and extend only their observation window to three minutes.
 - [x] Reuse the same extension-owned tab for split account data on Flying Blue, British Airways, and ANA, preserving the primary balance and expiration before navigating to the member-number page.
-- [x] Implement all nineteen airline, hotel, and Credit Card adapters behind a shared parser contract.
+- [x] Implement all twenty airline, hotel, and Credit Card adapters behind a shared parser contract.
 - [x] Build the title-free three-column popup with full airline/hotel rows, balance-only Credit Card rows, separate category totals, editing, refresh, sorting, and backup interactions.
 - [x] Add adapter, domain, storage, coordinator, privacy, and UI tests.
 - [x] Run lint, tests, production build, and manifest/package inspection.
@@ -43,11 +43,12 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 - IHG One Rewards' production balance, member number, and exact Elite-tier marker were confirmed live on 07/25/2026; the rebuilt extension still needs the end-to-end reload check.
 - Wyndham Rewards' production balance, member-number, and no-recent-activity selectors were confirmed live on 07/25/2026; the account page does not display a personal expiration date or Premier-card exemption.
 - American Express Membership Rewards' rendered `Available Points` block was confirmed live on 07/25/2026.
+- Capital One's rendered `.primary-detail__balances-container` structure and exact `Miles` label were confirmed live on 07/25/2026; neighboring Rewards cash is excluded.
 - Chase Ultimate Rewards' complete account-selector card list and per-row `Available Points` labels were confirmed live on 07/25/2026; only the combined total is stored.
 - Citi ThankYou Rewards' rendered `Total ThankYou® Points` block was confirmed live on 07/25/2026.
 - Bilt Rewards' top-right points pill and exact `Your Points` menu value were confirmed live on 07/25/2026; the menu may require one preparatory click.
 
-Member-number selectors or approved hydrated fields for all fifteen airline and hotel programs were confirmed live by 07/25/2026. The four Credit Card rows intentionally do not collect member numbers or expiration data. Flying Blue, British Airways, and ANA require the same-tab secondary-page path. The rebuilt extension still needs the final end-to-end reload check.
+Member-number selectors or approved hydrated fields for all fifteen airline and hotel programs were confirmed live by 07/25/2026. The five Credit Card rows intentionally do not collect member numbers or expiration data. Flying Blue, British Airways, and ANA require the same-tab secondary-page path. The rebuilt extension still needs the final end-to-end reload check.
 
 ## Next Adapters
 

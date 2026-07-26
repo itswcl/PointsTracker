@@ -271,6 +271,25 @@ const PROGRAM_DEFINITIONS = {
       expiration: false,
     },
   },
+  [PROGRAM_IDS.CAPITAL_ONE]: {
+    id: PROGRAM_IDS.CAPITAL_ONE,
+    category: PROGRAM_CATEGORIES.CREDIT_CARD,
+    name: 'Capital One Miles',
+    displayName: 'Capital One',
+    currencyName: 'miles',
+    accountUrl: 'https://myaccounts.capitalone.com/accountSummary',
+    loginUrl: 'https://myaccounts.capitalone.com/accountSummary',
+    hosts: ['myaccounts.capitalone.com'],
+    defaultExpiration: {
+      type: 'unknown',
+      date: null,
+      note: 'Expiration does not apply to this balance-only ledger row',
+    },
+    visibleFields: {
+      memberNumber: false,
+      expiration: false,
+    },
+  },
   [PROGRAM_IDS.CHASE]: {
     id: PROGRAM_IDS.CHASE,
     category: PROGRAM_CATEGORIES.CREDIT_CARD,

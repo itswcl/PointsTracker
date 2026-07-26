@@ -11,6 +11,7 @@ import { inspectAmerican } from './american.js';
 import { inspectAna } from './ana.js';
 import { inspectBritishAirways } from './britishairways.js';
 import { inspectBilt, prepareBilt } from './bilt.js';
+import { inspectCapitalOne } from './capitalone.js';
 import { inspectCathay } from './cathay.js';
 import { inspectChase } from './chase.js';
 import { inspectCiti } from './citi.js';
@@ -42,6 +43,7 @@ const INSPECTORS = {
   [PROGRAM_IDS.IHG]: inspectIhg,
   [PROGRAM_IDS.WYNDHAM]: inspectWyndham,
   [PROGRAM_IDS.AMEX]: inspectAmex,
+  [PROGRAM_IDS.CAPITAL_ONE]: inspectCapitalOne,
   [PROGRAM_IDS.CHASE]: inspectChase,
   [PROGRAM_IDS.CITI]: inspectCiti,
   [PROGRAM_IDS.BILT]: inspectBilt,

@@ -15,6 +15,7 @@ export const PROGRAM_IDS = {
   IHG: 'ihg',
   WYNDHAM: 'wyndham',
   AMEX: 'amex',
+  CAPITAL_ONE: 'capitalone',
   CHASE: 'chase',
   CITI: 'citi',
   BILT: 'bilt',

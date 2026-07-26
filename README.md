@@ -1,6 +1,6 @@
 # Points Tracker
 
-A local-only Chrome extension for viewing airline, hotel, and credit-card rewards balances in one compact three-column popup, with loyalty member numbers and expiration information where applicable. It supports United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, Marriott Bonvoy, IHG One Rewards, Wyndham Rewards, American Express Membership Rewards, Chase Ultimate Rewards, Citi ThankYou Rewards, and Bilt Rewards.
+A local-only Chrome extension for viewing airline, hotel, and credit-card rewards balances in one compact three-column popup, with loyalty member numbers and expiration information where applicable. It supports United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, Marriott Bonvoy, IHG One Rewards, Wyndham Rewards, American Express Membership Rewards, Capital One Miles, Chase Ultimate Rewards, Citi ThankYou Rewards, and Bilt Rewards.
 
 The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, card details, per-card balances, or transaction history. It stores only the displayed loyalty member number when applicable and the program-level ledger values, plus a non-personal update-check timestamp and latest public release version, in the current Chrome profile.
 
@@ -62,7 +62,7 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 
 ## Privacy boundary
 
-- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Chase, Citi, Bilt, and GitHub's public release API
+- Exact host access only for United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Capital One, Chase, Citi, Bilt, and GitHub's public release API
 - No cookie, password, history, or network interception permissions
 - No backend, analytics, or data uploads
 - No raw account-page HTML stored
@@ -75,8 +75,9 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 - Version 1.2.1 adds the installed extension version to the footer and provides a permission-free **Check updates** link to the latest GitHub release.
 - Version 1.3.0 checks GitHub's public latest-release endpoint no more than once every 24 hours and shows a compact update banner only when a newer version is available.
 - Version 1.4.0 adds IHG, Wyndham, Amex, Chase, Citi, and Bilt; introduces the Credit Card ledger; improves sign-in waiting and member-number copying; and fixes Chase multi-card totals and compact-popup overflow.
+- Version 1.5.0 adds Capital One Miles as a balance-only Credit Card program using the exact rendered `Miles` total while excluding Rewards cash and card details.
 - React popup, local records, separate airline, hotel, and Credit Card balance totals, manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
-- All nineteen program adapters have tested parser contracts.
+- All twenty program adapters have tested parser contracts.
 - Production member-number sources have been confirmed for all fifteen airline and hotel programs. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.
 - United's My United account URL and production balance selector are confirmed.
 - Cathay's authenticated account URL and production selectors are confirmed; remaining rebuilt-extension checks are tracked in [docs/LIVE_ACCEPTANCE.md](./docs/LIVE_ACCEPTANCE.md).
@@ -94,6 +95,7 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 - IHG One Rewards' rendered balance, member number, and Elite-tier marker are confirmed; expiration displays `N/A` only for an active Silver, Gold, Platinum, or Diamond Elite profile.
 - Wyndham Rewards' rendered balance, member number, and no-recent-activity state are confirmed. Zero points plus the exact empty state displays `N/A`; a positive balance retains the 18-month inactivity rule and separate four-year per-point note.
 - Amex reads the rendered `Available Points` total for Membership Rewards.
+- Capital One reads only the rendered whole-number balance paired with the exact `Miles` label on the authenticated account-summary page.
 - Chase sums every rendered card balance on the Ultimate Rewards account-selector page and stores only the combined program total.
 - Citi reads the rendered `Total ThankYou® Points` value from the signed-in dashboard.
 - Bilt reads the exact signed whole-number balance from the `Your Points` menu; the Credit Card category supports a negative program balance without relaxing airline or hotel validation.

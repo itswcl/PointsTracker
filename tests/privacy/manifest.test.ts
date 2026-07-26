@@ -21,6 +21,7 @@ describe('extension permission boundary', () => {
       'https://www.ihg.com/*',
       'https://www.wyndhamhotels.com/*',
       'https://global.americanexpress.com/*',
+      'https://myaccounts.capitalone.com/*',
       'https://ultimaterewardspoints.chase.com/*',
       'https://online.citi.com/*',
       'https://www.bilt.com/*',
@@ -55,6 +56,9 @@ describe('extension permission boundary', () => {
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://global.americanexpress.com/*');
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).toContain('https://myaccounts.capitalone.com/*');
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://ultimaterewardspoints.chase.com/*');

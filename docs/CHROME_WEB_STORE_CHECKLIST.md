@@ -36,7 +36,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.4.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.5.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
@@ -55,7 +55,7 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 - [x] Single purpose: show airline, hotel, and credit-card rewards balances in a local ledger, with loyalty member numbers and expiration information where applicable.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to twenty exact account-host patterns for the nineteen supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
+- [x] Host access is restricted to twenty-one exact account-host patterns for the twenty supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
@@ -77,6 +77,7 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 | IHG host | Reads the One Rewards member number, balance, and exact Elite-tier marker from the user's logged-in account page. |
 | Wyndham host | Reads the Rewards member number, balance, and exact no-recent-activity state from the user's logged-in activity page. |
 | Amex host | Reads the Membership Rewards `Available Points` total from the user's logged-in rewards page. |
+| Capital One host | Reads only the whole-number total paired with the exact `Miles` label on the user's logged-in account summary. |
 | Chase host | Reads every visible Ultimate Rewards card balance on the account-selector page, computes one total locally, and stores no card-level details. |
 | Citi host | Reads the `Total ThankYou® Points` value from the user's logged-in dashboard. |
 | Bilt host | Opens the account points menu when needed and reads the exact `Your Points` total from the user's logged-in rewards page. |

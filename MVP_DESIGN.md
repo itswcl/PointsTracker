@@ -10,7 +10,7 @@ Points Tracker is a private, personal Chrome extension that consolidates airline
 ## Understanding Summary
 
 - The MVP is for one person using one Chrome profile.
-- It supports nineteen airline, hotel, and Credit Card rewards programs.
+- It supports twenty airline, hotel, and Credit Card rewards programs.
 - The toolbar popup shows the current balance and, where applicable, a loyalty member number and expiration status or date.
 - Dates use `MM/DD/YYYY`; no relative timestamps or time of day are displayed.
 - The user signs in normally on each official website. The extension never requests or stores credentials.
@@ -238,7 +238,7 @@ The discovery pass must not save credentials, private page snapshots, or raw acc
 | Decision | Alternatives | Reason |
 | --- | --- | --- |
 | Personal-first MVP | Multi-user product | Minimizes scope and security complexity; P2 can come later. |
-| Nineteen rewards programs | Broad program catalog | The adapters cover airline, hotel, and Credit Card totals plus non-expiring, personally configured cardholder, inactivity-policy, qualifying-activity, explicit valid-until, month-only, partial-tranche, and shadow-root displays. |
+| Twenty rewards programs | Broad program catalog | The adapters cover airline, hotel, and Credit Card totals plus non-expiring, personally configured cardholder, inactivity-policy, qualifying-activity, explicit valid-until, month-only, partial-tranche, and shadow-root displays. |
 | Tab-driven adapters | Private API requests; visible-only capture | Best match for automatic capture using the existing browser session. |
 | Title-free three-column popup | Single-column ledger; full dashboard | Keeps Credit Card, Airline, and Hotel ledgers visible side by side without spending space on a redundant product title. |
 | Local-only storage | Local standalone app; cloud backend | Avoids accounts, remote data, and credential concerns. |

@@ -277,6 +277,20 @@ describe('popup', () => {
     );
     state = applyAutomaticCapture(
       state,
+      'capitalone',
+      {
+        balance: 445566,
+        memberNumber: null,
+        expiration: {
+          type: 'unknown',
+          date: null,
+          note: 'Expiration does not apply to this balance-only ledger row',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
       'chase',
       {
         balance: 700000,
@@ -365,6 +379,7 @@ describe('popup', () => {
     expect(screen.getByText('25,000')).toBeInTheDocument();
     expect(screen.getByText('42,500')).toBeInTheDocument();
     expect(screen.getByText('112,233')).toBeInTheDocument();
+    expect(screen.getByText('445,566')).toBeInTheDocument();
     expect(screen.getByText('700,000')).toBeInTheDocument();
     expect(screen.getByText('246,810')).toBeInTheDocument();
     expect(screen.getByText('-4,321')).toBeInTheDocument();
@@ -381,7 +396,7 @@ describe('popup', () => {
       'Total642,500',
     );
     expect(screen.getByLabelText('Credit Card total balance')).toHaveTextContent(
-      'Total1,054,722',
+      'Total1,500,288',
     );
     expect(screen.getByText('50 · 07/2028')).toBeInTheDocument();
     expect(screen.getByText('10/2028')).toBeInTheDocument();
@@ -419,7 +434,7 @@ describe('popup', () => {
     expect(
       screen.queryByRole('status', { name: 'Update available' }),
     ).not.toBeInTheDocument();
-    expect(container.querySelectorAll('.program-name')).toHaveLength(19);
+    expect(container.querySelectorAll('.program-name')).toHaveLength(20);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
     expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');
     expect(container.querySelector('[aria-labelledby="evaair-name"] .program-name')).toHaveTextContent('EVA');
@@ -427,6 +442,7 @@ describe('popup', () => {
     expect(container.querySelector('[aria-labelledby="ihg-name"] .program-name')).toHaveTextContent('IHG');
     expect(container.querySelector('[aria-labelledby="wyndham-name"] .program-name')).toHaveTextContent('Wyndham');
     expect(container.querySelector('[aria-labelledby="amex-name"] .program-name')).toHaveTextContent('Amex');
+    expect(container.querySelector('[aria-labelledby="capitalone-name"] .program-name')).toHaveTextContent('Capital One');
     expect(container.querySelector('[aria-labelledby="chase-name"] .program-name')).toHaveTextContent('Chase');
     expect(container.querySelector('[aria-labelledby="citi-name"] .program-name')).toHaveTextContent('Citi');
     expect(container.querySelector('[aria-labelledby="bilt-name"] .program-name')).toHaveTextContent('Bilt');
@@ -495,6 +511,9 @@ describe('popup', () => {
       }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole('button', { name: 'Refresh Capital One Miles' }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole('button', { name: 'Refresh Chase Ultimate Rewards' }),
     ).toBeInTheDocument();
     expect(
@@ -534,6 +553,7 @@ describe('popup', () => {
     expect(programList.lastElementChild).toBe(hotelSection);
     const originalOrder = [
       'amex-name',
+      'capitalone-name',
       'chase-name',
       'citi-name',
       'bilt-name',
@@ -565,6 +585,7 @@ describe('popup', () => {
     );
     expect(rowOrder()).toEqual([
       'amex-name',
+      'capitalone-name',
       'chase-name',
       'citi-name',
       'bilt-name',
@@ -602,6 +623,7 @@ describe('popup', () => {
     );
     expect(rowOrder()).toEqual([
       'amex-name',
+      'capitalone-name',
       'chase-name',
       'citi-name',
       'bilt-name',
@@ -635,6 +657,7 @@ describe('popup', () => {
     );
     expect(rowOrder()).toEqual([
       'amex-name',
+      'capitalone-name',
       'chase-name',
       'citi-name',
       'bilt-name',
@@ -668,6 +691,7 @@ describe('popup', () => {
     );
     expect(rowOrder()).toEqual([
       'amex-name',
+      'capitalone-name',
       'chase-name',
       'citi-name',
       'bilt-name',
@@ -700,6 +724,7 @@ describe('popup', () => {
     );
     expect(rowOrder()).toEqual([
       'chase-name',
+      'capitalone-name',
       'citi-name',
       'amex-name',
       'bilt-name',

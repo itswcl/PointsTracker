@@ -72,14 +72,19 @@ describe('program account targets', () => {
     expect(programShowsExpiration(amex)).toBe(false);
   });
 
-  it('registers Chase, Citi, and Bilt as balance-only Credit Card programs', () => {
+  it('registers Capital One, Chase, Citi, and Bilt as balance-only Credit Card programs', () => {
+    const capitalOne = getProgram(PROGRAM_IDS.CAPITAL_ONE);
     const chase = getProgram(PROGRAM_IDS.CHASE);
     const citi = getProgram(PROGRAM_IDS.CITI);
     const bilt = getProgram(PROGRAM_IDS.BILT);
-    if (!chase || !citi || !bilt) {
+    if (!capitalOne || !chase || !citi || !bilt) {
       throw new Error('A Credit Card program is missing');
     }
 
+    expect(capitalOne.accountUrl).toBe(
+      'https://myaccounts.capitalone.com/accountSummary',
+    );
+    expect(capitalOne.hosts).toEqual(['myaccounts.capitalone.com']);
     expect(chase.accountUrl).toBe(
       'https://ultimaterewardspoints.chase.com/account-selector',
     );
@@ -93,7 +98,7 @@ describe('program account targets', () => {
     );
     expect(bilt.hosts).toEqual(['www.bilt.com']);
 
-    for (const program of [chase, citi, bilt]) {
+    for (const program of [capitalOne, chase, citi, bilt]) {
       expect(program.category).toBe(PROGRAM_CATEGORIES.CREDIT_CARD);
       expect(programShowsMemberNumber(program)).toBe(false);
       expect(programShowsExpiration(program)).toBe(false);

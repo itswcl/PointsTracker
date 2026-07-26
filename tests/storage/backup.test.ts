@@ -49,6 +49,7 @@ describe('JSON backups', () => {
     Reflect.deleteProperty(candidate.data.records, 'ihg');
     Reflect.deleteProperty(candidate.data.records, 'wyndham');
     Reflect.deleteProperty(candidate.data.records, 'amex');
+    Reflect.deleteProperty(candidate.data.records, 'capitalone');
     Reflect.deleteProperty(candidate.data.records, 'chase');
     Reflect.deleteProperty(candidate.data.records, 'citi');
     Reflect.deleteProperty(candidate.data.records, 'bilt');
@@ -93,7 +94,12 @@ describe('JSON backups', () => {
       manualOverride: null,
       status: 'not_updated',
     });
-    for (const programId of ['chase', 'citi', 'bilt'] as const) {
+    for (const programId of [
+      'capitalone',
+      'chase',
+      'citi',
+      'bilt',
+    ] as const) {
       expect(imported.records[programId]).toMatchObject({
         programId,
         automatic: {

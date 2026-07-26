@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 — 2026-07-25
+
+### Added
+
+- Capital One Miles as a balance-only Credit Card program. The adapter reads
+  only the rendered whole-number balance paired with the exact `Miles` label on
+  the authenticated account-summary page.
+- Exact webpage access for `myaccounts.capitalone.com`; no member number,
+  expiration, card details, rewards cash, or private account API data is read
+  or stored.
+
 ## 1.4.0 — 2026-07-25
 
 ### Added

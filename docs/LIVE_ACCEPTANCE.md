@@ -448,6 +448,32 @@ Remaining end-to-end checks:
 - Refresh Amex and confirm the ledger matches the rendered Available Points total.
 - Confirm only Program, Balance, and Actions appear in the Credit Card row.
 
+## Capital One Miles acceptance — structure confirmed 07/25/2026
+
+Confirmed account-summary URL:
+
+`https://myaccounts.capitalone.com/accountSummary`
+
+Confirmed production structure:
+
+- Rewards scope: `.primary-detail__balances`
+- Balance rows: `.primary-detail__balances-container`
+- Whole-number value: `.primary-detail__balances-number-container`
+- Exact currency label: `.labels` with `Miles`
+- Excluded neighboring row: `.labels` with `Rewards cash`
+
+The adapter accepts one consistent whole-number balance paired with the exact
+Miles label. It rejects Rewards cash, promotional miles, form controls, and
+conflicting duplicate Miles rows. It does not collect a member number,
+expiration, card details, account identifiers, or transaction data.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Capital One host permission.
+- Refresh Capital One and confirm the ledger matches the rendered Miles total.
+- Confirm Rewards cash and card-level information do not appear in storage,
+  export, or the popup.
+
 ## Chase Ultimate Rewards acceptance — structure confirmed 07/25/2026
 
 Confirmed account-selector URL:
@@ -520,7 +546,7 @@ Remaining end-to-end checks:
 - Refresh Bilt and confirm the ledger matches the exact Your Points menu value.
 - Confirm a negative displayed value remains negative in the row, category total, manual editor, backup, and restore flow.
 
-All four Credit Card adapters use rendered, allowlisted page content only. No
+All five Credit Card adapters use rendered, allowlisted page content only. No
 private account API, credential, cookie, authorization token, raw HTML, card
 detail, or transaction data is requested or stored.
 

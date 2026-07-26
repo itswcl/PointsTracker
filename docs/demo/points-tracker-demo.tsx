@@ -187,6 +187,14 @@ const DEMO_CAPTURES: readonly (readonly [
     },
   ],
   [
+    'capitalone',
+    {
+      balance: 445566,
+      memberNumber: null,
+      expiration: HIDDEN_EXPIRATION,
+    },
+  ],
+  [
     'chase',
     {
       balance: 223344,
@@ -221,7 +229,7 @@ const storageArea = createFakeStorageArea({
   [STORAGE_KEY]: state,
   [UPDATE_CACHE_KEY]: {
     checkedAt: Date.now(),
-    latestVersion: '1.4.0',
+    latestVersion: '1.5.0',
   },
 });
 
@@ -234,7 +242,7 @@ const demoChrome = {
     },
   },
   runtime: {
-    getManifest: () => ({ version: '1.4.0' }),
+    getManifest: () => ({ version: '1.5.0' }),
     sendMessage: async () => ({ ok: true }),
   },
 };
