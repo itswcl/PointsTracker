@@ -1,11 +1,13 @@
 import {
   STORAGE_KEY,
   applyAutomaticCapture,
+  applyAutomaticCaptures,
   applyAutomaticMemberNumber,
   applyManualOverride,
   clearManualOverride,
   createInitialState,
   markRecordStatus,
+  markRecordStatuses,
   normalizeState,
   recoverInterruptedCaptures,
 } from '../domain/records.js';
@@ -13,6 +15,7 @@ import type {
   AutomaticCapture,
   ManualOverrideInput,
   PointsState,
+  ProgramCapture,
   ProgramId,
   RecordStatus,
   StorageAreaLike,
@@ -65,6 +68,15 @@ export class StateRepository {
     );
   }
 
+  saveAutomaticCaptures(
+    captures: readonly ProgramCapture[],
+    date?: Date,
+  ): Promise<PointsState> {
+    return this.update((state) =>
+      applyAutomaticCaptures(state, captures, date),
+    );
+  }
+
   saveAutomaticMemberNumber(
     programId: ProgramId,
     memberNumber: string,
@@ -96,6 +108,16 @@ export class StateRepository {
   ): Promise<PointsState> {
     return this.update((state) =>
       markRecordStatus(state, programId, status, error),
+    );
+  }
+
+  setStatuses(
+    programIds: readonly ProgramId[],
+    status: RecordStatus,
+    error: string | null = null,
+  ): Promise<PointsState> {
+    return this.update((state) =>
+      markRecordStatuses(state, programIds, status, error),
     );
   }
 }

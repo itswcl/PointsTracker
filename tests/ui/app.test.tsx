@@ -61,6 +61,30 @@ describe('popup', () => {
     );
     state = applyAutomaticCapture(
       state,
+      'unitedpool',
+      {
+        balance: 22000,
+        memberNumber: 'UA000001',
+        expiration: { type: 'never', date: null, note: 'No expiration' },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
+      'unitedtravelbank',
+      {
+        balance: 12550,
+        memberNumber: 'UA000001',
+        expiration: {
+          type: 'fixed_date',
+          date: '2027-06-15',
+          note: 'Earliest displayed TravelBank expiration',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
       'cathay',
       {
         balance: 84500,
@@ -184,6 +208,34 @@ describe('popup', () => {
           type: 'never',
           date: null,
           note: 'No expiration',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
+      'southwest',
+      {
+        balance: 20383,
+        memberNumber: 'RR000016',
+        expiration: {
+          type: 'never',
+          date: null,
+          note: 'No expiration',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
+      'southwestcredit',
+      {
+        balance: 69796,
+        memberNumber: 'RR000016',
+        expiration: {
+          type: 'fixed_date',
+          date: '2028-01-15',
+          note: 'Earliest Southwest Flight Credit expiration',
         },
       },
       new Date(2026, 6, 17),
@@ -373,6 +425,10 @@ describe('popup', () => {
     expect(screen.getByText('42,300')).toBeInTheDocument();
     expect(screen.getByText('77,500')).toBeInTheDocument();
     expect(screen.getByText('119,300')).toBeInTheDocument();
+    expect(screen.getByText('22,000')).toBeInTheDocument();
+    expect(screen.getByText('$125.50')).toBeInTheDocument();
+    expect(screen.getByText('20,383')).toBeInTheDocument();
+    expect(screen.getByText('$697.96')).toBeInTheDocument();
     expect(screen.getByText('55,000')).toBeInTheDocument();
     expect(screen.getByText('180,000')).toBeInTheDocument();
     expect(screen.getByText('340,000')).toBeInTheDocument();
@@ -390,7 +446,7 @@ describe('popup', () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/\d+ programs?/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,517,825',
+      'Total1,560,208',
     );
     expect(screen.getByLabelText('Hotel total balance')).toHaveTextContent(
       'Total642,500',
@@ -407,8 +463,9 @@ describe('popup', () => {
     expect(screen.getByText('07/05/2028')).toBeInTheDocument();
     expect(screen.getByText('24 mo inactivity')).toBeInTheDocument();
     expect(screen.getByText('18 mo inactivity')).toBeInTheDocument();
-    expect(screen.getAllByText('N/A')).toHaveLength(7);
-    expect(screen.getByText('0001')).toBeInTheDocument();
+    expect(screen.getAllByText('N/A')).toHaveLength(9);
+    expect(screen.getAllByText('0001')).toHaveLength(3);
+    expect(screen.getAllByText('0016')).toHaveLength(2);
     expect(screen.getByText('0011')).toBeInTheDocument();
     expect(screen.getByText('0012')).toBeInTheDocument();
     expect(screen.getByText('0013')).toBeInTheDocument();
@@ -419,24 +476,54 @@ describe('popup', () => {
     expect(screen.queryByText('MB000013')).not.toBeInTheDocument();
     expect(screen.queryByText('IHG000014')).not.toBeInTheDocument();
     expect(screen.queryByText('WR000015')).not.toBeInTheDocument();
+    expect(screen.getByText('v1.3.0')).toHaveAttribute(
+      'aria-label',
+      'Version 1.3.0',
+    );
     expect(
-      screen.getByText('Stored only in this Chrome profile. · v1.3.0'),
-    ).toBeInTheDocument();
+      screen.queryByText('Stored only in this Chrome profile.'),
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Check updates' }),
+      screen.getByRole('link', { name: 'Update' }),
     ).toHaveAttribute(
       'href',
       'https://github.com/itswcl/PointsTracker/releases/latest',
     );
     expect(
-      screen.getByRole('link', { name: 'Check updates' }),
+      screen.getByRole('link', { name: 'Update' }),
     ).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('button', { name: 'Setting' })).toHaveAttribute(
+      'data-tooltip',
+      'Setting',
+    );
+    expect(screen.getByRole('link', { name: 'Update' })).toHaveAttribute(
+      'data-tooltip',
+      'Update',
+    );
+    expect(screen.getByRole('button', { name: 'Export' })).toHaveAttribute(
+      'data-tooltip',
+      'Export',
+    );
+    expect(screen.getByRole('button', { name: 'Import' })).toHaveAttribute(
+      'data-tooltip',
+      'Import',
+    );
+    const utilityBar = container.querySelector('.utility-bar');
+    expect(utilityBar?.firstElementChild).toHaveTextContent('v1.3.0');
+    expect(
+      utilityBar?.querySelectorAll('.global-icon-button'),
+    ).toHaveLength(4);
+    expect(container.querySelector('footer')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('status', { name: 'Update available' }),
     ).not.toBeInTheDocument();
-    expect(container.querySelectorAll('.program-name')).toHaveLength(20);
+    expect(container.querySelectorAll('.program-name')).toHaveLength(24);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
-    expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA');
+    expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA Miles');
+    expect(container.querySelector('[aria-labelledby="unitedpool-name"] .program-name')).toHaveTextContent('UA Pool');
+    expect(container.querySelector('[aria-labelledby="unitedtravelbank-name"] .program-name')).toHaveTextContent('UA TB');
+    expect(container.querySelector('[aria-labelledby="southwest-name"] .program-name')).toHaveTextContent('Southwest');
+    expect(container.querySelector('[aria-labelledby="southwestcredit-name"] .program-name')).toHaveTextContent('SW Credit');
     expect(container.querySelector('[aria-labelledby="evaair-name"] .program-name')).toHaveTextContent('EVA');
     expect(container.querySelector('[aria-labelledby="hyatt-name"] .program-name')).toHaveTextContent('Hyatt');
     expect(container.querySelector('[aria-labelledby="ihg-name"] .program-name')).toHaveTextContent('IHG');
@@ -460,6 +547,33 @@ describe('popup', () => {
     expect(
       screen.getByRole('button', { name: 'Refresh United MileagePlus' }),
     ).toHaveAttribute('data-tooltip', 'Refresh');
+    expect(
+      screen.getByRole('button', { name: 'Refresh United Pooled Miles' }),
+    ).toHaveAttribute('data-tooltip', 'Refresh');
+    expect(
+      screen.getByRole('button', { name: 'Refresh United TravelBank' }),
+    ).toHaveAttribute('data-tooltip', 'Refresh');
+    expect(
+      screen.getByRole('button', { name: 'Refresh Southwest Rapid Rewards' }),
+    ).toHaveAttribute('data-tooltip', 'Refresh');
+    expect(
+      screen.getByRole('button', { name: 'Refresh Southwest Flight Credits' }),
+    ).toHaveAttribute('data-tooltip', 'Refresh');
+    expect(
+      screen.getByRole('button', {
+        name: 'Copy United Pooled Miles member number',
+      }),
+    ).toHaveTextContent('0001');
+    expect(
+      screen.getByRole('button', {
+        name: 'Copy United TravelBank member number',
+      }),
+    ).toHaveTextContent('0001');
+    expect(
+      screen.getByRole('button', {
+        name: 'Copy Southwest Flight Credits member number',
+      }),
+    ).toHaveTextContent('0016');
     expect(
       screen.queryByRole('button', { name: 'Open United MileagePlus account' }),
     ).not.toBeInTheDocument();
@@ -558,6 +672,7 @@ describe('popup', () => {
       'citi-name',
       'bilt-name',
       'united-name',
+      'unitedpool-name',
       'cathay-name',
       'airfrance-name',
       'virginatlantic-name',
@@ -567,6 +682,9 @@ describe('popup', () => {
       'britishairways-name',
       'ana-name',
       'delta-name',
+      'southwest-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'hyatt-name',
       'hilton-name',
       'marriott-name',
@@ -591,14 +709,18 @@ describe('popup', () => {
       'bilt-name',
       'cathay-name',
       'airfrance-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'evaair-name',
       'ana-name',
       'britishairways-name',
       'united-name',
+      'unitedpool-name',
       'virginatlantic-name',
       'alaska-name',
       'american-name',
       'delta-name',
+      'southwest-name',
       'hyatt-name',
       'hilton-name',
       'marriott-name',
@@ -637,6 +759,10 @@ describe('popup', () => {
       'cathay-name',
       'ana-name',
       'britishairways-name',
+      'unitedpool-name',
+      'southwest-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'hyatt-name',
       'hilton-name',
       'marriott-name',
@@ -662,6 +788,7 @@ describe('popup', () => {
       'citi-name',
       'bilt-name',
       'united-name',
+      'unitedpool-name',
       'cathay-name',
       'airfrance-name',
       'virginatlantic-name',
@@ -671,6 +798,9 @@ describe('popup', () => {
       'britishairways-name',
       'ana-name',
       'delta-name',
+      'southwest-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'marriott-name',
       'hilton-name',
       'hyatt-name',
@@ -696,6 +826,7 @@ describe('popup', () => {
       'citi-name',
       'bilt-name',
       'united-name',
+      'unitedpool-name',
       'cathay-name',
       'airfrance-name',
       'virginatlantic-name',
@@ -705,6 +836,9 @@ describe('popup', () => {
       'britishairways-name',
       'ana-name',
       'delta-name',
+      'southwest-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'marriott-name',
       'hyatt-name',
       'hilton-name',
@@ -729,6 +863,7 @@ describe('popup', () => {
       'amex-name',
       'bilt-name',
       'united-name',
+      'unitedpool-name',
       'cathay-name',
       'airfrance-name',
       'virginatlantic-name',
@@ -738,6 +873,9 @@ describe('popup', () => {
       'britishairways-name',
       'ana-name',
       'delta-name',
+      'southwest-name',
+      'unitedtravelbank-name',
+      'southwestcredit-name',
       'marriott-name',
       'hyatt-name',
       'hilton-name',
@@ -775,6 +913,70 @@ describe('popup', () => {
       'program-balance',
       'program-actions',
     ]);
+  });
+
+  it('hides disabled programs without deleting their saved data', async () => {
+    render(<App />);
+
+    expect(await screen.findByText('125,400')).toBeInTheDocument();
+    expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
+      'Total1,560,208',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Setting' }));
+    expect(
+      screen.getByRole('region', { name: 'Settings' }),
+    ).toBeInTheDocument();
+    const unitedPoolToggle = screen.getByRole('switch', {
+      name: 'Show United Pooled Miles',
+    });
+    expect(unitedPoolToggle).toBeChecked();
+
+    fireEvent.click(unitedPoolToggle);
+
+    await waitFor(() => {
+      expect(unitedPoolToggle).not.toBeChecked();
+    });
+    expect(unitedPoolToggle).toHaveTextContent('Hidden');
+    fireEvent.click(screen.getByRole('button', { name: 'Back to ledger' }));
+    expect(
+      screen.queryByRole('heading', { name: 'United Pooled Miles' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
+      'Total1,538,208',
+    );
+    expect(storageArea.snapshot()).toMatchObject({
+      pointsTrackerSettings: {
+        schemaVersion: 1,
+        disabledProgramIds: ['unitedpool'],
+      },
+      [STORAGE_KEY]: {
+        records: {
+          unitedpool: {
+            automatic: {
+              balance: 22000,
+            },
+          },
+        },
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Setting' }));
+    const hiddenUnitedPoolToggle = screen.getByRole('switch', {
+      name: 'Show United Pooled Miles',
+    });
+    expect(hiddenUnitedPoolToggle).not.toBeChecked();
+    fireEvent.click(hiddenUnitedPoolToggle);
+    await waitFor(() => {
+      expect(hiddenUnitedPoolToggle).toBeChecked();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Back to ledger' }));
+    expect(
+      await screen.findByRole('heading', { name: 'United Pooled Miles' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
+      'Total1,560,208',
+    );
   });
 
   it('copies a captured member number from its ledger row', async () => {
@@ -909,6 +1111,46 @@ describe('popup', () => {
         },
       });
     });
+  });
+
+  it('edits cash balances as dollars while storing exact cents', async () => {
+    render(<App />);
+    expect(await screen.findByText('$697.96')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Edit Southwest Flight Credits',
+      }),
+    );
+
+    expect(screen.getByLabelText('Balance (USD)')).toHaveValue('697.96');
+    fireEvent.change(screen.getByLabelText('Balance (USD)'), {
+      target: { value: '88.07' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save override' }));
+
+    await waitFor(() => {
+      expect(storageArea.snapshot()).toMatchObject({
+        [STORAGE_KEY]: {
+          records: {
+            southwestcredit: {
+              manualOverride: {
+                balance: 8807,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'fixed_date',
+                  date: '2028-01-15',
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
+      'Total1,560,208',
+    );
   });
 
   it('allows a signed manual balance only for Credit Card programs', async () => {

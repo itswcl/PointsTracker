@@ -21,13 +21,22 @@ import { inspectHyatt } from './hyatt.js';
 import { inspectHilton } from './hilton.js';
 import { inspectIhg } from './ihg.js';
 import { inspectMarriott, prepareMarriott } from './marriott.js';
+import { inspectSouthwest } from './southwest.js';
+import {
+  inspectSouthwestCredit,
+  prepareSouthwestCredit,
+} from './southwestcredit.js';
 import { inspectUnited } from './united.js';
+import { inspectUnitedPool } from './unitedpool.js';
+import { inspectUnitedTravelBank } from './unitedtravelbank.js';
 import { inspectVirginAtlantic } from './virginatlantic.js';
 import { inspectWyndham } from './wyndham.js';
 import { inspectionResult } from './shared.js';
 
 const INSPECTORS = {
   [PROGRAM_IDS.UNITED]: inspectUnited,
+  [PROGRAM_IDS.UNITED_POOL]: inspectUnitedPool,
+  [PROGRAM_IDS.UNITED_TRAVELBANK]: inspectUnitedTravelBank,
   [PROGRAM_IDS.CATHAY]: inspectCathay,
   [PROGRAM_IDS.AIR_FRANCE]: inspectAirFrance,
   [PROGRAM_IDS.VIRGIN_ATLANTIC]: inspectVirginAtlantic,
@@ -37,6 +46,8 @@ const INSPECTORS = {
   [PROGRAM_IDS.BRITISH_AIRWAYS]: inspectBritishAirways,
   [PROGRAM_IDS.ANA]: inspectAna,
   [PROGRAM_IDS.DELTA]: inspectDelta,
+  [PROGRAM_IDS.SOUTHWEST]: inspectSouthwest,
+  [PROGRAM_IDS.SOUTHWEST_CREDIT]: inspectSouthwestCredit,
   [PROGRAM_IDS.HYATT]: inspectHyatt,
   [PROGRAM_IDS.HILTON]: inspectHilton,
   [PROGRAM_IDS.MARRIOTT]: inspectMarriott,
@@ -52,6 +63,7 @@ const INSPECTORS = {
 const PREPARERS: Partial<Record<ProgramId, ProgramPreparer>> = {
   [PROGRAM_IDS.MARRIOTT]: prepareMarriott,
   [PROGRAM_IDS.BILT]: prepareBilt,
+  [PROGRAM_IDS.SOUTHWEST_CREDIT]: prepareSouthwestCredit,
 };
 
 export function prepareProgramPage(programId: unknown, document: Document): boolean {

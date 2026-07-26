@@ -56,16 +56,19 @@ const LOGIN_PAGE_SELECTORS = Object.freeze([
   '[data-testid="sign-in-form"]',
 ]);
 
+export function readUnitedMemberNumber(document: Document): string | null {
+  return readMemberNumber(document, MEMBER_NUMBER_RULES);
+}
+
 export function inspectUnited(document: Document, rawUrl: string) {
   const balance = readBalance(document, BALANCE_SELECTORS);
   if (balance !== null) {
-    const memberNumber = readMemberNumber(document, MEMBER_NUMBER_RULES);
     return inspectionResult({
       kind: 'success',
       authState: 'authenticated',
       capture: {
         balance,
-        memberNumber,
+        memberNumber: readUnitedMemberNumber(document),
         expiration: {
           type: 'never',
           date: null,

@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatBalance,
+  formatUsdCents,
+  formatUsdCentsInput,
   parseBalance,
   parseSignedBalance,
+  parseUsdCents,
 } from '../../src/domain/balances.js';
 
 describe('balance helpers', () => {
@@ -28,5 +31,16 @@ describe('balance helpers', () => {
     expect(parseSignedBalance('−75')).toBe(-75);
     expect(formatBalance(-1250, true)).toBe('-1,250');
     expect(formatBalance(-1250)).toBe('—');
+  });
+
+  it('parses and formats USD values as exact integer cents', () => {
+    expect(parseUsdCents('$1,234.56')).toBe(123456);
+    expect(parseUsdCents('0')).toBe(0);
+    expect(parseUsdCents('12.5')).toBe(1250);
+    expect(parseUsdCents('12.345')).toBeNull();
+    expect(parseUsdCents('-1.00')).toBeNull();
+    expect(formatUsdCents(123456)).toBe('$1,234.56');
+    expect(formatUsdCents(null)).toBe('—');
+    expect(formatUsdCentsInput(123456)).toBe('1234.56');
   });
 });

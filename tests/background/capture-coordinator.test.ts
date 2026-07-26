@@ -4,16 +4,23 @@ import {
   type RefreshResult,
 } from '../../src/background/capture-coordinator.js';
 import { MESSAGE_TYPES } from '../../src/messaging.js';
+import {
+  SETTINGS_STORAGE_KEY,
+} from '../../src/domain/settings.js';
+import { SettingsRepository } from '../../src/storage/settings-repository.js';
 import { SessionRepository } from '../../src/storage/session-repository.js';
 import { StateRepository } from '../../src/storage/state-repository.js';
+import type { ProgramId } from '../../src/types.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
 
 function setup({
   timeoutMs = 30_000,
   loginWaitMs = 180_000,
+  disabledProgramIds = [],
 }: {
   timeoutMs?: number;
   loginWaitMs?: number;
+  disabledProgramIds?: ProgramId[];
 } = {}) {
   let nextTabId = 40;
   const browserApi = {
@@ -28,9 +35,18 @@ function setup({
     },
   };
   const stateRepository = new StateRepository(createFakeStorageArea());
+  const settingsRepository = new SettingsRepository(
+    createFakeStorageArea({
+      [SETTINGS_STORAGE_KEY]: {
+        schemaVersion: 1,
+        disabledProgramIds,
+      },
+    }),
+  );
   const sessionRepository = new SessionRepository(createFakeStorageArea());
   const coordinator = createCaptureCoordinator({
     browserApi,
+    settingsRepository,
     stateRepository,
     sessionRepository,
     timeoutMs,
@@ -81,6 +97,48 @@ describe('capture coordinator', () => {
     expect(state.records.united.automatic.balance).toBe(125400);
     expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
     coordinator.destroy();
+  });
+
+  it('does not open or passively save a disabled program', async () => {
+    const { browserApi, coordinator, stateRepository } = setup({
+      disabledProgramIds: ['delta'],
+    });
+
+    await expect(
+      coordinator.refreshProgram('delta', { force: true }),
+    ).resolves.toEqual({ ok: true, skipped: 'disabled' });
+    expect(browserApi.tabs.create).not.toHaveBeenCalled();
+
+    await expect(
+      coordinator.handleMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'delta',
+        pageUrl: 'https://www.delta.com/myskymiles/overview',
+        final: true,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 119300,
+            memberNumber: 'DL000010',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      captured: false,
+      skipped: 'disabled',
+    });
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        delta: {
+          automatic: { balance: null },
+          status: 'not_updated',
+        },
+      },
+    });
   });
 
   it('reveals a login page and keeps the capture active for the longer login window', async () => {
@@ -373,6 +431,270 @@ describe('capture coordinator', () => {
       balance: 42300,
       memberNumber: 'BA000008',
       expiration: { date: '2029-01-01' },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('uses one owned tab for concurrent refreshes in the same capture group', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+
+    const [pointsRefresh, creditRefresh] = await Promise.all([
+      coordinator.refreshProgram('southwest', { force: true }),
+      coordinator.refreshProgram('southwestcredit', { force: true }),
+    ]);
+
+    expect(pointsRefresh).toMatchObject({ ok: true, tabId: 41 });
+    expect(creditRefresh).toEqual({ ok: true, alreadyRunning: true });
+    expect(browserApi.tabs.create).toHaveBeenCalledTimes(1);
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: { status: 'updating' },
+        southwestcredit: { status: 'updating' },
+      },
+    });
+    coordinator.destroy();
+  });
+
+  it('atomically saves Southwest points and Flight Credits from one page', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 20383,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 69796,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'fixed_date',
+                  date: '2028-01-15',
+                  note: 'Earliest Southwest Flight Credit expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: {
+          automatic: {
+            balance: 20383,
+            memberNumber: 'RR000016',
+          },
+          status: 'fresh',
+        },
+        southwestcredit: {
+          automatic: {
+            balance: 69796,
+            memberNumber: 'RR000016',
+            expiration: { date: '2028-01-15' },
+          },
+          status: 'fresh',
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('keeps a shared page open until every row finishes rendering', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    const refresh = await coordinator.refreshProgram('southwestcredit', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    const pointsObservation = {
+      programId: 'southwest' as const,
+      result: {
+        kind: 'success' as const,
+        authState: 'authenticated' as const,
+        capture: {
+          balance: 20383,
+          memberNumber: 'RR000016',
+          expiration: {
+            type: 'never' as const,
+            date: null,
+            note: 'No expiration',
+          },
+        },
+        reason: null,
+      },
+    };
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          pointsObservation,
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'not_found',
+              authState: 'authenticated',
+              capture: null,
+              reason: 'expiration_not_found',
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: {
+          automatic: { balance: 20383 },
+          status: 'fresh',
+        },
+        southwestcredit: {
+          automatic: { balance: null },
+          status: 'updating',
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).not.toHaveBeenCalled();
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: true,
+        observations: [
+          pointsObservation,
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 2500,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'All Southwest Flight Credits show no expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwestcredit: {
+          automatic: {
+            balance: 2500,
+            memberNumber: 'RR000016',
+          },
+          status: 'fresh',
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('times out only shared-page rows that are still pending', async () => {
+    const { browserApi, coordinator, stateRepository } = setup({
+      timeoutMs: 1_000,
+    });
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 20383,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'not_found',
+              authState: 'authenticated',
+              capture: null,
+              reason: 'expiration_not_found',
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: {
+          automatic: { balance: 20383 },
+          status: 'fresh',
+          error: null,
+        },
+        southwestcredit: {
+          status: 'error',
+          error: 'capture_timeout',
+        },
+      },
     });
     expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
     coordinator.destroy();

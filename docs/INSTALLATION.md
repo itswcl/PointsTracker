@@ -46,29 +46,30 @@ The Points Tracker icon should now remain visible in the Chrome toolbar.
 ## First use
 
 1. Select the Points Tracker toolbar icon.
-2. Select the pencil icon beside a program to enter a balance manually.
-3. Select the refresh icon beside a program to open its official account page.
-4. Sign in normally on the airline, hotel, or card-rewards website. Never enter an account password into Points Tracker.
-5. If sign-in is needed, Points Tracker brings the official login tab forward and keeps watching it for up to three minutes.
-6. After the official page loads, Points Tracker attempts to read only the displayed program balance and, where applicable, the loyalty member number and expiration information.
+2. Select the gear icon in the upper-right (hover text: **Setting**) and turn off any programs you do not use. Their saved values remain local and return if you enable them again.
+3. Select the pencil icon beside a program to enter a balance manually.
+4. Select the refresh icon beside a program to open its official account page.
+5. Sign in normally on the airline, hotel, or card-rewards website. Never enter an account password into Points Tracker.
+6. If sign-in is needed, Points Tracker brings the official login tab forward and keeps watching it for up to three minutes.
+7. After the official page loads, Points Tracker attempts to read only the displayed program balance and, where applicable, the loyalty member number and expiration information.
 
 If a website changes and automatic refresh does not work, your last saved value remains available and you can update it with the pencil icon.
 
 ## Chrome's permission message
 
-Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Capital One, Chase, Citi, and Bilt account hosts, plus GitHub's public API for checking releases. The production manifest requests `storage` plus exact host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, `www.marriott.com`, `www.ihg.com`, `www.wyndhamhotels.com`, `global.americanexpress.com`, `myaccounts.capitalone.com`, `ultimaterewardspoints.chase.com`, `online.citi.com`, `www.bilt.com`, and `api.github.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. GitHub receives an anonymous request for the latest public release no more than once every 24 hours; no loyalty data is included. The extension does not request cookie, history, password, or network-interception permissions.
+Chrome should disclose access to United, Southwest, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Capital One, Chase, Citi, and Bilt account hosts, plus GitHub's public API for checking releases. The production manifest requests `storage` plus exact host access to `*.united.com`, `www.southwest.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, `www.marriott.com`, `www.ihg.com`, `www.wyndhamhotels.com`, `global.americanexpress.com`, `myaccounts.capitalone.com`, `ultimaterewardspoints.chase.com`, `online.citi.com`, `www.bilt.com`, and `api.github.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. GitHub receives an anonymous request for the latest public release no more than once every 24 hours; no loyalty data is included. The extension does not request cookie, history, password, or network-interception permissions.
 
 ## Updating Points Tracker
 
 Installing a newer copy does not automatically transfer the locally saved ledger. Before updating:
 
-1. Open Points Tracker. If a newer release is available, an update banner appears automatically; select **Update**. You can also select **Check updates** to open the latest GitHub release manually.
-2. If a newer version is available, select **Export** to save a backup.
+1. Open Points Tracker. If a newer release is available, an update banner appears automatically; select **Update**. You can also select the upper-right icon with hover text **Update** to open the latest GitHub release manually.
+2. If a newer version is available, select the upper-right icon with hover text **Export** to save a backup.
 3. Download and unzip the newest `points-tracker-chrome.zip`.
 4. Open `chrome://extensions`.
 5. Select **Remove** on the old Points Tracker card.
 6. Select **Load unpacked** and choose the newly unzipped folder.
-7. Open Points Tracker and select **Import** to restore your backup.
+7. Open Points Tracker and select the upper-right icon with hover text **Import** to restore your backup.
 
 ## Troubleshooting
 

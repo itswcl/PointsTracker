@@ -1,5 +1,7 @@
 export const PROGRAM_IDS = {
   UNITED: 'united',
+  UNITED_POOL: 'unitedpool',
+  UNITED_TRAVELBANK: 'unitedtravelbank',
   CATHAY: 'cathay',
   AIR_FRANCE: 'airfrance',
   VIRGIN_ATLANTIC: 'virginatlantic',
@@ -9,6 +11,8 @@ export const PROGRAM_IDS = {
   BRITISH_AIRWAYS: 'britishairways',
   ANA: 'ana',
   DELTA: 'delta',
+  SOUTHWEST: 'southwest',
+  SOUTHWEST_CREDIT: 'southwestcredit',
   HYATT: 'hyatt',
   HILTON: 'hilton',
   MARRIOTT: 'marriott',
@@ -68,6 +72,10 @@ export interface ProgramDefinition {
   readonly name: string;
   readonly displayName: string;
   readonly currencyName: string;
+  readonly balanceFormat?: 'whole_number' | 'usd_cents';
+  readonly captureGroup?: string;
+  readonly includeInBalanceSort?: boolean;
+  readonly includeInCategoryTotal?: boolean;
   readonly accountUrl: string;
   readonly loginUrl: string;
   readonly memberNumberUrl?: string;
@@ -83,6 +91,11 @@ export interface AutomaticCapture {
   readonly balance: number;
   readonly memberNumber: string | null;
   readonly expiration: Expiration;
+}
+
+export interface ProgramCapture {
+  readonly programId: ProgramId;
+  readonly capture: AutomaticCapture;
 }
 
 export interface AutomaticRecord {
@@ -130,6 +143,11 @@ export interface ProgramRecord {
 export interface PointsState {
   schemaVersion: 1;
   records: Record<ProgramId, ProgramRecord>;
+}
+
+export interface PointsTrackerSettings {
+  schemaVersion: 1;
+  disabledProgramIds: ProgramId[];
 }
 
 export interface DisplayRecord {

@@ -6,7 +6,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 
 ## Scope
 
-- In: United MileagePlus, Cathay Asia Miles, Air France Flying Blue, Virgin Atlantic Flying Club, Alaska Airlines Atmos Rewards, American AAdvantage, EVA Air Infinity MileageLands, British Airways Club, ANA Mileage Club, Delta SkyMiles, World of Hyatt, Hilton Honors, Marriott Bonvoy, IHG One Rewards, Wyndham Rewards, American Express Membership Rewards, Capital One Miles, Chase Ultimate Rewards, Citi ThankYou Rewards, Bilt Rewards, automatic account-page balance capture, member-number/expiration capture where applicable, manual overrides, local storage, JSON backup, compact popup, failure recovery, tests, and unpacked installation.
+- In: United MileagePlus miles, pooled miles, and TravelBank; Southwest Rapid Rewards points and Flight Credits; Cathay Asia Miles; Air France Flying Blue; Virgin Atlantic Flying Club; Alaska Airlines Atmos Rewards; American AAdvantage; EVA Air Infinity MileageLands; British Airways Club; ANA Mileage Club; Delta SkyMiles; World of Hyatt; Hilton Honors; Marriott Bonvoy; IHG One Rewards; Wyndham Rewards; American Express Membership Rewards; Capital One Miles; Chase Ultimate Rewards; Citi ThankYou Rewards; Bilt Rewards; automatic account-page balance capture; member-number/expiration capture where applicable; manual overrides; per-program visibility settings; local storage; JSON backup; compact popup; failure recovery; tests; and unpacked installation.
 - Out: credentials, cookies, network interception, cloud services, alerts, recommendations, transaction history, P2, and Chrome Web Store publishing.
 
 ## Action Items
@@ -19,7 +19,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 - [x] Implement the capture coordinator with owned-tab tracking, cooldowns, and timeouts.
 - [x] Reveal login-required refresh tabs immediately and extend only their observation window to three minutes.
 - [x] Reuse the same extension-owned tab for split account data on Flying Blue, British Airways, and ANA, preserving the primary balance and expiration before navigating to the member-number page.
-- [x] Implement all twenty airline, hotel, and Credit Card adapters behind a shared parser contract.
+- [x] Implement all twenty-four airline, hotel, and Credit Card row adapters behind a shared parser contract.
 - [x] Build the title-free three-column popup with full airline/hotel rows, balance-only Credit Card rows, separate category totals, editing, refresh, sorting, and backup interactions.
 - [x] Add adapter, domain, storage, coordinator, privacy, and UI tests.
 - [x] Run lint, tests, production build, and manifest/package inspection.
@@ -28,7 +28,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 ## Open Questions
 
 - Cathay's account URL and production selectors were confirmed live on 07/17/2026; the rebuilt extension still needs the end-to-end reload check.
-- United's production balance selector was confirmed live on 07/17/2026; the rebuilt extension still needs the end-to-end reload check.
+- United's production MileagePlus, pooled-miles, and TravelBank rendered structures were confirmed live; the rebuilt extension still needs the end-to-end reload check.
 - Air France Flying Blue's production balance, expiration, and membership-card selectors were confirmed live; the rebuilt extension still needs the end-to-end reload check.
 - Virgin Atlantic Flying Club's production account-overview balance and member-number selectors were confirmed live; the rebuilt extension still needs the end-to-end reload check.
 - Alaska Airlines' production homepage shadow-root balance path was confirmed live on 07/17/2026; the rebuilt extension still needs the end-to-end reload check.
@@ -37,6 +37,7 @@ Build the approved MVP as a Vite/CRXJS-powered Manifest V3 extension with a Reac
 - British Airways' production Avios balance and newest statement-month structure were confirmed live on 07/17/2026; the rebuilt extension still needs the end-to-end reload check.
 - ANA's production total balance and latest-activity expiry-month structure were confirmed live on 07/17/2026; the rebuilt extension still needs the end-to-end reload check.
 - Delta SkyMiles' production overview balance selector and no-expiration status were confirmed live on 07/23/2026; the rebuilt extension still needs the end-to-end reload check.
+- Southwest's production Available Points, member-number, and expanded Flight Credit structures were confirmed live on 07/26/2026; the rebuilt extension still needs the end-to-end reload check.
 - World of Hyatt's production `Current Point Balance` structure was confirmed live on 07/18/2026; the rebuilt extension still needs the end-to-end reload check.
 - Hilton Honors' hydrated `totalPointsFmt` and `pointsExpiration` fields, visible balance fallback, and 24-month inactivity fallback were confirmed live on 07/19/2026.
 - Marriott Bonvoy's production balance, custom `All Qualifying` filter, and newest activity-row date were confirmed live on 07/19/2026; the rebuilt extension still needs the end-to-end reload check.

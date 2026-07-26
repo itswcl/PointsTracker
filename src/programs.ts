@@ -12,15 +12,51 @@ const PROGRAM_DEFINITIONS = {
     id: PROGRAM_IDS.UNITED,
     category: PROGRAM_CATEGORIES.AIRLINE,
     name: 'United MileagePlus',
-    displayName: 'UA',
+    displayName: 'UA Miles',
     currencyName: 'miles',
     accountUrl: 'https://www.united.com/en/us/myunited',
     loginUrl: 'https://www.united.com/en/us/myunited',
     hosts: ['united.com', 'www.united.com'],
+    captureGroup: 'united',
     defaultExpiration: {
       type: 'never',
       date: null,
       note: 'No expiration',
+    },
+  },
+  [PROGRAM_IDS.UNITED_POOL]: {
+    id: PROGRAM_IDS.UNITED_POOL,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'United Pooled Miles',
+    displayName: 'UA Pool',
+    currencyName: 'pooled miles',
+    accountUrl: 'https://www.united.com/en/us/myunited',
+    loginUrl: 'https://www.united.com/en/us/myunited',
+    hosts: ['united.com', 'www.united.com'],
+    captureGroup: 'united',
+    defaultExpiration: {
+      type: 'never',
+      date: null,
+      note: 'No expiration',
+    },
+  },
+  [PROGRAM_IDS.UNITED_TRAVELBANK]: {
+    id: PROGRAM_IDS.UNITED_TRAVELBANK,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'United TravelBank',
+    displayName: 'UA TB',
+    currencyName: 'TravelBank funds',
+    balanceFormat: 'usd_cents',
+    accountUrl: 'https://www.united.com/en/us/myunited',
+    loginUrl: 'https://www.united.com/en/us/myunited',
+    hosts: ['united.com', 'www.united.com'],
+    captureGroup: 'united',
+    includeInBalanceSort: false,
+    includeInCategoryTotal: false,
+    defaultExpiration: {
+      type: 'unknown',
+      date: null,
+      note: 'Exact expiration shown on the account page when available',
     },
   },
   [PROGRAM_IDS.CATHAY]: {
@@ -168,6 +204,41 @@ const PROGRAM_DEFINITIONS = {
       type: 'never',
       date: null,
       note: 'No expiration',
+    },
+  },
+  [PROGRAM_IDS.SOUTHWEST]: {
+    id: PROGRAM_IDS.SOUTHWEST,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'Southwest Rapid Rewards',
+    displayName: 'Southwest',
+    currencyName: 'points',
+    accountUrl: 'https://www.southwest.com/loyalty/myaccount/',
+    loginUrl: 'https://www.southwest.com/loyalty/myaccount/',
+    hosts: ['www.southwest.com'],
+    captureGroup: 'southwest',
+    defaultExpiration: {
+      type: 'never',
+      date: null,
+      note: 'No expiration',
+    },
+  },
+  [PROGRAM_IDS.SOUTHWEST_CREDIT]: {
+    id: PROGRAM_IDS.SOUTHWEST_CREDIT,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'Southwest Flight Credits',
+    displayName: 'SW Credit',
+    currencyName: 'flight credits',
+    balanceFormat: 'usd_cents',
+    accountUrl: 'https://www.southwest.com/loyalty/myaccount/',
+    loginUrl: 'https://www.southwest.com/loyalty/myaccount/',
+    hosts: ['www.southwest.com'],
+    captureGroup: 'southwest',
+    includeInBalanceSort: false,
+    includeInCategoryTotal: false,
+    defaultExpiration: {
+      type: 'unknown',
+      date: null,
+      note: 'Earliest rendered Flight Credit expiration when available',
     },
   },
   [PROGRAM_IDS.HYATT]: {
@@ -388,20 +459,49 @@ export function programAllowsSignedBalance(
   return program.category === PROGRAM_CATEGORIES.CREDIT_CARD;
 }
 
-export function detectProgramFromUrl(rawUrl: string): ProgramDefinition | null {
+export function programUsesUsdCents(program: ProgramDefinition): boolean {
+  return program.balanceFormat === 'usd_cents';
+}
+
+export function programIncludedInBalanceSort(
+  program: ProgramDefinition,
+): boolean {
+  return program.includeInBalanceSort !== false;
+}
+
+export function programIncludedInCategoryTotal(
+  program: ProgramDefinition,
+): boolean {
+  return program.includeInCategoryTotal !== false;
+}
+
+export function programsInCaptureGroup(
+  program: ProgramDefinition,
+): readonly ProgramDefinition[] {
+  if (!program.captureGroup) return [program];
+  return PROGRAM_LIST.filter(
+    (candidate) => candidate.captureGroup === program.captureGroup,
+  );
+}
+
+export function detectProgramsFromUrl(
+  rawUrl: string,
+): readonly ProgramDefinition[] {
   let hostname: string;
 
   try {
     hostname = new URL(rawUrl).hostname.toLowerCase();
   } catch {
-    return null;
+    return [];
   }
 
-  return (
-    PROGRAM_LIST.find((program) =>
-      program.hosts.some(
-        (host) => hostname === host || hostname.endsWith(`.${host}`),
-      ),
-    ) ?? null
+  return PROGRAM_LIST.filter((program) =>
+    program.hosts.some(
+      (host) => hostname === host || hostname.endsWith(`.${host}`),
+    ),
   );
+}
+
+export function detectProgramFromUrl(rawUrl: string): ProgramDefinition | null {
+  return detectProgramsFromUrl(rawUrl)[0] ?? null;
 }

@@ -8,8 +8,11 @@ import {
 } from 'react';
 import {
   formatBalance,
+  formatUsdCents,
+  formatUsdCentsInput,
   parseBalance,
   parseSignedBalance,
+  parseUsdCents,
 } from '../../src/domain/balances.js';
 import {
   formatDateKey,
@@ -21,14 +24,18 @@ import {
   getDisplayRecord,
   isExpirationType,
 } from '../../src/domain/records.js';
+import { isProgramEnabled } from '../../src/domain/settings.js';
 import { normalizeMemberNumber } from '../../src/domain/member-numbers.js';
 import { MESSAGE_TYPES } from '../../src/messaging.js';
 import {
   PROGRAM_CATEGORIES,
   PROGRAM_LIST,
   programAllowsSignedBalance,
+  programIncludedInBalanceSort,
+  programIncludedInCategoryTotal,
   programShowsExpiration,
   programShowsMemberNumber,
+  programUsesUsdCents,
 } from '../../src/programs.js';
 import { parseBackup, serializeBackup } from '../../src/storage/backup.js';
 import type {
@@ -36,6 +43,7 @@ import type {
   ManualOverrideInput,
   NormalizedExpiration,
   PointsState,
+  PointsTrackerSettings,
   ProgramCategory,
   ProgramDefinition,
   ProgramId,
@@ -43,6 +51,7 @@ import type {
 } from '../../src/types.js';
 import { LATEST_RELEASE_URL } from '../../src/update-check.js';
 import { usePointsState } from './use-points-state.js';
+import { usePointsSettings } from './use-points-settings.js';
 import { useUpdateCheck } from './use-update-check.js';
 
 const ERROR_LABELS: Readonly<Record<string, string>> = Object.freeze({
@@ -115,7 +124,10 @@ function sortedPrograms(
   if (sortMode === 'balance') {
     return stableSortPrograms(
       programs,
-      (program) => getDisplayRecord(state.records[program.id]).balance,
+      (program) =>
+        programIncludedInBalanceSort(program)
+          ? getDisplayRecord(state.records[program.id]).balance
+          : null,
       (left, right) => right - left,
     );
   }
@@ -136,15 +148,41 @@ function totalBalanceForPrograms(
   state: PointsState,
 ): number {
   return programs.reduce((total, program) => {
+    if (!programIncludedInCategoryTotal(program)) return total;
     const balance = getDisplayRecord(state.records[program.id]).balance;
     return typeof balance === 'number' ? total + balance : total;
   }, 0);
+}
+
+function formatProgramBalance(
+  program: ProgramDefinition,
+  balance: number | null,
+): string {
+  return programUsesUsdCents(program)
+    ? formatUsdCents(balance)
+    : formatBalance(balance, programAllowsSignedBalance(program));
+}
+
+function cashProgramsLast(
+  programs: readonly ProgramDefinition[],
+): ProgramDefinition[] {
+  return [
+    ...programs.filter((program) => !programUsesUsdCents(program)),
+    ...programs.filter(programUsesUsdCents),
+  ];
 }
 
 function memberNumberSuffix(memberNumber: string | null): string {
   if (!memberNumber) return '—';
   const compactNumber = memberNumber.replace(/[^A-Za-z0-9]/g, '');
   return compactNumber.slice(-4) || '—';
+}
+
+function programDisplayName(programId: ProgramId): string {
+  return (
+    PROGRAM_LIST.find((program) => program.id === programId)?.displayName ??
+    'Program'
+  );
 }
 
 function RefreshIcon() {
@@ -170,6 +208,50 @@ function RestoreIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M5 8V4M5 4h4" />
       <path d="M5.5 4.5A8 8 0 1 1 4 14" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z" />
+    </svg>
+  );
+}
+
+function UpdateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 11a8 8 0 0 0-14.9-4M4 4v5h5" />
+      <path d="M4 13a8 8 0 0 0 14.9 4M20 20v-5h-5" />
+    </svg>
+  );
+}
+
+function ExportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 15V3M8 7l4-4 4 4" />
+      <path d="M5 11v8h14v-8" />
+    </svg>
+  );
+}
+
+function ImportIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3v12M8 11l4 4 4-4" />
+      <path d="M5 11v8h14v-8" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m15 18-6-6 6-6" />
     </svg>
   );
 }
@@ -220,6 +302,7 @@ function ProgramRow({
   const showsMemberNumber = programShowsMemberNumber(program);
   const showsExpiration = programShowsExpiration(program);
   const isBalanceOnly = !showsMemberNumber && !showsExpiration;
+  const usesUsdCents = programUsesUsdCents(program);
   const errorText = display.error
     ? ERROR_LABELS[display.error] ?? 'The latest update did not finish.'
     : null;
@@ -231,7 +314,7 @@ function ProgramRow({
 
   return (
     <article
-      className={`program-row${isBalanceOnly ? ' program-row--balance-only' : ''}`}
+      className={`program-row${isBalanceOnly ? ' program-row--balance-only' : ''}${usesUsdCents ? ' program-row--usd' : ''}`}
       aria-labelledby={`${program.id}-name`}
     >
       <h2
@@ -243,10 +326,7 @@ function ProgramRow({
         {program.displayName}
       </h2>
       <strong className="program-balance">
-        {formatBalance(
-          display.balance,
-          programAllowsSignedBalance(program),
-        )}
+        {formatProgramBalance(program, display.balance)}
       </strong>
       {showsMemberNumber ? (
         memberNumber ? (
@@ -469,7 +549,11 @@ function EditPanel({
   const showsMemberNumber = programShowsMemberNumber(program);
   const showsExpiration = programShowsExpiration(program);
   const [balanceText, setBalanceText] = useState(
-    display.balance === null ? '' : String(display.balance),
+    programUsesUsdCents(program)
+      ? formatUsdCentsInput(display.balance)
+      : display.balance === null
+        ? ''
+        : String(display.balance),
   );
   const [memberNumberText, setMemberNumberText] = useState(
     display.memberNumber ?? '',
@@ -482,12 +566,16 @@ function EditPanel({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const balance = programAllowsSignedBalance(program)
-      ? parseSignedBalance(balanceText)
-      : parseBalance(balanceText);
+    const balance = programUsesUsdCents(program)
+      ? parseUsdCents(balanceText)
+      : programAllowsSignedBalance(program)
+        ? parseSignedBalance(balanceText)
+        : parseBalance(balanceText);
     if (balance === null) {
       setFormError(
-        programAllowsSignedBalance(program)
+        programUsesUsdCents(program)
+          ? 'Enter a dollar balance of zero or more, with up to two decimal places.'
+          : programAllowsSignedBalance(program)
           ? 'Enter a whole-number balance.'
           : 'Enter a whole-number balance of zero or more.',
       );
@@ -550,13 +638,15 @@ function EditPanel({
 
         <form onSubmit={handleSubmit}>
           <label>
-            Balance
+            {programUsesUsdCents(program) ? 'Balance (USD)' : 'Balance'}
             <input
               autoFocus
-              inputMode="numeric"
+              inputMode={
+                programUsesUsdCents(program) ? 'decimal' : 'numeric'
+              }
               value={balanceText}
               onChange={(event) => setBalanceText(event.target.value)}
-              placeholder="0"
+              placeholder={programUsesUsdCents(program) ? '0.00' : '0'}
             />
           </label>
 
@@ -630,6 +720,110 @@ function EditPanel({
   );
 }
 
+interface SettingsViewProps {
+  settings: PointsTrackerSettings;
+  onChange: (programId: ProgramId, enabled: boolean) => void | Promise<void>;
+  onBack: () => void;
+}
+
+function SettingsView({
+  settings,
+  onChange,
+  onBack,
+}: SettingsViewProps) {
+  return (
+    <section
+      className="settings-view"
+      aria-labelledby="settings-title"
+      aria-describedby="settings-description"
+    >
+      <header className="settings-view-header">
+        <button
+          className="settings-back-button"
+          type="button"
+          onClick={onBack}
+          aria-label="Back to ledger"
+          data-tooltip="Back"
+        >
+          <BackIcon />
+        </button>
+        <div>
+          <p className="eyebrow">Ledger display</p>
+          <h1 id="settings-title">Settings</h1>
+          <p id="settings-description">
+            Choose which programs appear. Changes save automatically.
+          </p>
+        </div>
+      </header>
+
+      <div className="settings-columns">
+        {PROGRAM_GROUPS.map((group) => (
+          <section
+            className={`settings-category settings-category--${group.id}`}
+            key={group.id}
+            aria-labelledby={`${group.id}-settings-title`}
+          >
+            <div className="settings-category-heading">
+              <h2 id={`${group.id}-settings-title`}>{group.label}</h2>
+              <span aria-hidden="true">Show</span>
+            </div>
+            <div className="settings-programs">
+              {cashProgramsLast(
+                PROGRAM_LIST.filter(
+                  (program) => program.category === group.id,
+                ),
+              ).map((program) => {
+                const enabled = isProgramEnabled(settings, program.id);
+                return (
+                  <button
+                    className="settings-program"
+                    type="button"
+                    role="switch"
+                    aria-checked={enabled}
+                    aria-label={`Show ${program.name}`}
+                    key={program.id}
+                    onClick={() => void onChange(program.id, !enabled)}
+                  >
+                    <span className="settings-program-name">
+                      {program.displayName}
+                    </span>
+                    <span className="settings-program-state" aria-hidden="true">
+                      {enabled ? 'Shown' : 'Hidden'}
+                    </span>
+                    <span className="settings-toggle" aria-hidden="true">
+                      <span />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+interface SettingsPageProps extends SettingsViewProps {
+  notice: string | null;
+}
+
+function SettingsPage({
+  notice,
+  ...settingsViewProps
+}: SettingsPageProps) {
+  return (
+    <main className="app-shell app-shell--settings">
+      <SettingsView {...settingsViewProps} />
+      {notice ? (
+        <p className="notice settings-notice" role="status">
+          {notice}
+        </p>
+      ) : null}
+    </main>
+  );
+}
+
 export function App() {
   const {
     clearManualOverride,
@@ -638,7 +832,13 @@ export function App() {
     saveManualOverride,
     state,
   } = usePointsState();
+  const {
+    changeProgramEnabled,
+    settings,
+    settingsError,
+  } = usePointsSettings();
   const [editingProgramId, setEditingProgramId] = useState<ProgramId | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [sortModes, setSortModes] = useState<SortModes>({
     [PROGRAM_CATEGORIES.AIRLINE]: null,
@@ -696,6 +896,22 @@ export function App() {
     }
   }
 
+  async function changeProgramVisibility(
+    programId: ProgramId,
+    enabled: boolean,
+  ): Promise<void> {
+    try {
+      await changeProgramEnabled(programId, enabled);
+      setNotice(
+        enabled
+          ? `${programDisplayName(programId)} enabled.`
+          : `${programDisplayName(programId)} disabled.`,
+      );
+    } catch {
+      setNotice('The setting could not be saved.');
+    }
+  }
+
   function changeGroupSort(
     groupId: ProgramCategory,
     requestedMode: SortMode,
@@ -732,12 +948,26 @@ export function App() {
     }
   }
 
-  if (loadError) {
-    return <main className="fatal-state">{loadError}</main>;
+  if (loadError || settingsError) {
+    return <main className="fatal-state">{loadError ?? settingsError}</main>;
   }
 
-  if (!state) {
+  if (!state || !settings) {
     return <main className="loading-state">Opening local ledger…</main>;
+  }
+
+  if (settingsOpen) {
+    return (
+      <SettingsPage
+        settings={settings}
+        notice={notice}
+        onChange={changeProgramVisibility}
+        onBack={() => {
+          setNotice(null);
+          setSettingsOpen(false);
+        }}
+      />
+    );
   }
 
   const editingProgram = PROGRAM_LIST.find(
@@ -745,10 +975,75 @@ export function App() {
   );
   const groupedPrograms = PROGRAM_GROUPS.map((group) => ({
     group,
-    programs: PROGRAM_LIST.filter((program) => program.category === group.id),
+    programs: cashProgramsLast(
+      PROGRAM_LIST.filter(
+        (program) =>
+          program.category === group.id &&
+          isProgramEnabled(settings, program.id),
+      ),
+    ),
   }));
   return (
     <main className="app-shell">
+      <header className="utility-bar">
+        <span
+          className="utility-version"
+          aria-label={`Version ${extensionVersion}`}
+        >
+          v{extensionVersion}
+        </span>
+        <div className="utility-actions">
+          <button
+            className="global-icon-button"
+            type="button"
+            aria-label="Setting"
+            data-tooltip="Setting"
+            onClick={() => {
+              setEditingProgramId(null);
+              setSettingsOpen(true);
+            }}
+          >
+            <SettingsIcon />
+          </button>
+          <a
+            className="global-icon-button"
+            href={LATEST_RELEASE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Update"
+            data-tooltip="Update"
+          >
+            <UpdateIcon />
+          </a>
+          <button
+            className="global-icon-button"
+            type="button"
+            aria-label="Export"
+            data-tooltip="Export"
+            onClick={exportBackup}
+          >
+            <ExportIcon />
+          </button>
+          <button
+            className="global-icon-button"
+            type="button"
+            aria-label="Import"
+            data-tooltip="Import"
+            onClick={() => importInputRef.current?.click()}
+          >
+            <ImportIcon />
+          </button>
+          <input
+            ref={importInputRef}
+            className="visually-hidden"
+            type="file"
+            accept="application/json,.json"
+            onChange={importBackup}
+            tabIndex={-1}
+          />
+        </div>
+      </header>
+
       <section className="program-list" aria-label="Loyalty balances">
         {groupedPrograms.map(({ group, programs }) => (
           <LedgerSection
@@ -786,38 +1081,6 @@ export function App() {
           </a>
         </aside>
       ) : null}
-
-      <footer className="app-footer">
-        <p>Stored only in this Chrome profile. · v{extensionVersion}</p>
-        <div>
-          <a
-            className="footer-button"
-            href={LATEST_RELEASE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Check updates
-          </a>
-          <button className="footer-button" type="button" onClick={exportBackup}>
-            Export
-          </button>
-          <button
-            className="footer-button"
-            type="button"
-            onClick={() => importInputRef.current?.click()}
-          >
-            Import
-          </button>
-          <input
-            ref={importInputRef}
-            className="visually-hidden"
-            type="file"
-            accept="application/json,.json"
-            onChange={importBackup}
-            tabIndex={-1}
-          />
-        </div>
-      </footer>
 
       {editingProgram ? (
         <EditPanel

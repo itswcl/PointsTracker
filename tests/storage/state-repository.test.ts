@@ -53,4 +53,61 @@ describe('StateRepository', () => {
     });
     expect(storage.snapshot()[STORAGE_KEY]).toMatchObject(recovered);
   });
+
+  it('saves shared-page captures in one state update', async () => {
+    const storage = createFakeStorageArea();
+    const repository = new StateRepository(storage);
+
+    await repository.saveAutomaticCaptures(
+      [
+        {
+          programId: 'southwest',
+          capture: {
+            balance: 20383,
+            memberNumber: 'RR000016',
+            expiration: {
+              type: 'never',
+              date: null,
+              note: 'No expiration',
+            },
+          },
+        },
+        {
+          programId: 'southwestcredit',
+          capture: {
+            balance: 69796,
+            memberNumber: 'RR000016',
+            expiration: {
+              type: 'fixed_date',
+              date: '2028-01-15',
+              note: 'Earliest Southwest Flight Credit expiration',
+            },
+          },
+        },
+      ],
+      new Date(2026, 6, 17),
+    );
+
+    expect(storage.snapshot()[STORAGE_KEY]).toMatchObject({
+      records: {
+        southwest: {
+          automatic: {
+            balance: 20383,
+            memberNumber: 'RR000016',
+            updatedOn: '2026-07-17',
+          },
+          status: 'fresh',
+        },
+        southwestcredit: {
+          automatic: {
+            balance: 69796,
+            memberNumber: 'RR000016',
+            expiration: { date: '2028-01-15' },
+            updatedOn: '2026-07-17',
+          },
+          status: 'fresh',
+        },
+      },
+    });
+  });
 });

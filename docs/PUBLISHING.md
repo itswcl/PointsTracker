@@ -1,4 +1,8 @@
-# Chrome Web Store Checklist
+# Publishing and Distribution
+
+This guide combines public-repository readiness, brand policy, Chrome Web Store
+submission tasks, and the working store-listing copy. Revalidate policy links
+and listing claims against the exact build being submitted.
 
 Status legend:
 
@@ -6,9 +10,10 @@ Status legend:
 - `[ ]` required before submission
 - `[~]` recommended or requires a publishing decision
 
-This checklist is tailored to Points Tracker and was reviewed against the Chrome Web Store documentation on July 19, 2026.
+This checklist is tailored to Points Tracker and was reviewed against the
+Chrome Web Store documentation on July 19, 2026.
 
-## Public GitHub readiness
+## Public repository readiness
 
 - [x] Source scan found no credentials, API keys, authentication tokens, private keys, real account identifiers, live account payloads, or machine-specific paths.
 - [x] `node_modules`, `dist`, coverage output, ZIP packages, and `.DS_Store` files are excluded from Git.
@@ -19,9 +24,75 @@ This checklist is tailored to Points Tracker and was reviewed against the Chrome
 - [x] Add an independent-product disclaimer to the README and store listing: "Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, or loyalty program."
 - [x] Replace airline, hotel, and rewards-program marks with recognizable text labels for public distribution.
 - [x] License the source under the MIT License.
-- [x] Update `docs/BRAND_ASSETS.md` if the project changes from a private personal ledger to a publicly distributed extension.
+- [x] Document the program-name, trademark, and original-artwork boundary for
+  public distribution.
 - [x] Run one final repository and Git-history secret scan immediately before changing GitHub visibility.
-  - Final scan completed July 19, 2026; evidence and the reviewed synthetic-fixture false positive are recorded in `docs/PUBLIC_REPOSITORY_AUDIT.md`.
+  - Final scan completed July 19, 2026; evidence and the reviewed
+    synthetic-fixture false positive are recorded below.
+
+## Brand and independent-product policy
+
+The popup identifies supported loyalty programs with recognizable names or
+abbreviations such as UA, Cathay, ANA, Hyatt, and Hilton. Full official names
+remain available to assistive technology and as hover text. The popup does not
+bundle or display airline, hotel, issuer, or loyalty-program logos and does not
+load remote artwork at runtime.
+
+Points Tracker is an independent project and is not affiliated with or endorsed
+by any supported airline, hotel, card issuer, or loyalty program. Company and
+program names and marks belong to their respective owners and are used only to
+identify supported programs.
+
+The program-logo assets and `simple-icons` dependency were removed before
+public distribution. Any future third-party mark or artwork requires a new
+review documented in this section.
+
+The Chrome toolbar and extension-management icon is an original Point Ledger
+mark generated for this project. It combines a simplified ledger with airline,
+hotel, and credit-card symbols using the popup palette. Its source and packaged
+16, 32, 48, and 128 pixel PNG files live in `assets/icons`.
+
+## Public repository audit evidence
+
+The preliminary and final scans on July 19, 2026 covered:
+
+- tracked and untracked project files, excluding `.git`, `node_modules`, and
+  generated `dist`;
+- every commit reachable from repository branches and tags;
+- high-confidence private-key, cloud-key, GitHub-token, Slack-token,
+  Google-key, live Stripe-key, bearer-token, JWT, credential-assignment, and
+  URL-embedded credential patterns;
+- machine-specific absolute paths, local extension origins, suspicious
+  credential filenames, and tracked generated artifacts; and
+- Chrome profiles, cookies, passwords, real member numbers, raw account HTML,
+  ZIP packages, coverage output, and `.DS_Store`.
+
+Results:
+
+- No credentials, private keys, authentication tokens, account identifiers,
+  machine-specific paths, suspicious credential files, or tracked generated
+  artifacts were found.
+- No high-confidence secret pattern was found in reachable Git history.
+- A broad credential-assignment scan identified only commit `a40d133`'s
+  deliberately synthetic password-field rejection fixture in the original
+  `tests/storage/backup.test.js`. Manual review confirmed that the value is test
+  data and the parser rejects the field.
+- Removed program-logo assets and the `simple-icons` dependency are absent from
+  the application and dependency graph.
+
+### v1.6.0 release audit — July 26, 2026
+
+The v1.6.0 release gate repeated the public-repository checks against the
+current source and every reachable Git commit:
+
+- 116 current project files contained no high-confidence secrets.
+- Reachable Git history contained no high-confidence secrets.
+- `npm audit --audit-level=moderate` reported zero vulnerabilities.
+- The production manifest requests only `storage`, contains no `<all_urls>`
+  access, and limits host access to the supported account sites plus GitHub's
+  public release API.
+- The production build contains 17 runtime files and no source maps, TypeScript
+  source, test files, account data, or development configuration.
 
 ## Developer account
 
@@ -36,13 +107,14 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.5.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.6.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
 - [x] Production verification is available through `npm run check`.
 - [ ] Run `npm ci` and `npm run check` from a clean checkout.
-- [ ] Load the resulting `dist` directory as an unpacked extension and complete the live acceptance checks in `docs/LIVE_ACCEPTANCE.md`.
+- [ ] Load the resulting `dist` directory as an unpacked extension and complete
+  the checks in [Live acceptance](./LIVE_ACCEPTANCE.md).
 - [ ] Create a ZIP containing the *contents* of `dist`, with `manifest.json` at the ZIP root.
 - [ ] Open the ZIP and confirm it contains no source maps, test files, development configuration, account data, or unrelated files.
 - [ ] Save the exact submitted ZIP and corresponding Git commit for release records.
@@ -55,13 +127,14 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 - [x] Single purpose: show airline, hotel, and credit-card rewards balances in a local ledger, with loyalty member numbers and expiration information where applicable.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to twenty-one exact account-host patterns for the twenty supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
+- [x] Host access is restricted to twenty-two exact account-host patterns for the twenty-one supported rewards programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
 | --- | --- |
 | `storage` | Saves loyalty member numbers, balances, expiration dates, capture dates, and manual overrides only in the user's current Chrome profile. |
-| United host | Reads the MileagePlus member number and balance from the user's logged-in United account page when the user refreshes United. |
+| United host | Reads the MileagePlus member number, miles, pooled miles, TravelBank total, and displayed TravelBank expiration from the user's logged-in United account page. |
+| Southwest host | Reads the Rapid Rewards member number and points, then sums rendered Flight Credit amounts and keeps only the earliest displayed expiration; no individual credit details are stored. |
 | Cathay host | Reads the Asia Miles member number, balance, and expiration information from the user's logged-in Cathay account page. |
 | Air France host | Reads the Flying Blue balance and expiration information, then reuses the same extension tab for the membership-card number when needed. |
 | Virgin Atlantic host | Reads the Flying Club member number and balance from the user's logged-in account overview. |
@@ -122,6 +195,51 @@ Official references: [fill out privacy fields](https://developer.chrome.com/docs
 - [ ] Make listing text, screenshots, manifest behavior, and Privacy-tab answers mutually consistent.
 
 Official reference: [create a quality listing](https://developer.chrome.com/docs/webstore/best-listing/).
+
+### Working listing copy
+
+**Name:** Points Tracker
+
+**Short summary:** Track airline, hotel, and credit-card rewards balances
+locally.
+
+**Detailed description:**
+
+Points Tracker provides one compact local ledger for supported airline, hotel,
+and credit-card rewards balances, with loyalty member numbers and expiration
+information where applicable.
+
+- Refresh a program after signing in directly on its official website.
+- Use manual entry whenever a loyalty website changes or automatic capture is
+  unavailable.
+- Hide programs you do not use without deleting their saved records.
+- Sort each rewards category by balance and Airline or Hotel programs by
+  expiration.
+- Keep Credit Card, Airline, and Hotel totals separate.
+- Export or import a local JSON backup when you choose.
+- Receive a compact notice when a newer public release is available.
+
+Points Tracker does not ask for account credentials. It stores only
+program-level ledger values, displayed loyalty member numbers where applicable,
+program visibility preferences, and a non-personal update-check timestamp and
+latest public release version in the current Chrome profile. It does not store
+card details or per-card balances. It has no backend, analytics, advertising,
+or telemetry. It contacts GitHub's public release API no more than once every
+24 hours to compare version numbers; that request contains no rewards data.
+
+**Independent-product disclaimer:** Points Tracker is an independent project
+and is not affiliated with or endorsed by any supported airline, hotel, card
+issuer, or loyalty program. All company and program names and marks belong to
+their respective owners and are used only to identify supported programs.
+
+Before publishing this copy:
+
+- add final support, homepage, and privacy-policy URLs;
+- confirm the supported program list and page-dependent limitations against the
+  submitted build;
+- use only synthetic member numbers, balances, and dates in screenshots; and
+- keep the listing consistent with manifest permissions and Privacy-tab
+  disclosures.
 
 ## Reviewer instructions
 

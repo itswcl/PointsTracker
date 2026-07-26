@@ -12,7 +12,7 @@ The adapter framework is implemented, but production selectors must be confirmed
 - Prefer stable `data-*`, ARIA, or semantic attributes over generated CSS class names.
 - Keep host permissions unchanged unless an official account flow demonstrably uses another first-party hostname.
 
-## United acceptance — selector confirmed 07/17/2026
+## United acceptance — MileagePlus selector confirmed 07/17/2026; shared rows added 07/26/2026
 
 Configured official page:
 
@@ -24,6 +24,14 @@ Confirmed production selectors, newest first:
 - `[aria-labelledby="accountBalanceAriaLabel"] [data-test-name="balance_value"]`
 - Member number: `[class*="AccountSummary-accountSummary__mpNumber"]`, parsed only after the exact `MileagePlus Number` label
 
+Additional rendered targets:
+
+- Pooled miles: a unique whole-number value immediately followed by the exact
+  text `pooled miles` in the authenticated United header.
+- TravelBank: the exact `TRAVELBANK` summary heading and its exact dollar total.
+  Displayed dates within TravelBank summary/detail containers are normalized and
+  the earliest date is stored.
+
 The primary balance selector is scoped to the My United MileageBalance component. The second supports the earlier accessible Account balance list. The member-number selector is scoped to the labeled Account details row. Together they exclude pooled miles in the account header and lifetime miles in Premier progress.
 
 United's balance endpoint requires a bearer authorization header managed by the page. Because the extension must never read or copy credentials or authorization tokens, United is an explicit rendered-HTML fallback rather than an API capture.
@@ -33,10 +41,16 @@ Remaining end-to-end checks:
 - A normal United login reaches or can access the configured page.
 - The parser returns the same integer shown on the page after the rebuilt extension is reloaded.
 - The popup member number matches the displayed MileagePlus number.
-- The popup displays `Expiration: N/A`.
+- `UA Miles` and `UA Pool` display `Expiration: N/A`.
+- All three United rows display the same MileagePlus member number.
+- `UA TB` displays USD with cents, uses the earliest displayed expiration when
+  available, and remains excluded from the Airline points total.
 - An expired session reveals the login tab and preserves the last good value.
 
-The stable selector and a synthetic regression fixture are recorded in `src/adapters/united.ts` and `tests/adapters/adapters.test.ts`. No production markup or real member number is stored in the repository.
+The selectors and synthetic regression fixtures are recorded in
+`src/adapters/united.ts`, `src/adapters/unitedpool.ts`,
+`src/adapters/unitedtravelbank.ts`, and their adapter tests. No production
+markup or real member number is stored in the repository.
 
 ## Cathay acceptance — URL and selectors confirmed 07/17/2026
 
@@ -271,6 +285,43 @@ Remaining end-to-end checks:
 - Confirm the extension-created tab closes after capture succeeds.
 
 The final URL, selector, and synthetic regression fixtures are recorded in `src/programs.ts`, `src/adapters/delta.ts`, and `tests/adapters/adapters.test.ts`. No production markup, real member number, or private API response is stored in the repository.
+
+## Southwest Rapid Rewards acceptance — structure confirmed 07/26/2026
+
+Confirmed official page:
+
+`https://www.southwest.com/loyalty/myaccount/`
+
+Confirmed rendered structure:
+
+- Points are read only from the exact `Available Points` labeled container.
+- Member number is parsed only from the rendered `.accountNumber` element after
+  the exact `RR#` prefix.
+- Flight Credits are scoped to `#my-flight-credits-card` and its real
+  `ul > li` entries.
+- The adapter selects the unique exact `Expand all` button when expiration
+  details have not rendered.
+- Each entry begins with an amount announced as `<amount> Dollars`; the adapter
+  sums those amounts locally as integer cents.
+- The earliest parseable date is stored. If every entry says
+  `Expiration: None` or no expiration detail is displayed, the row displays
+  `N/A`.
+
+End-to-end check:
+
+- Reload the rebuilt extension and approve the new Southwest host permission.
+- Refresh either Southwest row and confirm only one account tab opens.
+- Confirm `Southwest` matches the rendered points total and shows `N/A`.
+- Confirm `SW Credit` matches the sum of the rendered credits, displays a dollar
+  sign and cents, and does not change the Airline points total.
+- Confirm both Southwest rows display the same Rapid Rewards member number.
+- Confirm no individual Flight Credit record appears in storage or a backup.
+
+The URL, scoped traversal, preparer, and synthetic regression fixtures are
+recorded in `src/programs.ts`, `src/adapters/southwest.ts`,
+`src/adapters/southwestcredit.ts`, and their adapter tests. No production
+markup, real member number, or individual credit detail is stored in the
+repository.
 
 ## World of Hyatt acceptance — structure confirmed 07/24/2026
 

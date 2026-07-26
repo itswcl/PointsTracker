@@ -9,7 +9,19 @@ export const MESSAGE_TYPES = {
   REFRESH_ALL: 'points-tracker/refresh-all',
 } as const;
 
+export interface PageObservation {
+  programId: ProgramId;
+  result: InspectionResult;
+}
+
 export interface PageObservedMessage {
+  type: typeof MESSAGE_TYPES.PAGE_OBSERVED;
+  pageUrl: string;
+  observations: readonly PageObservation[];
+  final: boolean;
+}
+
+export interface LegacyPageObservedMessage {
   type: typeof MESSAGE_TYPES.PAGE_OBSERVED;
   programId: ProgramId;
   pageUrl: string;
@@ -28,6 +40,7 @@ export interface RefreshAllMessage {
 
 export type PointsTrackerMessage =
   | PageObservedMessage
+  | LegacyPageObservedMessage
   | RefreshProgramMessage
   | RefreshAllMessage;
 
@@ -77,13 +90,45 @@ export function isPointsTrackerMessage(
   if (!isRecord(message) || typeof message.type !== 'string') return false;
 
   if (message.type === MESSAGE_TYPES.REFRESH_ALL) return true;
-  if (!isProgramId(message.programId)) return false;
-  if (message.type === MESSAGE_TYPES.REFRESH_PROGRAM) return true;
+  if (message.type === MESSAGE_TYPES.REFRESH_PROGRAM) {
+    return isProgramId(message.programId);
+  }
   if (message.type !== MESSAGE_TYPES.PAGE_OBSERVED) return false;
 
+  if (
+    typeof message.pageUrl !== 'string' ||
+    typeof message.final !== 'boolean'
+  ) {
+    return false;
+  }
+
+  if (Array.isArray(message.observations)) {
+    if (message.observations.length === 0) return false;
+    const programIds = new Set<ProgramId>();
+    for (const observation of message.observations) {
+      if (
+        !isRecord(observation) ||
+        !isProgramId(observation.programId) ||
+        !isInspectionResult(observation.result, observation.programId) ||
+        programIds.has(observation.programId)
+      ) {
+        return false;
+      }
+      programIds.add(observation.programId);
+    }
+    return true;
+  }
+
   return (
-    typeof message.pageUrl === 'string' &&
-    typeof message.final === 'boolean' &&
+    isProgramId(message.programId) &&
     isInspectionResult(message.result, message.programId)
   );
+}
+
+export function observationsFromMessage(
+  message: PageObservedMessage | LegacyPageObservedMessage,
+): readonly PageObservation[] {
+  return 'observations' in message
+    ? message.observations
+    : [{ programId: message.programId, result: message.result }];
 }

@@ -45,7 +45,11 @@ describe('JSON backups', () => {
 
   it('adds newly supported programs when importing an older backup', () => {
     const candidate = JSON.parse(serializeBackup(createInitialState()));
+    Reflect.deleteProperty(candidate.data.records, 'unitedpool');
+    Reflect.deleteProperty(candidate.data.records, 'unitedtravelbank');
     Reflect.deleteProperty(candidate.data.records, 'delta');
+    Reflect.deleteProperty(candidate.data.records, 'southwest');
+    Reflect.deleteProperty(candidate.data.records, 'southwestcredit');
     Reflect.deleteProperty(candidate.data.records, 'ihg');
     Reflect.deleteProperty(candidate.data.records, 'wyndham');
     Reflect.deleteProperty(candidate.data.records, 'amex');
@@ -56,9 +60,49 @@ describe('JSON backups', () => {
 
     const imported = parseBackup(JSON.stringify(candidate));
 
+    expect(imported.records.unitedpool).toMatchObject({
+      programId: 'unitedpool',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'never', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.unitedtravelbank).toMatchObject({
+      programId: 'unitedtravelbank',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'unknown', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
     expect(imported.records.delta).toMatchObject({
       programId: 'delta',
       automatic: { balance: null },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.southwest).toMatchObject({
+      programId: 'southwest',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'never', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.southwestcredit).toMatchObject({
+      programId: 'southwestcredit',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'unknown', date: null },
+      },
       manualOverride: null,
       status: 'not_updated',
     });

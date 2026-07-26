@@ -10,7 +10,8 @@ Points Tracker is a private, personal Chrome extension that consolidates airline
 ## Understanding Summary
 
 - The MVP is for one person using one Chrome profile.
-- It supports twenty airline, hotel, and Credit Card rewards programs.
+- It supports twenty-one airline, hotel, and Credit Card rewards programs
+  represented by twenty-four independently tracked ledger rows.
 - The toolbar popup shows the current balance and, where applicable, a loyalty member number and expiration status or date.
 - Dates use `MM/DD/YYYY`; no relative timestamps or time of day are displayed.
 - The user signs in normally on each official website. The extension never requests or stores credentials.
@@ -59,7 +60,7 @@ Reading only the page the user manually opens requires fewer automated steps, bu
 
 The extension contains five primary components:
 
-1. **Popup** — displays all program records and exposes refresh, edit, import, and export actions.
+1. **Popup** — displays enabled program records and exposes settings, refresh, edit, import, and export actions.
 2. **Capture coordinator** — starts capture attempts, creates and tracks inactive tabs, prevents loops, applies timeouts, and closes only extension-created tabs.
 3. **Program adapters** — contain program-specific URLs, authenticated markers, parsers, and validators.
 4. **Page reader** — runs only on approved account pages and returns the allowlisted structured result.
@@ -166,7 +167,7 @@ If no exact status or date is available, the popup displays `Expiration: Unknown
 
 The ledger uses compact program names with accessible full names. The popup makes no remote image requests and keeps the row width predictable.
 
-The Balance and Expiration headers are mutually exclusive toggles. Balance sorts highest to lowest; Expiration sorts dated records from earliest to latest, with `Unknown` and `N/A` retained at the bottom. Clicking the active header restores the original program order.
+The Balance and Expiration headers are mutually exclusive toggles. Balance sorts highest to lowest; Expiration sorts dated records from earliest to latest, with `Unknown` and `N/A` retained at the bottom. Clicking the active header restores the original program order. A local Settings sheet can disable any program; disabled rows are hidden, excluded from totals and sorting, and ignored by automatic capture without deleting their saved values.
 
 When a program exposes expiring mileage tranches rather than one date for the full balance, the Expiration column shows the earliest tranche as `amount · MM/YYYY`. Month-only source data remains month-only; the extension does not invent a day.
 

@@ -54,6 +54,133 @@ describe('typed extension messaging', () => {
     ).toBe(true);
   });
 
+  it('accepts one validated batch for programs sharing an account page', () => {
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.united.com/en/us/myunited',
+        final: false,
+        observations: [
+          {
+            programId: 'united',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 125400,
+                memberNumber: 'UA000001',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'unitedpool',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 22000,
+                memberNumber: null,
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'unitedtravelbank',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 12550,
+                memberNumber: null,
+                expiration: {
+                  type: 'fixed_date',
+                  date: '2027-06-15',
+                  note: 'Earliest displayed TravelBank expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects empty, duplicate, or invalid shared-page observations', () => {
+    const validObservation = {
+      programId: 'southwest',
+      result: {
+        kind: 'success',
+        authState: 'authenticated',
+        capture: {
+          balance: 20383,
+          memberNumber: 'RR000016',
+          expiration: {
+            type: 'never',
+            date: null,
+            note: 'No expiration',
+          },
+        },
+        reason: null,
+      },
+    };
+
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [],
+      }),
+    ).toBe(false);
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [validObservation, validObservation],
+      }),
+    ).toBe(false);
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          validObservation,
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: -1,
+                memberNumber: null,
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
   it('accepts negative Credit Card balances but rejects them for loyalty programs', () => {
     const result = {
       kind: 'success',

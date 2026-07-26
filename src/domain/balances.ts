@@ -1,6 +1,8 @@
 const BALANCE_TOKEN = /(?:^|\s)(\d{1,3}(?:[,.\s]\d{3})+|\d+)(?:\s|$)/;
 const SIGNED_BALANCE_TOKEN =
   /(?:^|\s)(-?\d{1,3}(?:[,.\s]\d{3})+|-?\d+)(?:\s|$)/;
+const USD_AMOUNT_PATTERN =
+  /^\s*\$?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?)\s*$/;
 
 export function parseBalance(value: unknown): number | null {
   return parseBalanceWithPolicy(value, false);
@@ -8,6 +10,24 @@ export function parseBalance(value: unknown): number | null {
 
 export function parseSignedBalance(value: unknown): number | null {
   return parseBalanceWithPolicy(value, true);
+}
+
+export function parseUsdCents(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value >= 0
+      ? Math.round(value * 100)
+      : null;
+  }
+  if (typeof value !== 'string') return null;
+
+  const match = value.replace(/\u00a0/g, ' ').match(USD_AMOUNT_PATTERN);
+  const numericText = match?.[1];
+  if (!numericText) return null;
+
+  const dollars = Number(numericText.replace(/,/g, ''));
+  if (!Number.isFinite(dollars) || dollars < 0) return null;
+  const cents = Math.round(dollars * 100);
+  return Number.isSafeInteger(cents) ? cents : null;
 }
 
 function parseBalanceWithPolicy(
@@ -55,4 +75,17 @@ export function formatBalance(
   return isValidBalance(value)
     ? new Intl.NumberFormat('en-US').format(value)
     : '—';
+}
+
+export function formatUsdCents(value: unknown): string {
+  return isValidBalance(value)
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(value / 100)
+    : '—';
+}
+
+export function formatUsdCentsInput(value: unknown): string {
+  return isValidBalance(value) ? (value / 100).toFixed(2) : '';
 }

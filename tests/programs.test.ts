@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  detectProgramsFromUrl,
   getProgram,
   PROGRAM_CATEGORIES,
   PROGRAM_IDS,
+  programIncludedInBalanceSort,
+  programIncludedInCategoryTotal,
   programShowsExpiration,
   programShowsMemberNumber,
+  programsInCaptureGroup,
+  programUsesUsdCents,
 } from '../src/programs.js';
 
 describe('program account targets', () => {
@@ -14,6 +19,66 @@ describe('program account targets', () => {
 
     expect(united.accountUrl).toBe('https://www.united.com/en/us/myunited');
     expect(united.loginUrl).toBe('https://www.united.com/en/us/myunited');
+  });
+
+  it('registers three separate United rows on one capture page', () => {
+    const united = getProgram(PROGRAM_IDS.UNITED);
+    const pool = getProgram(PROGRAM_IDS.UNITED_POOL);
+    const travelBank = getProgram(PROGRAM_IDS.UNITED_TRAVELBANK);
+    if (!united || !pool || !travelBank) {
+      throw new Error('A United program is missing');
+    }
+
+    expect(programsInCaptureGroup(united).map(({ id }) => id)).toEqual([
+      PROGRAM_IDS.UNITED,
+      PROGRAM_IDS.UNITED_POOL,
+      PROGRAM_IDS.UNITED_TRAVELBANK,
+    ]);
+    expect(pool.accountUrl).toBe(united.accountUrl);
+    expect(travelBank.accountUrl).toBe(united.accountUrl);
+    expect(programShowsMemberNumber(pool)).toBe(true);
+    expect(programShowsMemberNumber(travelBank)).toBe(true);
+    expect(programUsesUsdCents(travelBank)).toBe(true);
+    expect(programIncludedInBalanceSort(travelBank)).toBe(false);
+    expect(programIncludedInCategoryTotal(travelBank)).toBe(false);
+  });
+
+  it('registers Southwest points and Flight Credits as separate shared-page rows', () => {
+    const southwest = getProgram(PROGRAM_IDS.SOUTHWEST);
+    const credit = getProgram(PROGRAM_IDS.SOUTHWEST_CREDIT);
+    if (!southwest || !credit) {
+      throw new Error('A Southwest program is missing');
+    }
+
+    expect(programsInCaptureGroup(southwest).map(({ id }) => id)).toEqual([
+      PROGRAM_IDS.SOUTHWEST,
+      PROGRAM_IDS.SOUTHWEST_CREDIT,
+    ]);
+    expect(credit.accountUrl).toBe(southwest.accountUrl);
+    expect(programUsesUsdCents(credit)).toBe(true);
+    expect(programShowsMemberNumber(credit)).toBe(true);
+    expect(programIncludedInBalanceSort(credit)).toBe(false);
+    expect(programIncludedInCategoryTotal(credit)).toBe(false);
+  });
+
+  it('detects every supported row sharing a United or Southwest host', () => {
+    expect(
+      detectProgramsFromUrl('https://www.united.com/en/us/myunited').map(
+        ({ id }) => id,
+      ),
+    ).toEqual([
+      PROGRAM_IDS.UNITED,
+      PROGRAM_IDS.UNITED_POOL,
+      PROGRAM_IDS.UNITED_TRAVELBANK,
+    ]);
+    expect(
+      detectProgramsFromUrl(
+        'https://www.southwest.com/loyalty/myaccount/',
+      ).map(({ id }) => id),
+    ).toEqual([
+      PROGRAM_IDS.SOUTHWEST,
+      PROGRAM_IDS.SOUTHWEST_CREDIT,
+    ]);
   });
 
   it('opens the confirmed Delta SkyMiles overview page', () => {

@@ -15,6 +15,7 @@ describe('extension permission boundary', () => {
       'https://stmt.cam.ana.co.jp/*',
       'https://cam.ana.co.jp/*',
       'https://www.delta.com/*',
+      'https://www.southwest.com/*',
       'https://www.hyatt.com/*',
       'https://www.hilton.com/*',
       'https://www.marriott.com/*',
@@ -68,5 +69,8 @@ describe('extension permission boundary', () => {
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://www.bilt.com/*');
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).toContain('https://www.southwest.com/*');
   });
 });

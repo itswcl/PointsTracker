@@ -2,8 +2,13 @@ import {
   inspectProgramPage,
   prepareProgramPage,
 } from '../src/adapters/index.js';
+import {
+  isProgramEnabled,
+  normalizeSettings,
+  SETTINGS_STORAGE_KEY,
+} from '../src/domain/settings.js';
 import { MESSAGE_TYPES } from '../src/messaging.js';
-import { detectProgramFromUrl } from '../src/programs.js';
+import { detectProgramsFromUrl } from '../src/programs.js';
 import {
   observationWindowFor,
   shouldFinishObservation,
@@ -12,10 +17,15 @@ import { DEFAULT_OBSERVATION_WINDOW_MS } from '../src/background/capture-timing.
 
 const MUTATION_DEBOUNCE_MS = 300;
 
-const program = detectProgramFromUrl(window.location.href);
-
-if (program) {
-  const activeProgram = program;
+async function observeEnabledPrograms(): Promise<void> {
+  const detectedPrograms = detectProgramsFromUrl(window.location.href);
+  if (detectedPrograms.length === 0) return;
+  const stored = await chrome.storage.local.get(SETTINGS_STORAGE_KEY);
+  const settings = normalizeSettings(stored[SETTINGS_STORAGE_KEY]);
+  const activePrograms = detectedPrograms.filter((program) =>
+    isProgramEnabled(settings, program.id),
+  );
+  if (activePrograms.length === 0) return;
   let lastSignature: string | null = null;
   let debounceId: ReturnType<typeof setTimeout> | null = null;
   let finalTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -38,22 +48,31 @@ if (program) {
 
   async function inspectAndSend(final = false): Promise<void> {
     if (finished) return;
-    if (!final && prepareProgramPage(activeProgram.id, document)) return;
-    const result = inspectProgramPage(
-      activeProgram.id,
-      document,
-      window.location.href,
-    );
-    const signature = JSON.stringify(result);
+    if (
+      !final &&
+      activePrograms.some((program) =>
+        prepareProgramPage(program.id, document),
+      )
+    ) {
+      return;
+    }
+    const observations = activePrograms.map((program) => ({
+      programId: program.id,
+      result: inspectProgramPage(
+        program.id,
+        document,
+        window.location.href,
+      ),
+    }));
+    const signature = JSON.stringify(observations);
     if (!final && signature === lastSignature) return;
     lastSignature = signature;
 
     try {
       await chrome.runtime.sendMessage({
         type: MESSAGE_TYPES.PAGE_OBSERVED,
-        programId: activeProgram.id,
         pageUrl: window.location.href,
-        result,
+        observations,
         final,
       });
     } catch {
@@ -61,14 +80,21 @@ if (program) {
     }
 
     if (!final) {
-      scheduleFinalInspection(observationWindowFor(result));
+      scheduleFinalInspection(
+        Math.max(
+          ...observations.map(({ result }) => observationWindowFor(result)),
+        ),
+      );
     }
 
     if (
-      shouldFinishObservation(
-        result,
-        final,
-        activeProgram.memberNumberUrl !== undefined,
+      observations.every(({ programId, result }) =>
+        shouldFinishObservation(
+          result,
+          final,
+          activePrograms.find((program) => program.id === programId)
+            ?.memberNumberUrl !== undefined,
+        ),
       )
     ) {
       finished = true;
@@ -94,3 +120,5 @@ if (program) {
 
   window.addEventListener('pagehide', cleanup, { once: true });
 }
+
+void observeEnabledPrograms().catch(() => undefined);

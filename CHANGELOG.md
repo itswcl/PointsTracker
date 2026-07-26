@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.6.0 — 2026-07-26
+
+### Added
+
+- Southwest Rapid Rewards as two separate Airline rows from one account page:
+  points with no expiration, and a USD Flight Credit total with the earliest
+  displayed expiration date.
+- United Pooled Miles and United TravelBank as separate rows alongside the
+  existing MileagePlus miles row.
+- Shared-page batch capture so one owned account tab can update multiple
+  independently stored program rows.
+- Local program visibility settings. A disabled program is hidden, excluded
+  from its category total and sorting, and ignored by automatic capture without
+  deleting its saved ledger record.
+
+### Changed
+
+- Cash rows display a dollar sign and cents, retain manual correction support,
+  and are excluded from Airline balance sorting and the Airline points total.
+- The default Airline order keeps miles and points programs together, with
+  cash-related rows such as UA TravelBank and Southwest Flight Credits at the
+  bottom.
+- United and Southwest rows from the same account display the same captured
+  loyalty member number.
+- Southwest Flight Credits display `N/A` when the account page provides no
+  expiration detail, while still preferring any real date that is displayed.
+- Repeated refreshes for rows sharing an account page reuse one in-progress
+  capture instead of opening duplicate tabs.
+- Redesigned Settings as a dedicated ledger-style screen with Credit Card,
+  Airline, and Hotel sections plus clear `Shown` and `Hidden` switches.
+- Replaced the footer's Check updates, Export, and Import wording with compact
+  icons, added a Settings icon before them, and provided Setting, Update,
+  Export, and Import hover descriptions. These global actions now sit in the
+  upper-right, while only the installed version appears in the upper-left.
+
+### Privacy and maintenance
+
+- Southwest capture is restricted to rendered `Available Points`, member
+  number, and Flight Credit amount/expiration fields. Individual Flight Credit
+  details are neither stored nor included in backups.
+- United pooled miles and TravelBank remain rendered-page adapters; no private
+  API, cookie, token, or network interception access was added.
+- Consolidated overlapping documentation into task-focused Installation,
+  Architecture, Live Acceptance, and Publishing guides with a central
+  documentation index.
+
 ## 1.5.0 — 2026-07-25
 
 ### Added

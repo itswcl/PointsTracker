@@ -1,12 +1,21 @@
 import {
   isPointsTrackerMessage,
   MESSAGE_TYPES,
+  observationsFromMessage,
+  type LegacyPageObservedMessage,
   type PageObservedMessage,
 } from '../messaging.js';
-import { getProgram, PROGRAM_LIST } from '../programs.js';
+import {
+  getProgram,
+  PROGRAM_LIST,
+  programShowsMemberNumber,
+  programsInCaptureGroup,
+} from '../programs.js';
+import { isProgramEnabled } from '../domain/settings.js';
 import type {
-  AutomaticCapture,
+  PointsTrackerSettings,
   PointsState,
+  ProgramCapture,
   ProgramId,
   RecordStatus,
 } from '../types.js';
@@ -31,9 +40,8 @@ interface BrowserApiLike {
 }
 
 interface StateRepositoryLike {
-  saveAutomaticCapture(
-    programId: ProgramId,
-    capture: AutomaticCapture,
+  saveAutomaticCaptures(
+    captures: readonly ProgramCapture[],
   ): Promise<PointsState>;
   saveAutomaticMemberNumber(
     programId: ProgramId,
@@ -41,6 +49,11 @@ interface StateRepositoryLike {
   ): Promise<PointsState>;
   setStatus(
     programId: ProgramId,
+    status: RecordStatus,
+    error?: string | null,
+  ): Promise<PointsState>;
+  setStatuses(
+    programIds: readonly ProgramId[],
     status: RecordStatus,
     error?: string | null,
   ): Promise<PointsState>;
@@ -55,12 +68,17 @@ interface SessionRepositoryLike {
   markTriggered(programId: ProgramId, timestamp: number): Promise<void>;
 }
 
+interface SettingsRepositoryLike {
+  getSettings(): Promise<PointsTrackerSettings>;
+}
+
 interface MessageSenderLike {
   tab?: { id?: number | undefined } | undefined;
 }
 
 interface CaptureCoordinatorOptions {
   browserApi: BrowserApiLike;
+  settingsRepository?: SettingsRepositoryLike;
   stateRepository: StateRepositoryLike;
   sessionRepository: SessionRepositoryLike;
   now?: () => number;
@@ -74,6 +92,7 @@ interface ActiveCapture {
   timeoutId: ReturnType<typeof setTimeout>;
   stage: 'primary' | 'member_number';
   waitingForLogin: boolean;
+  pendingProgramIds: Set<ProgramId>;
 }
 
 interface RefreshOptions {
@@ -87,11 +106,12 @@ interface FailureOptions {
 export type RefreshResult =
   | { ok: true; tabId: number }
   | { ok: true; alreadyRunning: true }
-  | { ok: true; skipped: 'cooldown' }
+  | { ok: true; skipped: 'cooldown' | 'disabled' }
   | { ok: false; error: string };
 
 export function createCaptureCoordinator({
   browserApi,
+  settingsRepository,
   stateRepository,
   sessionRepository,
   now = () => Date.now(),
@@ -100,6 +120,22 @@ export function createCaptureCoordinator({
   cooldownMs = DEFAULT_COOLDOWN_MS,
 }: CaptureCoordinatorOptions) {
   const activeCaptures = new Map<ProgramId, ActiveCapture>();
+  const openingCaptureGroups = new Set<string>();
+
+  function captureGroupKey(programId: ProgramId): string {
+    const program = getProgram(programId);
+    return program?.captureGroup ?? programId;
+  }
+
+  async function enabledProgramIds(
+    programIds: readonly ProgramId[],
+  ): Promise<ProgramId[]> {
+    if (!settingsRepository) return [...programIds];
+    const settings = await settingsRepository.getSettings();
+    return programIds.filter((programId) =>
+      isProgramEnabled(settings, programId),
+    );
+  }
 
   function resetCaptureTimeout(
     programId: ProgramId,
@@ -147,7 +183,18 @@ export function createCaptureCoordinator({
     { reveal = false }: FailureOptions = {},
   ): Promise<void> {
     const capture = clearCapture(programId);
-    await stateRepository.setStatus(programId, 'error', reason);
+    const program = getProgram(programId);
+    const pendingProgramIds =
+      capture && capture.pendingProgramIds.size > 0
+        ? [...capture.pendingProgramIds]
+        : program
+          ? programsInCaptureGroup(program).map((candidate) => candidate.id)
+          : [programId];
+    await stateRepository.setStatuses(
+      pendingProgramIds,
+      'error',
+      reason,
+    );
     if (!capture) return;
 
     if (reveal) {
@@ -173,20 +220,35 @@ export function createCaptureCoordinator({
     const program = getProgram(requestedProgramId);
     if (!program) return { ok: false, error: 'unsupported_program' };
     const programId = program.id;
-    if (activeCaptures.has(programId)) return { ok: true, alreadyRunning: true };
-
-    const timestamp = now();
+    if ((await enabledProgramIds([programId])).length === 0) {
+      return { ok: true, skipped: 'disabled' };
+    }
+    const groupKey = captureGroupKey(programId);
     if (
-      !force &&
-      !(await sessionRepository.canTrigger(programId, timestamp, cooldownMs))
+      openingCaptureGroups.has(groupKey) ||
+      programsInCaptureGroup(program).some((candidate) =>
+        activeCaptures.has(candidate.id),
+      )
     ) {
-      return { ok: true, skipped: 'cooldown' };
+      return { ok: true, alreadyRunning: true };
     }
 
-    await sessionRepository.markTriggered(programId, timestamp);
-    await stateRepository.setStatus(programId, 'updating');
-
+    openingCaptureGroups.add(groupKey);
     try {
+      const timestamp = now();
+      if (
+        !force &&
+        !(await sessionRepository.canTrigger(programId, timestamp, cooldownMs))
+      ) {
+        return { ok: true, skipped: 'cooldown' };
+      }
+
+      await sessionRepository.markTriggered(programId, timestamp);
+      const captureGroupProgramIds = await enabledProgramIds(
+        programsInCaptureGroup(program).map((candidate) => candidate.id),
+      );
+      await stateRepository.setStatuses(captureGroupProgramIds, 'updating');
+
       const tab = await browserApi.tabs.create({
         url: program.accountUrl,
         active: false,
@@ -200,111 +262,137 @@ export function createCaptureCoordinator({
         }, timeoutMs),
         stage: 'primary',
         waitingForLogin: false,
+        pendingProgramIds: new Set(captureGroupProgramIds),
       };
       activeCaptures.set(programId, capture);
       return { ok: true, tabId: tab.id };
     } catch {
-      await stateRepository.setStatus(programId, 'error', 'tab_open_failed');
+      const captureGroupProgramIds = await enabledProgramIds(
+        programsInCaptureGroup(program).map((candidate) => candidate.id),
+      );
+      await stateRepository.setStatuses(
+        captureGroupProgramIds,
+        'error',
+        'tab_open_failed',
+      );
       return { ok: false, error: 'tab_open_failed' };
+    } finally {
+      openingCaptureGroups.delete(groupKey);
     }
   }
 
   async function handlePageObserved(
-    message: PageObservedMessage,
+    message: PageObservedMessage | LegacyPageObservedMessage,
     sender: MessageSenderLike,
   ) {
-    const program = getProgram(message.programId);
-    if (!program) return { ok: false, error: 'unsupported_program' };
+    const receivedObservations = observationsFromMessage(message);
+    const enabledIds = new Set(
+      await enabledProgramIds(
+        receivedObservations.map(({ programId }) => programId),
+      ),
+    );
+    const observations = receivedObservations.filter(({ programId }) =>
+      enabledIds.has(programId),
+    );
+    if (observations.length === 0) {
+      return { ok: true, captured: false, skipped: 'disabled' };
+    }
+    const observedPrograms = observations.map(({ programId }) =>
+      getProgram(programId),
+    );
+    if (observedPrograms.some((program) => !program)) {
+      return { ok: false, error: 'unsupported_program' };
+    }
 
     const senderTabId = sender.tab?.id;
     const owned =
       typeof senderTabId === 'number' ? findCaptureByTab(senderTabId) : null;
-    const result = message.result;
+    const ownerObservation = owned
+      ? observations.find(
+          (observation) => observation.programId === owned.programId,
+        )
+      : null;
 
-    if (result.kind === 'success') {
-      if (
-        owned?.programId === program.id &&
-        owned.capture.stage === 'member_number'
-      ) {
+    if (owned?.capture.stage === 'member_number' && ownerObservation) {
+      const result = ownerObservation.result;
+      if (result.kind === 'success') {
         if (result.capture.memberNumber) {
           await stateRepository.saveAutomaticMemberNumber(
-            program.id,
+            owned.programId,
             result.capture.memberNumber,
           );
         }
-        await closeOwnedTab(program.id);
+        await closeOwnedTab(owned.programId);
         return { ok: true, captured: true };
       }
+      if (result.kind === 'member_number_found') {
+        await stateRepository.saveAutomaticMemberNumber(
+          owned.programId,
+          result.capture.memberNumber,
+        );
+        await closeOwnedTab(owned.programId);
+        return { ok: true, captured: true };
+      }
+    }
 
-      await stateRepository.saveAutomaticCapture(program.id, result.capture);
-      if (
-        owned?.programId === program.id &&
-        result.capture.memberNumber === null &&
-        program.memberNumberUrl
-      ) {
-        owned.capture.stage = 'member_number';
-        resetCaptureTimeout(program.id, owned.capture);
-        await stateRepository.setStatus(program.id, 'updating');
-        try {
-          await browserApi.tabs.update(owned.capture.tabId, {
-            url: program.memberNumberUrl,
-            active: false,
-          });
-          return {
-            ok: true,
-            captured: true,
-            continued: 'member_number',
-          };
-        } catch {
-          await failCapture(program.id, 'tab_open_failed');
-          return { ok: false, error: 'tab_open_failed' };
+    const successfulCaptures = observations.flatMap(
+      ({ programId, result }): ProgramCapture[] =>
+        result.kind === 'success'
+          ? [{ programId, capture: result.capture }]
+          : [],
+    );
+    if (successfulCaptures.length > 0) {
+      await stateRepository.saveAutomaticCaptures(successfulCaptures);
+      if (owned) {
+        for (const { programId } of successfulCaptures) {
+          owned.capture.pendingProgramIds.delete(programId);
         }
       }
-
-      if (
-        owned?.programId === program.id &&
-        result.capture.memberNumber === null &&
-        !message.final
-      ) {
-        await stateRepository.setStatus(program.id, 'updating');
-        return {
-          ok: true,
-          captured: true,
-          continued: 'member_number_wait',
-        };
-      }
-
-      if (owned?.programId === program.id) await closeOwnedTab(program.id);
-      return { ok: true, captured: true };
     }
 
-    if (result.kind === 'member_number_found') {
+    for (const observation of observations) {
+      if (observation.result.kind !== 'member_number_found') continue;
       await stateRepository.saveAutomaticMemberNumber(
-        program.id,
-        result.capture.memberNumber,
+        observation.programId,
+        observation.result.capture.memberNumber,
       );
-      if (owned?.programId === program.id) await closeOwnedTab(program.id);
-      return { ok: true, captured: true };
+      owned?.capture.pendingProgramIds.delete(observation.programId);
     }
 
-    if (
-      owned?.programId === program.id &&
-      result.kind === 'login_required'
-    ) {
+    const failedObservations = observations.filter(
+      ({ result }) =>
+        result.kind !== 'success' &&
+        result.kind !== 'member_number_found',
+    );
+    const loginObservation = failedObservations.find(
+      ({ result }) => result.kind === 'login_required',
+    );
+
+    if (owned && loginObservation) {
       if (!owned.capture.waitingForLogin) {
         owned.capture.waitingForLogin = true;
         resetCaptureTimeout(
-          program.id,
+          owned.programId,
           owned.capture,
           loginWaitMs,
           'login_required',
           true,
         );
-        await stateRepository.setStatus(program.id, 'updating');
+        const ownerProgram = getProgram(owned.programId);
+        await stateRepository.setStatuses(
+          ownerProgram
+            ? programsInCaptureGroup(ownerProgram).map(
+                (candidate) => candidate.id,
+              )
+            : [owned.programId],
+          'updating',
+        );
         try {
           await browserApi.tabs.update(owned.capture.tabId, { active: true });
         } catch {
-          await failCapture(program.id, 'login_required', { reveal: true });
+          await failCapture(owned.programId, 'login_required', {
+            reveal: true,
+          });
           return { ok: false, error: 'login_required' };
         }
       }
@@ -315,20 +403,130 @@ export function createCaptureCoordinator({
       };
     }
 
-    if (owned?.programId === program.id && message.final) {
-      if (result.kind === 'verification_required') {
-        await failCapture(program.id, 'verification_required', { reveal: true });
-      } else {
-        await failCapture(program.id, result.reason ?? 'balance_not_found');
+    if (!owned) {
+      const authenticatedFailure = failedObservations.find(
+        ({ result }) => result.authState === 'authenticated',
+      );
+      if (authenticatedFailure) {
+        return refreshProgram(authenticatedFailure.programId);
       }
-      return { ok: false, error: result.reason ?? 'balance_not_found' };
+      return {
+        ok: true,
+        captured:
+          successfulCaptures.length > 0 ||
+          observations.some(
+            ({ result }) => result.kind === 'member_number_found',
+          ),
+      };
     }
 
-    if (result.authState === 'authenticated') {
-      return refreshProgram(program.id);
+    const ownerProgram = getProgram(owned.programId);
+    const ownerResult = ownerObservation?.result;
+    if (!ownerProgram || !ownerResult) {
+      if (message.final) {
+        await failCapture(owned.programId, 'balance_not_found');
+        return { ok: false, error: 'balance_not_found' };
+      }
+      return { ok: true, captured: successfulCaptures.length > 0 };
     }
 
-    return { ok: true, captured: false };
+    if (ownerResult.kind === 'member_number_found') {
+      await closeOwnedTab(owned.programId);
+      return { ok: true, captured: true };
+    }
+
+    if (
+      ownerResult.kind === 'success' &&
+      ownerResult.capture.memberNumber === null &&
+      ownerProgram.memberNumberUrl
+    ) {
+      owned.capture.stage = 'member_number';
+      owned.capture.pendingProgramIds.add(owned.programId);
+      resetCaptureTimeout(owned.programId, owned.capture);
+      await stateRepository.setStatus(owned.programId, 'updating');
+      try {
+        await browserApi.tabs.update(owned.capture.tabId, {
+          url: ownerProgram.memberNumberUrl,
+          active: false,
+        });
+        return {
+          ok: true,
+          captured: true,
+          continued: 'member_number',
+        };
+      } catch {
+        await failCapture(owned.programId, 'tab_open_failed');
+        return { ok: false, error: 'tab_open_failed' };
+      }
+    }
+
+    if (
+      ownerResult.kind === 'success' &&
+      ownerResult.capture.memberNumber === null &&
+      programShowsMemberNumber(ownerProgram) &&
+      !message.final
+    ) {
+      owned.capture.pendingProgramIds.add(owned.programId);
+      await stateRepository.setStatus(owned.programId, 'updating');
+      return {
+        ok: true,
+        captured: true,
+        continued: 'member_number_wait',
+      };
+    }
+
+    if (failedObservations.length > 0 && !message.final) {
+      await stateRepository.setStatuses(
+        failedObservations.map(({ programId }) => programId),
+        'updating',
+      );
+      return {
+        ok: true,
+        captured: successfulCaptures.length > 0,
+        continued: 'shared_page_wait',
+      };
+    }
+
+    if (failedObservations.length > 0) {
+      for (const { programId, result } of failedObservations) {
+        await stateRepository.setStatus(
+          programId,
+          'error',
+          result.reason ?? 'balance_not_found',
+        );
+      }
+
+      const capture = clearCapture(owned.programId);
+      const reveal = failedObservations.some(
+        ({ result }) => result.kind === 'verification_required',
+      );
+      if (capture) {
+        try {
+          if (reveal) {
+            await browserApi.tabs.update(capture.tabId, { active: true });
+          } else {
+            await browserApi.tabs.remove(capture.tabId);
+          }
+        } catch {
+          // The tab may have been closed while final failures were saved.
+        }
+      }
+      return {
+        ok: false,
+        error:
+          failedObservations[0]?.result.reason ?? 'balance_not_found',
+      };
+    }
+
+    await closeOwnedTab(owned.programId);
+    return {
+      ok: true,
+      captured:
+        successfulCaptures.length > 0 ||
+        observations.some(
+          ({ result }) => result.kind === 'member_number_found',
+        ),
+    };
   }
 
   async function handleMessage(
@@ -344,8 +542,19 @@ export function createCaptureCoordinator({
       return refreshProgram(message.programId, { force: true });
     }
     if (message.type === MESSAGE_TYPES.REFRESH_ALL) {
+      const enabledIds = new Set(
+        await enabledProgramIds(PROGRAM_LIST.map((program) => program.id)),
+      );
+      const seenCaptureGroups = new Set<string>();
+      const refreshTargets = PROGRAM_LIST.filter((program) => {
+        if (!enabledIds.has(program.id)) return false;
+        const groupKey = captureGroupKey(program.id);
+        if (seenCaptureGroups.has(groupKey)) return false;
+        seenCaptureGroups.add(groupKey);
+        return true;
+      });
       const results = await Promise.all(
-        PROGRAM_LIST.map((program) =>
+        refreshTargets.map((program) =>
           refreshProgram(program.id, { force: true }),
         ),
       );
@@ -357,8 +566,19 @@ export function createCaptureCoordinator({
   function handleTabRemoved(tabId: number): void {
     const owned = findCaptureByTab(tabId);
     if (!owned) return;
-    clearCapture(owned.programId);
-    void stateRepository.setStatus(owned.programId, 'error', 'capture_tab_closed');
+    const capture = clearCapture(owned.programId);
+    const program = getProgram(owned.programId);
+    const pendingProgramIds =
+      capture && capture.pendingProgramIds.size > 0
+        ? [...capture.pendingProgramIds]
+        : program
+          ? programsInCaptureGroup(program).map((candidate) => candidate.id)
+          : [owned.programId];
+    void stateRepository.setStatuses(
+      pendingProgramIds,
+      'error',
+      'capture_tab_closed',
+    );
   }
 
   function destroy(): void {

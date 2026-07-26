@@ -14,6 +14,7 @@ import type {
   NormalizedExpiration,
   PointsState,
   ProgramDefinition,
+  ProgramCapture,
   ProgramId,
   ProgramRecord,
   RecordStatus,
@@ -331,6 +332,23 @@ export function applyAutomaticCapture(
   return next;
 }
 
+export function applyAutomaticCaptures(
+  state: PointsState,
+  captures: readonly ProgramCapture[],
+  date = new Date(),
+): PointsState {
+  let next = state;
+  const programIds = new Set<ProgramId>();
+  for (const { programId, capture } of captures) {
+    if (programIds.has(programId)) {
+      throw new Error('Duplicate automatic capture');
+    }
+    programIds.add(programId);
+    next = applyAutomaticCapture(next, programId, capture, date);
+  }
+  return next;
+}
+
 export function applyAutomaticMemberNumber(
   state: unknown,
   programId: ProgramId,
@@ -413,6 +431,22 @@ export function markRecordStatus(
     status,
     error: typeof error === 'string' ? error : null,
   };
+  return next;
+}
+
+export function markRecordStatuses(
+  state: PointsState,
+  programIds: readonly ProgramId[],
+  status: RecordStatus,
+  error: string | null = null,
+): PointsState {
+  let next = state;
+  const uniqueProgramIds = new Set<ProgramId>();
+  for (const programId of programIds) {
+    if (uniqueProgramIds.has(programId)) continue;
+    uniqueProgramIds.add(programId);
+    next = markRecordStatus(next, programId, status, error);
+  }
   return next;
 }
 
