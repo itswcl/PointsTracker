@@ -12,6 +12,12 @@ export const PROGRAM_IDS = {
   HYATT: 'hyatt',
   HILTON: 'hilton',
   MARRIOTT: 'marriott',
+  IHG: 'ihg',
+  WYNDHAM: 'wyndham',
+  AMEX: 'amex',
+  CHASE: 'chase',
+  CITI: 'citi',
+  BILT: 'bilt',
 } as const;
 
 export type ProgramId = (typeof PROGRAM_IDS)[keyof typeof PROGRAM_IDS];
@@ -19,6 +25,7 @@ export type ProgramId = (typeof PROGRAM_IDS)[keyof typeof PROGRAM_IDS];
 export const PROGRAM_CATEGORIES = {
   AIRLINE: 'airline',
   HOTEL: 'hotel',
+  CREDIT_CARD: 'credit_card',
 } as const;
 
 export type ProgramCategory =
@@ -65,6 +72,10 @@ export interface ProgramDefinition {
   readonly memberNumberUrl?: string;
   readonly hosts: readonly string[];
   readonly defaultExpiration: Expiration;
+  readonly visibleFields?: {
+    readonly memberNumber?: boolean;
+    readonly expiration?: boolean;
+  };
 }
 
 export interface AutomaticCapture {

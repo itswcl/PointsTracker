@@ -1,4 +1,16 @@
 import type { InspectionResult } from '../types.js';
+import {
+  DEFAULT_OBSERVATION_WINDOW_MS,
+  LOGIN_WAIT_MS,
+} from './capture-timing.js';
+
+export function observationWindowFor(
+  result: InspectionResult,
+): number {
+  return result.kind === 'login_required'
+    ? LOGIN_WAIT_MS
+    : DEFAULT_OBSERVATION_WINDOW_MS;
+}
 
 export function shouldFinishObservation(
   result: InspectionResult,

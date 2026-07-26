@@ -4,9 +4,12 @@ import {
 } from '../src/adapters/index.js';
 import { MESSAGE_TYPES } from '../src/messaging.js';
 import { detectProgramFromUrl } from '../src/programs.js';
-import { shouldFinishObservation } from '../src/background/observation-policy.js';
+import {
+  observationWindowFor,
+  shouldFinishObservation,
+} from '../src/background/observation-policy.js';
+import { DEFAULT_OBSERVATION_WINDOW_MS } from '../src/background/capture-timing.js';
 
-const OBSERVATION_WINDOW_MS = 12_000;
 const MUTATION_DEBOUNCE_MS = 300;
 
 const program = detectProgramFromUrl(window.location.href);
@@ -23,6 +26,14 @@ if (program) {
     observer?.disconnect();
     if (debounceId) clearTimeout(debounceId);
     if (finalTimerId) clearTimeout(finalTimerId);
+  }
+
+  function scheduleFinalInspection(delayMs: number): void {
+    if (finalTimerId) clearTimeout(finalTimerId);
+    finalTimerId = setTimeout(() => {
+      observer?.disconnect();
+      void inspectAndSend(true);
+    }, delayMs);
   }
 
   async function inspectAndSend(final = false): Promise<void> {
@@ -47,6 +58,10 @@ if (program) {
       });
     } catch {
       // Extension reloads can invalidate an existing content script context.
+    }
+
+    if (!final) {
+      scheduleFinalInspection(observationWindowFor(result));
     }
 
     if (
@@ -75,10 +90,7 @@ if (program) {
 
   void inspectAndSend(false);
 
-  finalTimerId = setTimeout(() => {
-    observer?.disconnect();
-    void inspectAndSend(true);
-  }, OBSERVATION_WINDOW_MS);
+  scheduleFinalInspection(DEFAULT_OBSERVATION_WINDOW_MS);
 
   window.addEventListener('pagehide', cleanup, { once: true });
 }

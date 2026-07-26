@@ -353,6 +353,177 @@ Remaining end-to-end checks:
 
 The final URL, scoped traversal, filter preparation, and synthetic regression fixtures are recorded in `src/programs.ts`, `src/adapters/marriott.ts`, `entrypoints/supported.content.ts`, and `tests/adapters/adapters.test.ts`. No production markup, transaction description, or real member number is stored in the repository.
 
+## IHG One Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed account URL:
+
+`https://www.ihg.com/rewardsclub/us/en/account-mgmt/home`
+
+Confirmed production structure:
+
+- Balance: `[data-testid="pointsToRedeemSID"]`
+- Member number: `[data-testid="memberNumberSID"]`
+- Account marker: `[data-testid="yourPointsLabelSID"]`
+- Elite-status proof: `.header-member-level-name`, allowlisted only for exact Silver, Gold, Platinum, or Diamond Elite Member text
+- Additional rendered program rows: `[data-testid="memberProgram0SID"]` and `[data-testid="memberProgram1SID"]`
+
+The adapter reads only the rendered account page. It displays expiration as
+`N/A` only when an exact active Elite-tier marker is present; if the balance is
+available without that proof, it preserves the saved record and reports that
+expiration details were not found. The generic credit cardmember and Business
+Rewards program rows are not treated as non-expiration proof. A credential-free
+account API request was rejected, so the private API host is not requested or
+used.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new IHG host permission.
+- Refresh IHG One Rewards and confirm the balance and member number match the account page.
+- Confirm Expiration displays `N/A` only while an allowlisted active Elite-tier label is present.
+- Confirm the extension-created tab closes after capture succeeds.
+
+The final URL, selectors, and synthetic regression fixtures are recorded in
+`src/programs.ts`, `src/adapters/ihg.ts`, and
+`tests/adapters/ihg.test.ts`. No production markup, real member number, private
+API response, cookie, or authorization data is stored in the repository.
+
+## Wyndham Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed activity URL:
+
+`https://www.wyndhamhotels.com/wyndham-rewards/my-account/activity`
+
+Confirmed production structure:
+
+- Balance: `.details-points.member-level-color` with the exact text form `You have {number} points`
+- Member number: `.img-container .text-number`
+- Member-number fallback: `.details-number.member-attribute`
+- Empty state: `.no-activity .no-activity-headline.headline-g` with the exact text `You have no recent activity.`
+
+The account block does not display a personal expiration date or a Wyndham
+Rewards Earner Premier exemption. When the rendered balance is exactly zero and
+the exact empty-state marker is also present, Expiration displays `N/A` because
+there are no points to expire. A positive balance displays `18 mo inactivity`
+and retains the separate four-year per-point rule in the record note, even if
+the activity table is empty. The adapter does not interpret the unrelated
+credit-card promotion as proof of a cardholder exemption. No credential-free
+account API was identified, so the adapter uses rendered HTML only.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Wyndham host permission.
+- Refresh Wyndham Rewards and confirm the balance matches the `You have … points` value.
+- Confirm the popup member number matches the displayed Wyndham Rewards number.
+- With zero points and the exact empty state, confirm Expiration displays `N/A`.
+- With a positive balance, confirm Expiration displays `18 mo inactivity`.
+- Confirm the extension-created tab closes after capture succeeds.
+
+The final URL, selectors, and synthetic regression fixtures are recorded in
+`src/programs.ts`, `src/adapters/wyndham.ts`, and
+`tests/adapters/wyndham.test.ts`. No production markup, real member number,
+cookie, token, or network response is stored in the repository.
+
+## American Express Membership Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed rewards URL:
+
+`https://global.americanexpress.com/rewards`
+
+Confirmed production structure:
+
+- Desktop label: `#available-header-lg` containing exact text `Available Points`
+- Desktop scope: nearest `[data-testid="desktop-tile"]`
+- Desktop amount: `p.heading-sans-medium-bold.color-text-emphasis`
+- Responsive label: `#available-header-md-sm` containing exact text `Available Points`
+- Responsive scope: nearest `[data-testid="small-tile"]`
+- Responsive amount: `p.heading-sans-medium-bold`
+
+The adapter reads only the balance inside the exact Available Points tile. It
+does not read card details, promotional offers, form controls, member numbers,
+or expiration data.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Amex host permission.
+- Refresh Amex and confirm the ledger matches the rendered Available Points total.
+- Confirm only Program, Balance, and Actions appear in the Credit Card row.
+
+## Chase Ultimate Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed account-selector URL:
+
+`https://ultimaterewardspoints.chase.com/account-selector`
+
+Confirmed production structure:
+
+- Rewards list host: `mds-list.mds-list--cmb[list-type="navigational"]`
+- Card rows inside the open shadow root: `li.list-item--navigational`
+- Balance elements: `.list-item__description.list-item__description--subdued`
+- Exact balance text: `Available Points: {number} pts`
+
+The adapter traverses only open shadow roots, sums one exact balance for every
+rendered card row, ignores hidden responsive lists, and accepts multiple
+rendered list copies only when their totals agree. Missing or conflicting card
+rows fail closed. Only the combined Ultimate Rewards total is stored; card
+names, partial card numbers, links, and per-card balances are not retained.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Chase host permission.
+- Refresh Chase and compare the ledger total with the sum of every visible card balance.
+- Confirm no card-level information appears in storage, export, or the popup.
+
+## Citi ThankYou Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed dashboard URL:
+
+`https://online.citi.com/US/ag/dashboard/summary`
+
+Confirmed production structure:
+
+- Rewards scope: `.reward-wrapper.clubbed-wrapper`
+- Exact heading: `.reward-heading[role="heading"]` with `Total ThankYou® Points`
+- Amount scope: `.reward-amount`
+
+The adapter accepts one consistent whole-number total across rendered responsive
+copies and rejects conflicting totals, unrelated point offers, editable fields,
+and account details.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Citi host permission.
+- Refresh Citi and confirm the ledger matches Total ThankYou Points.
+- Confirm only the combined program balance is stored.
+
+## Bilt Rewards acceptance — structure confirmed 07/25/2026
+
+Confirmed rewards URL:
+
+`https://www.bilt.com/rewards/neighborhood`
+
+Confirmed production structure:
+
+- Points control: `button[data-testid="user-info-points-pill"]`
+- Exact balance scope: rendered `[role="menu"]`
+- Exact label: `Your Points`
+- Exact amount: the label's signed whole-number next sibling
+
+The content script clicks the single rendered points pill only when the exact
+menu is not already available. The adapter ignores rounded pill text when it
+cannot prove an exact whole-number balance, rejects hidden or conflicting
+copies, and accepts a signed Bilt balance. Signed values remain restricted to
+the Credit Card category.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the new Bilt host permission.
+- Refresh Bilt and confirm the ledger matches the exact Your Points menu value.
+- Confirm a negative displayed value remains negative in the row, category total, manual editor, backup, and restore flow.
+
+All four Credit Card adapters use rendered, allowlisted page content only. No
+private account API, credential, cookie, authorization token, raw HTML, card
+detail, or transaction data is requested or stored.
+
 ## Completion gate
 
 For each program, acceptance requires three consecutive successful flows:

@@ -39,13 +39,19 @@ function isRecord(value: unknown): value is UnknownRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isInspectionResult(value: unknown): value is InspectionResult {
+function isInspectionResult(
+  value: unknown,
+  programId: ProgramId,
+): value is InspectionResult {
   if (!isRecord(value)) return false;
   if (!['authenticated', 'signed_out', 'unknown'].includes(String(value.authState))) {
     return false;
   }
   if (value.kind === 'success') {
-    return validateCapture(value.capture) && value.reason === null;
+    return (
+      validateCapture(value.capture, programId) &&
+      value.reason === null
+    );
   }
   if (value.kind === 'member_number_found') {
     return (
@@ -78,6 +84,6 @@ export function isPointsTrackerMessage(
   return (
     typeof message.pageUrl === 'string' &&
     typeof message.final === 'boolean' &&
-    isInspectionResult(message.result)
+    isInspectionResult(message.result, message.programId)
   );
 }

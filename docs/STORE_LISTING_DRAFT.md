@@ -8,24 +8,24 @@ Points Tracker
 
 ## Short summary
 
-Track airline and hotel member numbers, balances, and expiration dates locally.
+Track airline, hotel, and credit-card rewards balances locally.
 
 ## Detailed description
 
-Points Tracker provides one compact ledger for supported airline and hotel loyalty member numbers, balances, and expiration information.
+Points Tracker provides one compact local ledger for supported airline, hotel, and credit-card rewards balances, with loyalty member numbers and expiration information where applicable.
 
 - Refresh a program after signing in directly on its official website.
 - Use manual entry whenever a loyalty website changes or automatic capture is unavailable.
-- Sort airline and hotel programs by balance or expiration.
-- Keep airline and hotel totals separate.
+- Sort each rewards category by balance and airline/hotel programs by expiration.
+- Keep Credit Card, Airline, and Hotel totals separate.
 - Export or import a local JSON backup when you choose.
 - Receive a compact notice when a newer public release is available.
 
-Points Tracker does not ask for loyalty-site credentials. It stores the displayed loyalty member number and ledger values, plus a non-personal update-check timestamp and latest public release version, only in the current Chrome profile. It has no backend, analytics, advertising, or telemetry. It contacts GitHub's public release API no more than once every 24 hours to compare version numbers; the request contains no loyalty data.
+Points Tracker does not ask for account credentials. It stores only program-level ledger values and displayed loyalty member numbers where applicable, plus a non-personal update-check timestamp and latest public release version, in the current Chrome profile. It does not store card details or per-card balances. It has no backend, analytics, advertising, or telemetry. It contacts GitHub's public release API no more than once every 24 hours to compare version numbers; the request contains no rewards data.
 
 ## Independent-product disclaimer
 
-Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, or loyalty program. All airline, hotel, and loyalty-program names and marks belong to their respective owners and are used only to identify supported programs.
+Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, card issuer, or loyalty program. All company and program names and marks belong to their respective owners and are used only to identify supported programs.
 
 ## Before publishing
 

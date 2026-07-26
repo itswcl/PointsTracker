@@ -6,7 +6,11 @@ import {
   type FormEvent,
   type ReactNode,
 } from 'react';
-import { formatBalance, parseBalance } from '../../src/domain/balances.js';
+import {
+  formatBalance,
+  parseBalance,
+  parseSignedBalance,
+} from '../../src/domain/balances.js';
 import {
   formatDateKey,
   formatMonthKey,
@@ -19,7 +23,13 @@ import {
 } from '../../src/domain/records.js';
 import { normalizeMemberNumber } from '../../src/domain/member-numbers.js';
 import { MESSAGE_TYPES } from '../../src/messaging.js';
-import { PROGRAM_CATEGORIES, PROGRAM_LIST } from '../../src/programs.js';
+import {
+  PROGRAM_CATEGORIES,
+  PROGRAM_LIST,
+  programAllowsSignedBalance,
+  programShowsExpiration,
+  programShowsMemberNumber,
+} from '../../src/programs.js';
 import { parseBackup, serializeBackup } from '../../src/storage/backup.js';
 import type {
   ExpirationType,
@@ -69,6 +79,7 @@ type SortMode = 'balance' | 'expiration';
 type SortModes = Record<ProgramCategory, SortMode | null>;
 
 const PROGRAM_GROUPS: readonly LedgerGroup[] = Object.freeze([
+  { id: PROGRAM_CATEGORIES.CREDIT_CARD, label: 'Credit Card' },
   { id: PROGRAM_CATEGORIES.AIRLINE, label: 'Airline' },
   { id: PROGRAM_CATEGORIES.HOTEL, label: 'Hotel' },
 ]);
@@ -130,6 +141,12 @@ function totalBalanceForPrograms(
   }, 0);
 }
 
+function memberNumberSuffix(memberNumber: string | null): string {
+  if (!memberNumber) return '—';
+  const compactNumber = memberNumber.replace(/[^A-Za-z0-9]/g, '');
+  return compactNumber.slice(-4) || '—';
+}
+
 function RefreshIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -178,10 +195,12 @@ function ActionButton({ label, children, ...buttonProps }: ActionButtonProps) {
 }
 
 type ProgramAction = (programId: ProgramId) => void | Promise<void>;
+type MemberNumberCopyAction = (memberNumber: string) => Promise<boolean>;
 
 interface ProgramRowProps {
   program: ProgramDefinition;
   record: ProgramRecord;
+  onCopyMemberNumber: MemberNumberCopyAction;
   onEdit: ProgramAction;
   onRefresh: ProgramAction;
   onUseAutomatic: ProgramAction;
@@ -190,17 +209,31 @@ interface ProgramRowProps {
 function ProgramRow({
   program,
   record,
+  onCopyMemberNumber,
   onEdit,
   onRefresh,
   onUseAutomatic,
 }: ProgramRowProps) {
   const display = getDisplayRecord(record);
+  const memberNumber = display.memberNumber;
+  const [memberNumberCopied, setMemberNumberCopied] = useState(false);
+  const showsMemberNumber = programShowsMemberNumber(program);
+  const showsExpiration = programShowsExpiration(program);
+  const isBalanceOnly = !showsMemberNumber && !showsExpiration;
   const errorText = display.error
     ? ERROR_LABELS[display.error] ?? 'The latest update did not finish.'
     : null;
 
+  async function handleCopyMemberNumber(): Promise<void> {
+    if (!memberNumber) return;
+    setMemberNumberCopied(await onCopyMemberNumber(memberNumber));
+  }
+
   return (
-    <article className="program-row" aria-labelledby={`${program.id}-name`}>
+    <article
+      className={`program-row${isBalanceOnly ? ' program-row--balance-only' : ''}`}
+      aria-labelledby={`${program.id}-name`}
+    >
       <h2
         className="program-name"
         id={`${program.id}-name`}
@@ -209,28 +242,65 @@ function ProgramRow({
       >
         {program.displayName}
       </h2>
-      <strong className="program-balance">{formatBalance(display.balance)}</strong>
-      <span
-        className="program-member-number"
-        title={display.memberNumber ?? 'Member number not captured'}
-      >
-        {display.memberNumber ?? '—'}
-      </span>
-      <dl className="record-facts">
-        <div>
-          <dt className="visually-hidden">Expiration</dt>
-          <dd>{expirationLabel(display.expiration)}</dd>
-        </div>
-      </dl>
+      <strong className="program-balance">
+        {formatBalance(
+          display.balance,
+          programAllowsSignedBalance(program),
+        )}
+      </strong>
+      {showsMemberNumber ? (
+        memberNumber ? (
+          <button
+            className="program-member-suffix program-member-suffix--copy"
+            type="button"
+            aria-label={
+              memberNumberCopied
+                ? `Copied ${program.name} member number`
+                : `Copy ${program.name} member number`
+            }
+            title=""
+            data-tooltip={
+              memberNumberCopied ? 'Copied' : 'Copy member#'
+            }
+            onClick={() => void handleCopyMemberNumber()}
+            onMouseLeave={() => setMemberNumberCopied(false)}
+            onBlur={() => setMemberNumberCopied(false)}
+          >
+            {memberNumberSuffix(memberNumber)}
+          </button>
+        ) : (
+          <span
+            className="program-member-suffix"
+            aria-label={`${program.name} member number not captured`}
+          >
+            —
+          </span>
+        )
+      ) : null}
+      {showsExpiration ? (
+        <dl className="record-facts">
+          <div>
+            <dt className="visually-hidden">Expiration</dt>
+            <dd>{expirationLabel(display.expiration)}</dd>
+          </div>
+        </dl>
+      ) : null}
       <div className="program-actions">
         <ActionButton
           label={`Refresh ${program.name}`}
+          title=""
+          data-tooltip="Refresh"
           onClick={() => onRefresh(program.id)}
           disabled={display.status === 'updating'}
         >
           <RefreshIcon />
         </ActionButton>
-        <ActionButton label={`Edit ${program.name}`} onClick={() => onEdit(program.id)}>
+        <ActionButton
+          label={`Edit ${program.name}`}
+          title=""
+          data-tooltip="Edit"
+          onClick={() => onEdit(program.id)}
+        >
           <EditIcon />
         </ActionButton>
         {record.manualOverride ? (
@@ -250,18 +320,25 @@ function ProgramRow({
 
 interface LedgerHeaderProps {
   groupLabel: string;
+  showsExpiration: boolean;
+  showsMemberNumber: boolean;
   sortMode: SortMode | null;
   onChangeSort: (mode: SortMode) => void;
 }
 
 function LedgerHeader({
   groupLabel,
+  showsExpiration,
+  showsMemberNumber,
   sortMode,
   onChangeSort,
 }: LedgerHeaderProps) {
+  const isBalanceOnly = !showsMemberNumber && !showsExpiration;
   return (
-    <div className="ledger-header">
-      <span>Program</span>
+    <div
+      className={`ledger-header${isBalanceOnly ? ' ledger-header--balance-only' : ''}`}
+    >
+      <span aria-hidden="true" />
       <button
         className="ledger-sort-button"
         type="button"
@@ -278,23 +355,25 @@ function LedgerHeader({
           <path d="m2 3.5 3 3 3-3" />
         </svg>
       </button>
-      <span>Member #</span>
-      <button
-        className="ledger-sort-button"
-        type="button"
-        aria-label={
-          sortMode === 'expiration'
-            ? `Restore original ${groupLabel} order`
-            : `Sort ${groupLabel} by expiration, earliest first`
-        }
-        aria-pressed={sortMode === 'expiration'}
-        onClick={() => onChangeSort('expiration')}
-      >
-        Expiration
-        <svg viewBox="0 0 10 10" aria-hidden="true">
-          <path d="m2 6.5 3-3 3 3" />
-        </svg>
-      </button>
+      {showsMemberNumber ? <span aria-hidden="true" /> : null}
+      {showsExpiration ? (
+        <button
+          className="ledger-sort-button"
+          type="button"
+          aria-label={
+            sortMode === 'expiration'
+              ? `Restore original ${groupLabel} order`
+              : `Sort ${groupLabel} by expiration, earliest first`
+          }
+          aria-pressed={sortMode === 'expiration'}
+          onClick={() => onChangeSort('expiration')}
+        >
+          Expiration
+          <svg viewBox="0 0 10 10" aria-hidden="true">
+            <path d="m2 6.5 3-3 3 3" />
+          </svg>
+        </button>
+      ) : null}
       <span aria-hidden="true" />
     </div>
   );
@@ -306,6 +385,7 @@ interface LedgerSectionProps {
   sortMode: SortMode | null;
   state: PointsState;
   onChangeSort: (mode: SortMode) => void;
+  onCopyMemberNumber: MemberNumberCopyAction;
   onEdit: ProgramAction;
   onRefresh: ProgramAction;
   onUseAutomatic: ProgramAction;
@@ -317,10 +397,13 @@ function LedgerSection({
   sortMode,
   state,
   onChangeSort,
+  onCopyMemberNumber,
   onEdit,
   onRefresh,
   onUseAutomatic,
 }: LedgerSectionProps) {
+  const showsMemberNumber = programs.some(programShowsMemberNumber);
+  const showsExpiration = programs.some(programShowsExpiration);
   const displayedPrograms = sortMode
     ? sortedPrograms(programs, state, sortMode)
     : programs;
@@ -334,12 +417,11 @@ function LedgerSection({
     >
       <div className="ledger-section-heading">
         <h2 id={`${group.id}-section-title`}>{group.label}</h2>
-        <span aria-label={`${programs.length} ${programs.length === 1 ? 'program' : 'programs'}`}>
-          {programs.length}
-        </span>
       </div>
       <LedgerHeader
         groupLabel={group.label}
+        showsExpiration={showsExpiration}
+        showsMemberNumber={showsMemberNumber}
         sortMode={sortMode}
         onChangeSort={onChangeSort}
       />
@@ -348,6 +430,7 @@ function LedgerSection({
           key={program.id}
           program={program}
           record={state.records[program.id]}
+          onCopyMemberNumber={onCopyMemberNumber}
           onEdit={onEdit}
           onRefresh={onRefresh}
           onUseAutomatic={onUseAutomatic}
@@ -355,7 +438,12 @@ function LedgerSection({
       ))}
       <div className="ledger-total-row" aria-label={`${group.label} total balance`}>
         <strong className="ledger-total-label">Total</strong>
-        <output className="ledger-total-balance">{formatBalance(totalBalance)}</output>
+        <output className="ledger-total-balance">
+          {formatBalance(
+            totalBalance,
+            group.id === PROGRAM_CATEGORIES.CREDIT_CARD,
+          )}
+        </output>
       </div>
     </section>
   );
@@ -378,6 +466,8 @@ function EditPanel({
   onSave,
 }: EditPanelProps) {
   const display = getDisplayRecord(record);
+  const showsMemberNumber = programShowsMemberNumber(program);
+  const showsExpiration = programShowsExpiration(program);
   const [balanceText, setBalanceText] = useState(
     display.balance === null ? '' : String(display.balance),
   );
@@ -392,15 +482,26 @@ function EditPanel({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const balance = parseBalance(balanceText);
+    const balance = programAllowsSignedBalance(program)
+      ? parseSignedBalance(balanceText)
+      : parseBalance(balanceText);
     if (balance === null) {
-      setFormError('Enter a whole-number balance of zero or more.');
+      setFormError(
+        programAllowsSignedBalance(program)
+          ? 'Enter a whole-number balance.'
+          : 'Enter a whole-number balance of zero or more.',
+      );
       return;
     }
-    const memberNumber = memberNumberText.trim()
-      ? normalizeMemberNumber(memberNumberText)
-      : null;
-    if (memberNumberText.trim() && memberNumber === null) {
+    const memberNumber =
+      showsMemberNumber && memberNumberText.trim()
+        ? normalizeMemberNumber(memberNumberText)
+        : null;
+    if (
+      showsMemberNumber &&
+      memberNumberText.trim() &&
+      memberNumber === null
+    ) {
       setFormError(
         'Enter a member number using letters, numbers, spaces, hyphens, or *.',
       );
@@ -409,7 +510,11 @@ function EditPanel({
     const validExpirationDate = isValidDateKey(expirationDate)
       ? expirationDate
       : null;
-    if (expirationType === 'fixed_date' && !validExpirationDate) {
+    if (
+      showsExpiration &&
+      expirationType === 'fixed_date' &&
+      !validExpirationDate
+    ) {
       setFormError('Choose an expiration date.');
       return;
     }
@@ -417,14 +522,16 @@ function EditPanel({
     void onSave(program.id, {
       balance,
       memberNumber,
-      expiration: {
-        type: expirationType,
-        date:
-          expirationType === 'never' || expirationType === 'unknown'
-            ? null
-            : validExpirationDate,
-        note: expirationType === 'never' ? 'No expiration' : null,
-      },
+      expiration: showsExpiration
+        ? {
+            type: expirationType,
+            date:
+              expirationType === 'never' || expirationType === 'unknown'
+                ? null
+                : validExpirationDate,
+            note: expirationType === 'never' ? 'No expiration' : null,
+          }
+        : program.defaultExpiration,
     });
   }
 
@@ -453,51 +560,58 @@ function EditPanel({
             />
           </label>
 
-          <label>
-            Member number
-            <input
-              autoComplete="off"
-              value={memberNumberText}
-              onChange={(event) => setMemberNumberText(event.target.value)}
-              placeholder="Optional"
-              maxLength={32}
-            />
-          </label>
-
-          <label>
-            Expiration type
-            <select
-              value={expirationType}
-              onChange={(event) => {
-                if (isExpirationType(event.target.value)) {
-                  setExpirationType(event.target.value);
-                }
-              }}
-            >
-              {EXPIRATION_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type === 'never'
-                    ? 'N/A (does not expire)'
-                    : type === 'fixed_date'
-                      ? 'Fixed date'
-                      : type === 'activity_based'
-                        ? 'Activity based'
-                        : 'Unknown'}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {expirationType === 'fixed_date' || expirationType === 'activity_based' ? (
+          {showsMemberNumber ? (
             <label>
-              Expiration date
+              Member number
               <input
-                type="date"
-                value={expirationDate}
-                onChange={(event) => setExpirationDate(event.target.value)}
-                required={expirationType === 'fixed_date'}
+                autoComplete="off"
+                value={memberNumberText}
+                onChange={(event) => setMemberNumberText(event.target.value)}
+                placeholder="Optional"
+                maxLength={32}
               />
             </label>
+          ) : null}
+
+          {showsExpiration ? (
+            <>
+              <label>
+                Expiration type
+                <select
+                  value={expirationType}
+                  onChange={(event) => {
+                    if (isExpirationType(event.target.value)) {
+                      setExpirationType(event.target.value);
+                    }
+                  }}
+                >
+                  {EXPIRATION_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type === 'never'
+                        ? 'N/A (does not expire)'
+                        : type === 'fixed_date'
+                          ? 'Fixed date'
+                          : type === 'activity_based'
+                            ? 'Activity based'
+                            : 'Unknown'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {expirationType === 'fixed_date' ||
+              expirationType === 'activity_based' ? (
+                <label>
+                  Expiration date
+                  <input
+                    type="date"
+                    value={expirationDate}
+                    onChange={(event) => setExpirationDate(event.target.value)}
+                    required={expirationType === 'fixed_date'}
+                  />
+                </label>
+              ) : null}
+            </>
           ) : null}
 
           {formError ? <p className="form-error">{formError}</p> : null}
@@ -529,6 +643,7 @@ export function App() {
   const [sortModes, setSortModes] = useState<SortModes>({
     [PROGRAM_CATEGORIES.AIRLINE]: null,
     [PROGRAM_CATEGORIES.HOTEL]: null,
+    [PROGRAM_CATEGORIES.CREDIT_CARD]: null,
   });
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const extensionVersion = chrome.runtime.getManifest().version;
@@ -569,6 +684,16 @@ export function App() {
   async function useAutomatic(programId: ProgramId): Promise<void> {
     await clearManualOverride(programId);
     setNotice('Automatic value restored.');
+  }
+
+  async function copyMemberNumber(memberNumber: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(memberNumber);
+      return true;
+    } catch {
+      setNotice('The member number could not be copied.');
+      return false;
+    }
   }
 
   function changeGroupSort(
@@ -633,6 +758,7 @@ export function App() {
             sortMode={sortModes[group.id]}
             state={state}
             onChangeSort={(mode) => changeGroupSort(group.id, mode)}
+            onCopyMemberNumber={copyMemberNumber}
             onEdit={setEditingProgramId}
             onRefresh={refreshProgram}
             onUseAutomatic={useAutomatic}

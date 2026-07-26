@@ -8,7 +8,13 @@ import { SessionRepository } from '../../src/storage/session-repository.js';
 import { StateRepository } from '../../src/storage/state-repository.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
 
-function setup() {
+function setup({
+  timeoutMs = 30_000,
+  loginWaitMs = 180_000,
+}: {
+  timeoutMs?: number;
+  loginWaitMs?: number;
+} = {}) {
   let nextTabId = 40;
   const browserApi = {
     tabs: {
@@ -27,7 +33,8 @@ function setup() {
     browserApi,
     stateRepository,
     sessionRepository,
-    timeoutMs: 30_000,
+    timeoutMs,
+    loginWaitMs,
   });
   return { browserApi, coordinator, stateRepository };
 }
@@ -73,6 +80,129 @@ describe('capture coordinator', () => {
     const state = await stateRepository.getState();
     expect(state.records.united.automatic.balance).toBe(125400);
     expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('reveals a login page and keeps the capture active for the longer login window', async () => {
+    const { browserApi, coordinator, stateRepository } = setup({
+      timeoutMs: 30_000,
+      loginWaitMs: 180_000,
+    });
+    const refresh = await coordinator.refreshProgram('united', { force: true });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'united',
+        pageUrl: 'https://www.united.com/en/us/myunited',
+        final: false,
+        result: {
+          kind: 'login_required',
+          authState: 'signed_out',
+          capture: null,
+          reason: 'login_required',
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(browserApi.tabs.update).toHaveBeenCalledWith(tabId, {
+      active: true,
+    });
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        united: {
+          status: 'updating',
+          error: null,
+        },
+      },
+    });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        united: {
+          status: 'updating',
+          error: null,
+        },
+      },
+    });
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'united',
+        pageUrl: 'https://www.united.com/en/us/myunited',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 125400,
+            memberNumber: 'UA000001',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        united: {
+          automatic: { balance: 125400, memberNumber: 'UA000001' },
+          status: 'fresh',
+          error: null,
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('leaves the login page open when the longer login window expires', async () => {
+    const { browserApi, coordinator, stateRepository } = setup({
+      loginWaitMs: 180_000,
+    });
+    const refresh = await coordinator.refreshProgram('united', { force: true });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'united',
+        pageUrl: 'https://www.united.com/en/us/myunited',
+        final: true,
+        result: {
+          kind: 'login_required',
+          authState: 'signed_out',
+          capture: null,
+          reason: 'login_required',
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    await vi.advanceTimersByTimeAsync(179_999);
+    expect((await stateRepository.getState()).records.united.status).toBe(
+      'updating',
+    );
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        united: {
+          status: 'error',
+          error: 'login_required',
+        },
+      },
+    });
+    expect(browserApi.tabs.update).toHaveBeenCalledWith(tabId, {
+      active: true,
+    });
+    expect(browserApi.tabs.remove).not.toHaveBeenCalled();
     coordinator.destroy();
   });
 

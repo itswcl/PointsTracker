@@ -6,17 +6,23 @@ import type {
 } from '../types.js';
 import { inspectAirFrance } from './airfrance.js';
 import { inspectAlaska } from './alaska.js';
+import { inspectAmex } from './amex.js';
 import { inspectAmerican } from './american.js';
 import { inspectAna } from './ana.js';
 import { inspectBritishAirways } from './britishairways.js';
+import { inspectBilt, prepareBilt } from './bilt.js';
 import { inspectCathay } from './cathay.js';
+import { inspectChase } from './chase.js';
+import { inspectCiti } from './citi.js';
 import { inspectDelta } from './delta.js';
 import { inspectEvaAir } from './evaair.js';
 import { inspectHyatt } from './hyatt.js';
 import { inspectHilton } from './hilton.js';
+import { inspectIhg } from './ihg.js';
 import { inspectMarriott, prepareMarriott } from './marriott.js';
 import { inspectUnited } from './united.js';
 import { inspectVirginAtlantic } from './virginatlantic.js';
+import { inspectWyndham } from './wyndham.js';
 import { inspectionResult } from './shared.js';
 
 const INSPECTORS = {
@@ -33,10 +39,17 @@ const INSPECTORS = {
   [PROGRAM_IDS.HYATT]: inspectHyatt,
   [PROGRAM_IDS.HILTON]: inspectHilton,
   [PROGRAM_IDS.MARRIOTT]: inspectMarriott,
+  [PROGRAM_IDS.IHG]: inspectIhg,
+  [PROGRAM_IDS.WYNDHAM]: inspectWyndham,
+  [PROGRAM_IDS.AMEX]: inspectAmex,
+  [PROGRAM_IDS.CHASE]: inspectChase,
+  [PROGRAM_IDS.CITI]: inspectCiti,
+  [PROGRAM_IDS.BILT]: inspectBilt,
 } satisfies Record<ProgramId, ProgramInspector>;
 
 const PREPARERS: Partial<Record<ProgramId, ProgramPreparer>> = {
   [PROGRAM_IDS.MARRIOTT]: prepareMarriott,
+  [PROGRAM_IDS.BILT]: prepareBilt,
 };
 
 export function prepareProgramPage(programId: unknown, document: Document): boolean {

@@ -48,14 +48,15 @@ The Points Tracker icon should now remain visible in the Chrome toolbar.
 1. Select the Points Tracker toolbar icon.
 2. Select the pencil icon beside a program to enter a balance manually.
 3. Select the refresh icon beside a program to open its official account page.
-4. Sign in normally on the airline or hotel website. Never enter your loyalty-site password into Points Tracker.
-5. After the official page loads, Points Tracker attempts to read only the displayed loyalty member number, balance, and expiration information.
+4. Sign in normally on the airline, hotel, or card-rewards website. Never enter an account password into Points Tracker.
+5. If sign-in is needed, Points Tracker brings the official login tab forward and keeps watching it for up to three minutes.
+6. After the official page loads, Points Tracker attempts to read only the displayed program balance and, where applicable, the loyalty member number and expiration information.
 
 If a website changes and automatic refresh does not work, your last saved value remains available and you can update it with the pencil icon.
 
 ## Chrome's permission message
 
-Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, and Marriott account hosts, plus GitHub's public API for checking releases. The production manifest requests `storage` plus exact host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, `www.marriott.com`, and `api.github.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. GitHub receives an anonymous request for the latest public release no more than once every 24 hours; no loyalty data is included. The extension does not request cookie, history, password, or network-interception permissions.
+Chrome should disclose access to United, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Chase, Citi, and Bilt account hosts, plus GitHub's public API for checking releases. The production manifest requests `storage` plus exact host access to `*.united.com`, `*.cathaypacific.com`, `wwws.airfrance.us`, `www.virginatlantic.com`, `www.alaskaair.com`, `www.aa.com`, `eservice.evaair.com`, `www.britishairways.com`, `stmt.cam.ana.co.jp`, `cam.ana.co.jp`, `www.delta.com`, `www.hyatt.com`, `www.hilton.com`, `www.marriott.com`, `www.ihg.com`, `www.wyndhamhotels.com`, `global.americanexpress.com`, `ultimaterewardspoints.chase.com`, `online.citi.com`, `www.bilt.com`, and `api.github.com`. ANA uses both official hosts because its balance/expiration statement and member-number reference are separate pages. GitHub receives an anonymous request for the latest public release no more than once every 24 hours; no loyalty data is included. The extension does not request cookie, history, password, or network-interception permissions.
 
 ## Updating Points Tracker
 
@@ -93,7 +94,7 @@ Confirm that you are signed in on the official account page and let the page fin
 
 ## Backups
 
-- **Export** downloads a plain JSON file containing the approved member numbers, balances, and expiration records.
+- **Export** downloads a plain JSON file containing the approved program-level balances and applicable member numbers and expiration records.
 - **Import** accepts only the current versioned schema and rejects unexpected fields.
 - The file is not encrypted and contains your loyalty member numbers. Treat it like any other personal local document.
 

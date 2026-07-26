@@ -98,6 +98,29 @@ describe('program records', () => {
     ).toBe(false);
   });
 
+  it('accepts signed Credit Card balances but rejects negative loyalty balances', () => {
+    const signedCapture = {
+      balance: -4321,
+      memberNumber: null,
+      expiration: {
+        type: 'unknown' as const,
+        date: null,
+        note: 'Expiration does not apply to this balance-only ledger row',
+      },
+    };
+
+    expect(validateCapture(signedCapture, 'bilt')).toBe(true);
+    expect(validateCapture(signedCapture, 'united')).toBe(false);
+
+    const state = applyAutomaticCapture(
+      createInitialState(),
+      'bilt',
+      signedCapture,
+      new Date(2026, 6, 17),
+    );
+    expect(state.records.bilt.automatic.balance).toBe(-4321);
+  });
+
   it('preserves the last captured member number when a later page omits it', () => {
     const first = applyAutomaticCapture(
       createInitialState(),

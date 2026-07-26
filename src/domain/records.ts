@@ -1,4 +1,9 @@
-import { isProgramId, PROGRAM_LIST } from '../programs.js';
+import {
+  getProgram,
+  isProgramId,
+  PROGRAM_LIST,
+  programAllowsSignedBalance,
+} from '../programs.js';
 import type {
   AutomaticCapture,
   DateKey,
@@ -14,7 +19,10 @@ import type {
   RecordStatus,
 } from '../types.js';
 import { EXPIRATION_TYPES } from '../types.js';
-import { isValidBalance } from './balances.js';
+import {
+  isValidBalance,
+  isValidSignedBalance,
+} from './balances.js';
 import { isValidDateKey, isValidMonthKey, toDateKey } from './dates.js';
 import {
   isValidMemberNumber,
@@ -145,7 +153,20 @@ function hasOnlyKeys(
   );
 }
 
-function validAutomaticRecord(candidate: unknown): candidate is ValidAutomaticRecord {
+function isValidProgramBalance(
+  value: unknown,
+  programId?: ProgramId,
+): value is number {
+  const program = getProgram(programId);
+  return program && programAllowsSignedBalance(program)
+    ? isValidSignedBalance(value)
+    : isValidBalance(value);
+}
+
+function validAutomaticRecord(
+  candidate: unknown,
+  programId?: ProgramId,
+): candidate is ValidAutomaticRecord {
   return Boolean(
     hasOnlyKeys(candidate, [
       'balance',
@@ -153,7 +174,8 @@ function validAutomaticRecord(candidate: unknown): candidate is ValidAutomaticRe
       'expiration',
       'updatedOn',
     ]) &&
-      (candidate.balance === null || isValidBalance(candidate.balance)) &&
+      (candidate.balance === null ||
+        isValidProgramBalance(candidate.balance, programId)) &&
       (candidate.memberNumber === undefined ||
         candidate.memberNumber === null ||
         isValidMemberNumber(candidate.memberNumber)) &&
@@ -162,10 +184,13 @@ function validAutomaticRecord(candidate: unknown): candidate is ValidAutomaticRe
   );
 }
 
-export function validateCapture(capture: unknown): capture is AutomaticCapture {
+export function validateCapture(
+  capture: unknown,
+  programId?: ProgramId,
+): capture is AutomaticCapture {
   return Boolean(
     hasOnlyKeys(capture, ['balance', 'memberNumber', 'expiration']) &&
-      isValidBalance(capture.balance) &&
+      isValidProgramBalance(capture.balance, programId) &&
       (capture.memberNumber === null ||
         isValidMemberNumber(capture.memberNumber)) &&
       validExpiration(capture.expiration),
@@ -174,6 +199,7 @@ export function validateCapture(capture: unknown): capture is AutomaticCapture {
 
 export function validateManualOverride(
   override: unknown,
+  programId?: ProgramId,
 ): override is ValidManualOverride {
   return Boolean(
     hasOnlyKeys(override, [
@@ -182,7 +208,7 @@ export function validateManualOverride(
       'expiration',
       'editedOn',
     ]) &&
-      isValidBalance(override.balance) &&
+      isValidProgramBalance(override.balance, programId) &&
       (override.memberNumber === undefined ||
         override.memberNumber === null ||
         isValidMemberNumber(override.memberNumber)) &&
@@ -215,9 +241,9 @@ export function validateStateForImport(candidate: unknown): boolean {
     }
     return Boolean(
       record.programId === programId &&
-        validAutomaticRecord(record.automatic) &&
+        validAutomaticRecord(record.automatic, programId) &&
         (record.manualOverride === null ||
-          validateManualOverride(record.manualOverride)) &&
+          validateManualOverride(record.manualOverride, programId)) &&
         isRecordStatus(record.status) &&
         (record.error === null ||
           (typeof record.error === 'string' && record.error.length <= 80)),
@@ -245,7 +271,7 @@ export function normalizeState(candidate: unknown): PointsState {
     }
 
     const record = createEmptyRecord(program);
-    if (validAutomaticRecord(candidateRecord.automatic)) {
+    if (validAutomaticRecord(candidateRecord.automatic, program.id)) {
       record.automatic = {
         balance: candidateRecord.automatic.balance,
         memberNumber: normalizeMemberNumber(
@@ -256,7 +282,7 @@ export function normalizeState(candidate: unknown): PointsState {
       };
     }
 
-    if (validateManualOverride(candidateRecord.manualOverride)) {
+    if (validateManualOverride(candidateRecord.manualOverride, program.id)) {
       record.manualOverride = {
         balance: candidateRecord.manualOverride.balance,
         memberNumber: normalizeMemberNumber(
@@ -284,7 +310,7 @@ export function applyAutomaticCapture(
   capture: AutomaticCapture,
   date = new Date(),
 ): PointsState {
-  if (!isProgramId(programId) || !validateCapture(capture)) {
+  if (!isProgramId(programId) || !validateCapture(capture, programId)) {
     throw new Error('Invalid automatic capture');
   }
 
@@ -342,7 +368,7 @@ export function applyManualOverride(
     expiration: override.expiration,
     editedOn: toDateKey(date),
   };
-  if (!validateManualOverride(candidate)) {
+  if (!validateManualOverride(candidate, programId)) {
     throw new Error('Invalid manual override');
   }
 

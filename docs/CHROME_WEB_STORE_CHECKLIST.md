@@ -1,4 +1,4 @@
-# Chrome Web Store 1.0 Checklist
+# Chrome Web Store Checklist
 
 Status legend:
 
@@ -6,7 +6,7 @@ Status legend:
 - `[ ]` required before submission
 - `[~]` recommended or requires a publishing decision
 
-This checklist is tailored to Points Tracker 1.0 and was reviewed against the Chrome Web Store documentation on July 19, 2026.
+This checklist is tailored to Points Tracker and was reviewed against the Chrome Web Store documentation on July 19, 2026.
 
 ## Public GitHub readiness
 
@@ -15,9 +15,9 @@ This checklist is tailored to Points Tracker 1.0 and was reviewed against the Ch
 - [x] The repository contains no Chrome profile data, cookies, passwords, real member numbers, or raw account-page HTML.
 - [x] Test balances, dates, and member numbers are synthetic fixtures.
 - [x] The original Points Tracker toolbar artwork contains no private information.
-- [x] The popup uses recognizable program labels and contains no third-party airline, hotel, or loyalty-program logo assets.
+- [x] The popup uses recognizable program labels and contains no third-party airline, hotel, issuer, or loyalty-program logo assets.
 - [x] Add an independent-product disclaimer to the README and store listing: "Points Tracker is an independent project and is not affiliated with or endorsed by any supported airline, hotel, or loyalty program."
-- [x] Replace airline and hotel marks with recognizable text labels for public distribution.
+- [x] Replace airline, hotel, and rewards-program marks with recognizable text labels for public distribution.
 - [x] License the source under the MIT License.
 - [x] Update `docs/BRAND_ASSETS.md` if the project changes from a private personal ledger to a publicly distributed extension.
 - [x] Run one final repository and Git-history secret scan immediately before changing GitHub visibility.
@@ -36,7 +36,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.3.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.4.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
@@ -52,10 +52,10 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 
 ## Single purpose and permissions
 
-- [x] Single purpose: show airline and hotel loyalty member numbers, balances, and expiration information in a local ledger.
+- [x] Single purpose: show airline, hotel, and credit-card rewards balances in a local ledger, with loyalty member numbers and expiration information where applicable.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to fourteen exact account-host patterns for the thirteen supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
+- [x] Host access is restricted to twenty exact account-host patterns for the nineteen supported programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
@@ -74,6 +74,12 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 | Hyatt host | Reads the World of Hyatt member number and balance from the user's logged-in account overview. |
 | Hilton host | Reads the Honors member number, `totalPointsFmt`, and `pointsExpiration` from the logged-in account summary, with focused visible-page fallbacks. |
 | Marriott host | Reads the Bonvoy member number, balance, and newest qualifying activity from the user's logged-in activity page. |
+| IHG host | Reads the One Rewards member number, balance, and exact Elite-tier marker from the user's logged-in account page. |
+| Wyndham host | Reads the Rewards member number, balance, and exact no-recent-activity state from the user's logged-in activity page. |
+| Amex host | Reads the Membership Rewards `Available Points` total from the user's logged-in rewards page. |
+| Chase host | Reads every visible Ultimate Rewards card balance on the account-selector page, computes one total locally, and stores no card-level details. |
+| Citi host | Reads the `Total ThankYou® Points` value from the user's logged-in dashboard. |
+| Bilt host | Opens the account points menu when needed and reads the exact `Your Points` total from the user's logged-in rewards page. |
 | GitHub API host | Checks the latest public Points Tracker release no more than once every 24 hours and sends no loyalty data. |
 
 - [~] Decide whether required host permissions should become `optional_host_permissions`, requested only when the user enables or refreshes a program. The current exact-host list supports existing functionality, but optional permissions would produce a smaller initial access warning and a stronger least-privilege story.
@@ -84,7 +90,7 @@ Official references: [minimum-permission and user-data FAQ](https://developer.ch
 ## Privacy and user-data disclosure
 
 - [ ] Publish a privacy policy at a public URL that works without authentication. A private GitHub repository URL is not sufficient.
-- [ ] State exactly what is processed: program identifier, loyalty member number, points or miles balance, expiration date or month, expiration amount when available, capture date, user-entered manual overrides, and the non-personal update-check timestamp/latest release version.
+- [ ] State exactly what is processed: program identifier, loyalty member number where applicable, program-level points or miles balance, expiration date or month and expiration amount where applicable, capture date, user-entered manual overrides, and the non-personal update-check timestamp/latest release version.
 - [ ] State that webpage content is processed only on the listed loyalty-program hosts and only to provide the ledger's user-facing functionality.
 - [ ] State that data is stored only with `chrome.storage.local` in the user's Chrome profile.
 - [ ] State that JSON export happens only when the user explicitly downloads a backup.
@@ -108,7 +114,7 @@ Official references: [fill out privacy fields](https://developer.chrome.com/docs
 - [ ] Upload the existing 128 pixel store icon.
 - [ ] Create one to five screenshots at 1280 x 800 or 640 x 400 pixels.
 - [ ] Use synthetic balances and dates in screenshots; never publish screenshots of personal loyalty accounts or real account data.
-- [ ] Show the popup, airline/hotel grouping, refresh flow, manual edit fallback, and expiration sorting.
+- [ ] Show the popup, Credit Card/Airline/Hotel grouping, refresh flow, manual edit fallback, balance sorting, and expiration sorting where applicable.
 - [~] Create an optional 440 x 280 small promotional tile.
 - [~] Create an optional 1400 x 560 marquee image if featured placement will be pursued.
 - [ ] Provide a public project/homepage URL, public privacy-policy URL, and support URL.
@@ -118,7 +124,7 @@ Official reference: [create a quality listing](https://developer.chrome.com/docs
 
 ## Reviewer instructions
 
-- [ ] Explain that Points Tracker never asks for loyalty-site credentials; users sign in directly on each airline or hotel website.
+- [ ] Explain that Points Tracker never asks for account credentials; users sign in directly on each airline, hotel, or card-rewards website.
 - [ ] Provide exact steps to test installation, popup rendering, manual entry, sorting, backup export/import, and automatic refresh.
 - [ ] Explain that automatic refresh requires an authenticated session on the applicable third-party website.
 - [ ] Make the manual-entry path sufficient for a reviewer to verify the core ledger without receiving personal credentials.
@@ -144,6 +150,6 @@ Private, unlisted, and public visibility all receive policy review. New develope
 - [ ] Verify automatic updates from the store.
 - [ ] Publish a tagged GitHub release matching the submitted commit and version.
 - [ ] Keep the privacy policy, support information, and permission explanations current.
-- [ ] Re-test live adapters periodically because airline and hotel pages can change without notice.
+- [ ] Re-test live adapters periodically because airline, hotel, and card-rewards pages can change without notice.
 - [ ] Treat any new host permission as a user-visible access expansion and document why it is necessary.
 - [ ] Increment the version, rerun all checks, and retain every submitted package for future releases.

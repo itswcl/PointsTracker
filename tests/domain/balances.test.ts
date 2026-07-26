@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatBalance, parseBalance } from '../../src/domain/balances.js';
+import {
+  formatBalance,
+  parseBalance,
+  parseSignedBalance,
+} from '../../src/domain/balances.js';
 
 describe('balance helpers', () => {
   it('parses formatted balances from display text', () => {
@@ -18,5 +22,11 @@ describe('balance helpers', () => {
     expect(formatBalance(125400)).toBe('125,400');
     expect(formatBalance(null)).toBe('—');
   });
-});
 
+  it('parses and formats signed balances only when explicitly allowed', () => {
+    expect(parseSignedBalance('-1,250 points')).toBe(-1250);
+    expect(parseSignedBalance('−75')).toBe(-75);
+    expect(formatBalance(-1250, true)).toBe('-1,250');
+    expect(formatBalance(-1250)).toBe('—');
+  });
+});

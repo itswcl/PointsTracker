@@ -10,8 +10,11 @@ import type {
   ProgramId,
   RecordStatus,
 } from '../types.js';
+import {
+  DEFAULT_CAPTURE_TIMEOUT_MS,
+  LOGIN_WAIT_MS,
+} from './capture-timing.js';
 
-const DEFAULT_TIMEOUT_MS = 30_000;
 const DEFAULT_COOLDOWN_MS = 5 * 60_000;
 
 interface BrowserApiLike {
@@ -62,6 +65,7 @@ interface CaptureCoordinatorOptions {
   sessionRepository: SessionRepositoryLike;
   now?: () => number;
   timeoutMs?: number;
+  loginWaitMs?: number;
   cooldownMs?: number;
 }
 
@@ -69,6 +73,7 @@ interface ActiveCapture {
   tabId: number;
   timeoutId: ReturnType<typeof setTimeout>;
   stage: 'primary' | 'member_number';
+  waitingForLogin: boolean;
 }
 
 interface RefreshOptions {
@@ -90,7 +95,8 @@ export function createCaptureCoordinator({
   stateRepository,
   sessionRepository,
   now = () => Date.now(),
-  timeoutMs = DEFAULT_TIMEOUT_MS,
+  timeoutMs = DEFAULT_CAPTURE_TIMEOUT_MS,
+  loginWaitMs = LOGIN_WAIT_MS,
   cooldownMs = DEFAULT_COOLDOWN_MS,
 }: CaptureCoordinatorOptions) {
   const activeCaptures = new Map<ProgramId, ActiveCapture>();
@@ -98,11 +104,14 @@ export function createCaptureCoordinator({
   function resetCaptureTimeout(
     programId: ProgramId,
     capture: ActiveCapture,
+    delayMs = timeoutMs,
+    reason = 'capture_timeout',
+    reveal = false,
   ): void {
     clearTimeout(capture.timeoutId);
     capture.timeoutId = setTimeout(() => {
-      void failCapture(programId, 'capture_timeout');
-    }, timeoutMs);
+      void failCapture(programId, reason, { reveal });
+    }, delayMs);
   }
 
   function clearCapture(programId: ProgramId): ActiveCapture | null {
@@ -190,6 +199,7 @@ export function createCaptureCoordinator({
           void failCapture(programId, 'capture_timeout');
         }, timeoutMs),
         stage: 'primary',
+        waitingForLogin: false,
       };
       activeCaptures.set(programId, capture);
       return { ok: true, tabId: tab.id };
@@ -277,10 +287,36 @@ export function createCaptureCoordinator({
       return { ok: true, captured: true };
     }
 
+    if (
+      owned?.programId === program.id &&
+      result.kind === 'login_required'
+    ) {
+      if (!owned.capture.waitingForLogin) {
+        owned.capture.waitingForLogin = true;
+        resetCaptureTimeout(
+          program.id,
+          owned.capture,
+          loginWaitMs,
+          'login_required',
+          true,
+        );
+        await stateRepository.setStatus(program.id, 'updating');
+        try {
+          await browserApi.tabs.update(owned.capture.tabId, { active: true });
+        } catch {
+          await failCapture(program.id, 'login_required', { reveal: true });
+          return { ok: false, error: 'login_required' };
+        }
+      }
+      return {
+        ok: true,
+        captured: false,
+        continued: 'login_wait',
+      };
+    }
+
     if (owned?.programId === program.id && message.final) {
-      if (result.kind === 'login_required') {
-        await failCapture(program.id, 'login_required', { reveal: true });
-      } else if (result.kind === 'verification_required') {
+      if (result.kind === 'verification_required') {
         await failCapture(program.id, 'verification_required', { reveal: true });
       } else {
         await failCapture(program.id, result.reason ?? 'balance_not_found');

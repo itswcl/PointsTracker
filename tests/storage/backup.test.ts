@@ -46,6 +46,12 @@ describe('JSON backups', () => {
   it('adds newly supported programs when importing an older backup', () => {
     const candidate = JSON.parse(serializeBackup(createInitialState()));
     Reflect.deleteProperty(candidate.data.records, 'delta');
+    Reflect.deleteProperty(candidate.data.records, 'ihg');
+    Reflect.deleteProperty(candidate.data.records, 'wyndham');
+    Reflect.deleteProperty(candidate.data.records, 'amex');
+    Reflect.deleteProperty(candidate.data.records, 'chase');
+    Reflect.deleteProperty(candidate.data.records, 'citi');
+    Reflect.deleteProperty(candidate.data.records, 'bilt');
 
     const imported = parseBackup(JSON.stringify(candidate));
 
@@ -55,5 +61,49 @@ describe('JSON backups', () => {
       manualOverride: null,
       status: 'not_updated',
     });
+    expect(imported.records.ihg).toMatchObject({
+      programId: 'ihg',
+      automatic: {
+        balance: null,
+        expiration: { type: 'unknown', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.wyndham).toMatchObject({
+      programId: 'wyndham',
+      automatic: {
+        balance: null,
+        expiration: {
+          type: 'activity_based',
+          date: null,
+          inactivityMonths: 18,
+        },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.amex).toMatchObject({
+      programId: 'amex',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'unknown', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    for (const programId of ['chase', 'citi', 'bilt'] as const) {
+      expect(imported.records[programId]).toMatchObject({
+        programId,
+        automatic: {
+          balance: null,
+          memberNumber: null,
+          expiration: { type: 'unknown', date: null },
+        },
+        manualOverride: null,
+        status: 'not_updated',
+      });
+    }
   });
 });

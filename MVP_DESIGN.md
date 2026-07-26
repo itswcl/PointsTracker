@@ -5,13 +5,13 @@ Date: 07/17/2026
 
 ## Purpose
 
-Points Tracker is a private, personal Chrome extension that consolidates loyalty-program member numbers, balances, and expiration information. The MVP reduces the need to remember where each account detail is shown while avoiding credential collection or storage.
+Points Tracker is a private, personal Chrome extension that consolidates airline, hotel, and credit-card rewards balances, plus loyalty member numbers and expiration information where applicable. The MVP reduces the need to remember where each account detail is shown while avoiding credential collection or storage.
 
 ## Understanding Summary
 
 - The MVP is for one person using one Chrome profile.
-- It supports thirteen airline and hotel loyalty programs, including Delta SkyMiles, World of Hyatt, Hilton Honors, and Marriott Bonvoy.
-- The toolbar popup shows the current balance, loyalty member number, and expiration status or date.
+- It supports nineteen airline, hotel, and Credit Card rewards programs.
+- The toolbar popup shows the current balance and, where applicable, a loyalty member number and expiration status or date.
 - Dates use `MM/DD/YYYY`; no relative timestamps or time of day are displayed.
 - The user signs in normally on each official website. The extension never requests or stores credentials.
 - After recognizing an authenticated visit, the extension may open a known official account-detail page in an inactive tab, capture the required fields, and close that extension-created tab.
@@ -31,7 +31,7 @@ Points Tracker is a private, personal Chrome extension that consolidates loyalty
 ## Assumptions
 
 - The MVP tracks one account per program.
-- It stores only program name, currency name, loyalty member number, balance, expiration information, capture source, status, and capture date.
+- It stores only program name, currency name, applicable loyalty member number, program-level balance, applicable expiration information, capture source, status, and capture date.
 - Everything remains in `chrome.storage.local` in the current Chrome profile.
 - Plain local storage and unencrypted JSON backups are accepted for this personal tool, but backups contain loyalty member numbers and must be treated as personal documents.
 - A normal refresh should complete within roughly 30 seconds.
@@ -71,7 +71,7 @@ The extension contains five primary components:
 2. A supported-domain page reader recognizes an authenticated state without inspecting login form values.
 3. The capture coordinator checks its session and cooldown state to avoid duplicate work.
 4. The coordinator opens the adapter's official account-detail page in an inactive tab.
-5. The adapter waits for the rendered loyalty member number, balance, and expiration information.
+5. The adapter waits for the allowlisted rendered program balance and any applicable loyalty member number and expiration information.
 6. For Flying Blue, British Airways, or ANA, the coordinator saves the primary balance and expiration, then navigates that same extension-owned tab to the program's separate official member-number page.
 7. A valid result is saved locally and the extension-created tab is closed.
 8. An invalid or failed result leaves the last successful data intact and records a minimal error category.
@@ -125,6 +125,7 @@ An automatic refresh must never silently erase a manual correction.
 - Start another capture after a newly completed login.
 - Apply a short cooldown to repeated page events to prevent tab loops.
 - Allow an explicit popup refresh at any time.
+- When an extension-owned refresh reaches a login page, reveal it immediately and continue observing for up to three minutes so the user can sign in.
 - Do not navigate to program websites when the user makes a manual edit.
 - Time out a capture instead of waiting indefinitely.
 - Close only tabs created by the extension.
@@ -136,20 +137,29 @@ An automatic refresh must never silently erase a manual correction.
 - **Data not found:** retain saved data and offer the official account-detail link and manual editing.
 - **Website changed:** identify the affected adapter without disabling the other program.
 - **Network or timeout:** retain saved data and offer retry.
-- **Invalid result:** reject empty, negative, malformed, or otherwise unsafe values.
+- **Invalid result:** reject empty, malformed, or otherwise unsafe values. Airline and hotel balances must be nonnegative; Credit Card program totals may be signed because an issuer can display a negative rewards balance.
 
 Failed capture attempts never overwrite the last successful record. Diagnostics contain only categories such as `balance_not_found`; they do not contain raw HTML or network responses.
 
 ## Popup Presentation
 
-The popup uses a compact single-line ticker ledger separated by rules. Each program uses a short recognizable text label, while its full name remains available to screen readers and tooltips. Program actions are accessible icons, and refresh is available only per program so one click cannot open multiple account pages:
+The popup uses three compact single-line ledger columns separated by rules:
+Credit Card, Airline, and Hotel. Each program uses a short recognizable text
+label, while its full name remains available to screen readers and tooltips.
+Program-name and member-number column titles are omitted to preserve space.
+Airline and Hotel rows show the program label, Balance, the member number's
+last four characters, Expiration, and Actions. Selecting the suffix copies the
+full locally stored member number and temporarily changes its tooltip from
+`Copy member#` to `Copied`. Credit Card rows show only the program label,
+Balance, and Actions. Refresh is available only per program so one click cannot
+open multiple account pages:
 
 ```text
-Program  Balance  Member #   Expiration   Actions
-UA       125,400  UA000001   N/A          [refresh] [edit]
-Cathay    84,500  CX000002   12/14/2026   [refresh] [edit]
-AirFrance 210,500 AF000003   05/15/2027   [refresh] [edit]
-EVA       96,575  BR000007   50 · 07/2028 [refresh] [edit]
+           Balance          Expiration   Actions
+UA         12,345   1001    N/A          [refresh] [edit]
+Cathay     23,456   1002    02/01/2030   [refresh] [edit]
+Air France 34,567   1003    03/15/2029   [refresh] [edit]
+EVA        78,901   1007    250 · 08/2030 [refresh] [edit]
 ```
 
 If no exact status or date is available, the popup displays `Expiration: Unknown`. A failed refresh displays a concise error and relevant recovery actions while retaining the prior value.
@@ -171,7 +181,7 @@ The extension must not:
 - Access general browsing history
 - Intercept network requests
 - Store raw account-page HTML
-- Store member names or any account identifier other than the displayed loyalty member number
+- Store member names, card details, per-card balances, or any account identifier other than the displayed loyalty member number
 - Upload data or diagnostics
 - Include remote analytics
 - Execute remotely downloaded code
@@ -217,7 +227,7 @@ Before implementation, perform a narrow live discovery pass after the user logs 
 - Exact authenticated account-detail URLs
 - Stable signs that login succeeded
 - Stable rendered balance elements
-- Stable rendered loyalty member-number elements
+- Stable rendered loyalty member-number elements where applicable
 - Cathay expiration or qualifying-activity information exposed by the account
 - Verification and session-expiry states
 
@@ -228,9 +238,9 @@ The discovery pass must not save credentials, private page snapshots, or raw acc
 | Decision | Alternatives | Reason |
 | --- | --- | --- |
 | Personal-first MVP | Multi-user product | Minimizes scope and security complexity; P2 can come later. |
-| Twelve initial loyalty programs | Broad program catalog | The adapters validate airline and hotel balances plus non-expiring, personally configured cardholder, inactivity-policy, qualifying-activity, explicit valid-until, month-only, partial-tranche, and shadow-root displays. |
+| Nineteen rewards programs | Broad program catalog | The adapters cover airline, hotel, and Credit Card totals plus non-expiring, personally configured cardholder, inactivity-policy, qualifying-activity, explicit valid-until, month-only, partial-tranche, and shadow-root displays. |
 | Tab-driven adapters | Private API requests; visible-only capture | Best match for automatic capture using the existing browser session. |
-| Title-free two-column popup | Single-column ledger; full dashboard | Keeps airline and hotel ledgers visible side by side without spending space on a redundant product title. |
+| Title-free three-column popup | Single-column ledger; full dashboard | Keeps Credit Card, Airline, and Hotel ledgers visible side by side without spending space on a redundant product title. |
 | Local-only storage | Local standalone app; cloud backend | Avoids accounts, remote data, and credential concerns. |
 | Hybrid automatic/manual data | Automatic-only; manual-only | Provides convenience while remaining usable when a site changes. |
 | Separate automatic and manual values | Automatic overwrites manual edits | Preserves corrections without discarding newer captured observations. |
@@ -239,8 +249,8 @@ The discovery pass must not save credentials, private page snapshots, or raw acc
 | JSON export/import | No backup; cloud sync | Provides recoverability without a backend. |
 | Unpacked distribution | Chrome Web Store | Faster iteration for one personal user. |
 | Local program marks in single-line ledger rows | Airline-code badges; visible program names; program cards | Improves recognition while keeping the growing program list compact and preserving accessible names. |
-| Per-program refresh only | Global refresh | Prevents one action from opening multiple airline account pages. |
-| Bottom-aligned total per loyalty category | One combined total; separate summary cards | Keeps airline and hotel balances distinct, with both neutral totals sharing one baseline below their independently sorted sections. |
+| Per-program refresh only | Global refresh | Prevents one action from opening multiple account pages. |
+| Bottom-aligned total per rewards category | One combined total; separate summary cards | Keeps airline, hotel, and Credit Card balances distinct, with neutral totals sharing one baseline below independently sorted sections. |
 | Alerts and recommendations deferred | Include in MVP | The validated core need is visibility of balances and expiration. |
 
 ## Next Phase

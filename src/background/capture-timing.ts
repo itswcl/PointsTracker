@@ -1,0 +1,3 @@
+export const DEFAULT_CAPTURE_TIMEOUT_MS = 30_000;
+export const DEFAULT_OBSERVATION_WINDOW_MS = 12_000;
+export const LOGIN_WAIT_MS = 3 * 60_000;

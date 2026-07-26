@@ -54,6 +54,42 @@ describe('typed extension messaging', () => {
     ).toBe(true);
   });
 
+  it('accepts negative Credit Card balances but rejects them for loyalty programs', () => {
+    const result = {
+      kind: 'success',
+      authState: 'authenticated',
+      capture: {
+        balance: -4321,
+        memberNumber: null,
+        expiration: {
+          type: 'unknown',
+          date: null,
+          note: 'Expiration does not apply to this balance-only ledger row',
+        },
+      },
+      reason: null,
+    };
+
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'bilt',
+        pageUrl: 'https://www.bilt.com/rewards/neighborhood',
+        final: false,
+        result,
+      }),
+    ).toBe(true);
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'united',
+        pageUrl: 'https://www.united.com/en/us/myunited',
+        final: false,
+        result,
+      }),
+    ).toBe(false);
+  });
+
   it('accepts a member-number-only observation from a secondary account page', () => {
     expect(
       isPointsTrackerMessage({
