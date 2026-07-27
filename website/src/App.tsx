@@ -13,7 +13,6 @@ import {
 const BASE_URL = import.meta.env.BASE_URL;
 const RELEASE_DOWNLOAD =
   'https://github.com/itswcl/PointsTracker/releases/latest/download/points-tracker-chrome.zip';
-const GITHUB_REPOSITORY = 'https://github.com/itswcl/PointsTracker';
 const CURRENT_YEAR = new Date().getFullYear();
 
 function sitePath(path = ''): string {
@@ -151,18 +150,8 @@ function Header({ page }: HeaderProps) {
               <a href={sitePath('#supported')}>Supported sites</a>
             </li>
             <li>
-              <a
-                href={sitePath('privacy.html')}
-                aria-current={page === 'privacy' ? 'page' : undefined}
-              >
-                Privacy
-              </a>
+              <a href={sitePath('#privacy')}>Privacy</a>
             </li>
-            {page === 'privacy' ? (
-              <li>
-                <a href={GITHUB_REPOSITORY}>GitHub</a>
-              </li>
-            ) : null}
             <li>
               <a className="nav-download" href={RELEASE_DOWNLOAD}>
                 Download
@@ -183,10 +172,8 @@ function Footer({ guideLink = false }: { guideLink?: boolean }) {
         <nav className="footer-links" aria-label="Footer">
           {guideLink ? <a href={sitePath()}>Guide</a> : null}
           {!guideLink ? (
-            <a href={sitePath('privacy.html')}>Privacy</a>
+            <a href={sitePath('#privacy')}>Privacy</a>
           ) : null}
-          <a href={GITHUB_REPOSITORY}>Source on GitHub</a>
-          <a href={`${GITHUB_REPOSITORY}/releases/latest`}>Latest release</a>
         </nav>
       </div>
     </footer>
@@ -858,12 +845,9 @@ export function PrivacyPage() {
               </p>
               <p>
                 For privacy questions or a suspected issue, open a public issue
-                in the{' '}
-                <a href={`${GITHUB_REPOSITORY}/issues`}>
-                  Points Tracker GitHub repository
-                </a>
-                . Do not include account numbers, credentials, screenshots of
-                private account pages, or other sensitive information.
+                through the project repository’s issue tracker. Do not include
+                account numbers, credentials, screenshots of private account
+                pages, or other sensitive information.
               </p>
               <p>
                 Points Tracker is an independent open-source project and is not
