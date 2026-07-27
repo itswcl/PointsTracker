@@ -7,6 +7,7 @@ import {
   createInitialState,
   STORAGE_KEY,
 } from '../../src/domain/records.js';
+import { SETTINGS_STORAGE_KEY } from '../../src/domain/settings.js';
 import { UPDATE_CACHE_KEY } from '../../src/update-check.js';
 import type {
   AutomaticCapture,
@@ -31,6 +32,26 @@ const DEMO_CAPTURES: readonly (readonly [
       balance: 12345,
       memberNumber: 'TEST-UA-1001',
       expiration: { type: 'never', date: null, note: 'No expiration' },
+    },
+  ],
+  [
+    'unitedpool',
+    {
+      balance: 6789,
+      memberNumber: 'TEST-UA-1001',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    },
+  ],
+  [
+    'unitedtravelbank',
+    {
+      balance: 48725,
+      memberNumber: 'TEST-UA-1001',
+      expiration: {
+        type: 'fixed_date',
+        date: '2030-11-12',
+        note: 'Synthetic demo date',
+      },
     },
   ],
   [
@@ -126,6 +147,26 @@ const DEMO_CAPTURES: readonly (readonly [
       balance: 101234,
       memberNumber: 'TEST-DL-1010',
       expiration: { type: 'never', date: null, note: 'No expiration' },
+    },
+  ],
+  [
+    'southwest',
+    {
+      balance: 10345,
+      memberNumber: 'TEST-WN-1011',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    },
+  ],
+  [
+    'southwestcredit',
+    {
+      balance: 32640,
+      memberNumber: 'TEST-WN-1011',
+      expiration: {
+        type: 'fixed_date',
+        date: '2030-12-20',
+        note: 'Synthetic demo date',
+      },
     },
   ],
   [
@@ -227,9 +268,13 @@ for (const [programId, capture] of DEMO_CAPTURES) {
 
 const storageArea = createFakeStorageArea({
   [STORAGE_KEY]: state,
+  [SETTINGS_STORAGE_KEY]: {
+    schemaVersion: 1,
+    disabledProgramIds: ['bilt', 'britishairways', 'ana', 'wyndham'],
+  },
   [UPDATE_CACHE_KEY]: {
     checkedAt: Date.now(),
-    latestVersion: '1.5.0',
+    latestVersion: '1.6.0',
   },
 });
 
@@ -242,7 +287,7 @@ const demoChrome = {
     },
   },
   runtime: {
-    getManifest: () => ({ version: '1.5.0' }),
+    getManifest: () => ({ version: '1.6.0' }),
     sendMessage: async () => ({ ok: true }),
   },
 };

@@ -4,6 +4,8 @@ A local-only Chrome extension for viewing airline, hotel, and credit-card reward
 
 The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, card details, per-card balances, individual Flight Credit details, or transaction history. It stores only the displayed loyalty member number when applicable, program-level ledger values, enabled/disabled program preferences, and a non-personal update-check timestamp and latest public release version in the current Chrome profile.
 
+[**Open the live installation and first-refresh guide**](https://itswcl.github.io/PointsTracker/)
+
 ## Preview
 
 ![Points Tracker popup showing synthetic credit-card, airline, and hotel rewards data](./docs/assets/points-tracker-demo.png)
@@ -21,7 +23,10 @@ _All balances, member numbers, and expiration dates shown above are fictional de
 
 Keep the unzipped folder on your computer after installation. Chrome uses the files in that folder to run the extension.
 
-See the [beginner installation guide](./docs/INSTALLATION.md) for pictures-in-words directions, first use, updates, and troubleshooting.
+See the [live beginner guide](https://itswcl.github.io/PointsTracker/) for a
+visual walkthrough, supported-site table, privacy details, and
+troubleshooting. The repository also keeps a
+[plain-text installation guide](./docs/INSTALLATION.md).
 
 ## Independent project
 
@@ -44,7 +49,18 @@ For a production build:
 npm run check
 ```
 
-`npm run check` runs strict TypeScript validation, ESLint, the full Vitest suite, and the production extension build. Run only the compiler with `npm run typecheck`.
+`npm run check` runs strict TypeScript validation for the extension and
+React/TypeScript website, ESLint, the full Vitest suite, the production
+extension build, and the GitHub Pages build. Run only the extension compiler
+with `npm run typecheck`.
+
+Run the guidance website locally with:
+
+```bash
+npm run dev:site
+```
+
+Build only the GitHub Pages output in `docs` with `npm run build:site`.
 
 Load `dist` from `chrome://extensions` with Developer mode enabled.
 

@@ -7,12 +7,15 @@
   "description": "A local-only Chrome extension for airline, hotel, and credit-card rewards balances.",
   "scripts": {
     "dev": "vite",
+    "dev:site": "vite --config website/vite.config.ts",
     "build": "vite build",
+    "build:site": "vite build --config website/vite.config.ts",
     "typecheck": "tsc --noEmit",
+    "typecheck:site": "tsc -p website/tsconfig.json --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "check": "npm run typecheck && npm run typecheck:site && npm run lint && npm run test && npm run build && npm run build:site"
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "5.2.8",
