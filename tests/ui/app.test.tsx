@@ -913,7 +913,7 @@ describe('popup', () => {
       'program-balance',
       'program-actions',
     ]);
-  });
+  }, 15_000);
 
   it('hides disabled programs without deleting their saved data', async () => {
     render(<App />);

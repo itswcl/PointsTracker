@@ -77,6 +77,10 @@ svg {
   max-width: 100%;
 }
 
+img {
+  height: auto;
+}
+
 a {
   color: inherit;
 }
@@ -226,7 +230,7 @@ button {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(480px, 1.25fr);
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.95fr);
   align-items: center;
   gap: clamp(36px, 6vw, 86px);
 }
@@ -352,6 +356,8 @@ h1 {
 
 .ledger-frame {
   position: relative;
+  width: min(100%, 540px);
+  justify-self: end;
   margin: 0;
   padding: 13px;
   border: 1px solid var(--line-dark);
@@ -1205,7 +1211,8 @@ h1 {
   }
 
   .ledger-frame {
-    width: min(760px, calc(100% - 18px));
+    width: min(540px, calc(100% - 18px));
+    justify-self: center;
     margin-inline: auto;
   }
 
