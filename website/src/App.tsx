@@ -344,13 +344,15 @@ function FirstRefresh() {
               that program’s official account page.
             </p>
             <figure className="refresh-shot">
-              <img
-                src={assetPath('points-tracker-refresh.png')}
-                alt="Synthetic Points Tracker rows with the round-arrow refresh control highlighted"
-                width="610"
-                height="230"
-                loading="lazy"
-              />
+              <div className="refresh-shot__image">
+                <img
+                  src={assetPath('points-tracker-refresh.png')}
+                  alt="Synthetic Points Tracker rows with the round-arrow refresh control highlighted"
+                  width="610"
+                  height="230"
+                  loading="lazy"
+                />
+              </div>
             </figure>
             <div className="tip">
               <span className="tip-mark">i</span>
