@@ -50,8 +50,11 @@ describe('JSON backups', () => {
     Reflect.deleteProperty(candidate.data.records, 'delta');
     Reflect.deleteProperty(candidate.data.records, 'southwest');
     Reflect.deleteProperty(candidate.data.records, 'southwestcredit');
+    Reflect.deleteProperty(candidate.data.records, 'krisflyer');
     Reflect.deleteProperty(candidate.data.records, 'ihg');
     Reflect.deleteProperty(candidate.data.records, 'wyndham');
+    Reflect.deleteProperty(candidate.data.records, 'choice');
+    Reflect.deleteProperty(candidate.data.records, 'lhw');
     Reflect.deleteProperty(candidate.data.records, 'amex');
     Reflect.deleteProperty(candidate.data.records, 'capitalone');
     Reflect.deleteProperty(candidate.data.records, 'chase');
@@ -106,6 +109,16 @@ describe('JSON backups', () => {
       manualOverride: null,
       status: 'not_updated',
     });
+    expect(imported.records.krisflyer).toMatchObject({
+      programId: 'krisflyer',
+      automatic: {
+        balance: null,
+        memberNumber: null,
+        expiration: { type: 'unknown', date: null },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
     expect(imported.records.ihg).toMatchObject({
       programId: 'ihg',
       automatic: {
@@ -123,6 +136,32 @@ describe('JSON backups', () => {
           type: 'activity_based',
           date: null,
           inactivityMonths: 18,
+        },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.choice).toMatchObject({
+      programId: 'choice',
+      automatic: {
+        balance: null,
+        expiration: {
+          type: 'activity_based',
+          date: null,
+          inactivityMonths: 18,
+        },
+      },
+      manualOverride: null,
+      status: 'not_updated',
+    });
+    expect(imported.records.lhw).toMatchObject({
+      programId: 'lhw',
+      automatic: {
+        balance: null,
+        expiration: {
+          type: 'activity_based',
+          date: null,
+          inactivityMonths: 24,
         },
       },
       manualOverride: null,

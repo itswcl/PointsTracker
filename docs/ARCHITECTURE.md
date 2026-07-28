@@ -64,6 +64,29 @@ Each category has an independent balance sort and total. Airline and Hotel also
 support expiration sorting. The default Airline order places points and miles
 first, followed by cash-related rows.
 
+Activity-based Hotel adapters derive dates only from rendered qualifying
+activity. Choice adds 18 months to the newest points activity unless the page
+shows active Gold, Platinum, Diamond, or Titanium status. LHW adds 24 months to
+the newest rendered earn or redeem activity. A zero balance displays `N/A`
+because there are no points to expire. A positive balance with no rendered
+activity date retains the applicable inactivity policy without fabricating a
+date. Neither adapter uses the extension refresh date as an account-activity
+substitute.
+
+KrisFlyer reads the rendered account-header balance and member number only on
+Singapore Airlines' first-party pages. The Miles validity page supplies the
+earliest displayed expiring-mile tranche, stored with month precision and shown
+as `amount · MM/YYYY`, like EVA. When the page displays no tranche, the ledger
+shows `N/A`; active PPS Club status is treated as non-expiring. The adapter does
+not calculate an expiry month from earning history or the general three-year
+policy.
+
+Zero balance is a shared record invariant rather than an adapter-specific rule.
+For every program, an effective automatic or manual balance of `0` clears any
+stored date, month, tranche amount, or inactivity period and displays
+Expiration as `N/A`. State normalization applies the same rule to older stored
+records and imported backups.
+
 ## Program visibility settings
 
 Settings are stored separately from ledger records. Disabling a program:
@@ -78,6 +101,22 @@ Settings are stored separately from ledger records. Disabling a program:
 All programs default to enabled so existing installations preserve their prior
 behavior.
 
+## Manual value protection
+
+Manual values are program-wide write guards, not visual markers. While a row
+has a manual override:
+
+- the row keeps only its normal refresh and edit actions;
+- passive observations from a user-opened account page are ignored;
+- an explicit refresh requires confirmation in the popup;
+- canceling the confirmation performs no background action; and
+- confirming authorizes only that row, with the manual override cleared only
+  after the complete automatic capture sequence succeeds.
+
+A failed confirmed refresh keeps the manual value. For United and Southwest
+capture groups, non-manual rows can still update from the shared account page
+while manually controlled sibling rows remain unchanged.
+
 ## Credit Card rewards category
 
 Credit Card rows represent transferable rewards programs rather than individual
@@ -86,7 +125,7 @@ physical cards:
 | Program | Rendered source | Stored result |
 | --- | --- | --- |
 | Amex | Exact `Available Points` tile | Membership Rewards total |
-| Capital One | Whole-number value paired with exact `Miles` label | Miles total |
+| Capital One | Signed whole-number value paired with exact `Miles` label | Miles total |
 | Chase | Every rendered card balance on the account selector | One locally summed Ultimate Rewards total |
 | Citi | Exact `Total ThankYou® Points` value | ThankYou total |
 | Bilt | Exact `Your Points` menu value | Signed Bilt total |

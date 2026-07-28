@@ -84,6 +84,14 @@ export const SUPPORTED_PROGRAMS: readonly SupportedProgram[] = [
   },
   {
     category: 'airline',
+    program: 'Singapore Airlines KrisFlyer',
+    capture:
+      'Miles, member number, and earliest rendered expiring-mile tranche.',
+    url: 'https://www.singaporeair.com/krisflyer/miles/expiring-miles/',
+    host: 'singaporeair.com',
+  },
+  {
+    category: 'airline',
     program: 'Delta SkyMiles',
     capture: 'Miles and member number; no expiration date.',
     url: 'https://www.delta.com/myskymiles/overview',
@@ -129,6 +137,22 @@ export const SUPPORTED_PROGRAMS: readonly SupportedProgram[] = [
     host: 'wyndhamhotels.com',
   },
   {
+    category: 'hotel',
+    program: 'Choice Privileges',
+    capture:
+      'Points, member number, active status, and supported activity-based expiration.',
+    url: 'https://www.choicehotels.com/choice-privileges/account',
+    host: 'choicehotels.com',
+  },
+  {
+    category: 'hotel',
+    program: 'Leading Hotels of the World Leaders Club',
+    capture:
+      'Points, member ID, and expiration derived from qualifying activity.',
+    url: 'https://www.lhw.com/account/points-activity',
+    host: 'lhw.com',
+  },
+  {
     category: 'card',
     program: 'American Express Membership Rewards',
     capture: 'Rendered Available Points total only.',
@@ -138,7 +162,7 @@ export const SUPPORTED_PROGRAMS: readonly SupportedProgram[] = [
   {
     category: 'card',
     program: 'Capital One Miles',
-    capture: 'Exact rendered whole-number Miles total only.',
+    capture: 'Exact rendered signed whole-number Miles total only.',
     url: 'https://myaccounts.capitalone.com/accountSummary',
     host: 'capitalone.com',
   },
@@ -180,7 +204,12 @@ export const FAQ_ITEMS = [
   {
     question: 'What happens if a supported site changes?',
     answer:
-      'Your last successful value stays in the ledger. Use the pencil icon for a manual update until the program-specific reader is adjusted in a future release.',
+      'Your last successful value stays in the ledger. Use the pencil icon for a manual update until the program-specific reader is adjusted. Passive visits cannot replace manual data; a row refresh asks first and changes it only after automatic capture succeeds.',
+  },
+  {
+    question: 'Why does expiration sometimes show N/A?',
+    answer:
+      'Every zero-balance row shows N/A because there is nothing to expire. N/A also appears when a program does not expire points or an eligible account status prevents expiration.',
   },
   {
     question: 'Will uninstalling remove my ledger?',

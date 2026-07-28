@@ -30,6 +30,7 @@ describe('date helpers', () => {
   it('preserves month-only expiration precision', () => {
     expect(parseDisplayedMonth('Jul. 2028')).toBe('2028-07');
     expect(parseDisplayedMonth('2029/3')).toBe('2029-03');
+    expect(parseDisplayedMonth('03/2029')).toBe('2029-03');
     expect(formatMonthKey('2028-07')).toBe('07/2028');
     expect(isValidMonthKey('2028-13')).toBe(false);
   });

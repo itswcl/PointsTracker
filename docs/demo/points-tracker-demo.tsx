@@ -142,6 +142,20 @@ const DEMO_CAPTURES: readonly (readonly [
     },
   ],
   [
+    'krisflyer',
+    {
+      balance: 92345,
+      memberNumber: 'TEST-SQ-1019',
+      expiration: {
+        type: 'fixed_date',
+        date: null,
+        month: '2030-11',
+        amount: 700,
+        note: 'Synthetic demo tranche',
+      },
+    },
+  ],
+  [
     'delta',
     {
       balance: 101234,
@@ -220,6 +234,32 @@ const DEMO_CAPTURES: readonly (readonly [
     },
   ],
   [
+    'choice',
+    {
+      balance: 43210,
+      memberNumber: 'TEST-CP-2006',
+      expiration: {
+        type: 'activity_based',
+        date: '2030-10-12',
+        inactivityMonths: 18,
+        note: 'Synthetic demo date',
+      },
+    },
+  ],
+  [
+    'lhw',
+    {
+      balance: 21000,
+      memberNumber: 'TEST-LH-2007',
+      expiration: {
+        type: 'activity_based',
+        date: '2031-01-20',
+        inactivityMonths: 24,
+        note: 'Synthetic demo date',
+      },
+    },
+  ],
+  [
     'amex',
     {
       balance: 112233,
@@ -274,7 +314,7 @@ const storageArea = createFakeStorageArea({
   },
   [UPDATE_CACHE_KEY]: {
     checkedAt: Date.now(),
-    latestVersion: '1.6.0',
+    latestVersion: '1.7.0',
   },
 });
 
@@ -287,7 +327,7 @@ const demoChrome = {
     },
   },
   runtime: {
-    getManifest: () => ({ version: '1.6.0' }),
+    getManifest: () => ({ version: '1.7.0' }),
     sendMessage: async () => ({ ok: true }),
   },
 };

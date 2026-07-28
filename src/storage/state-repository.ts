@@ -14,6 +14,7 @@ import {
 import type {
   AutomaticCapture,
   ManualOverrideInput,
+  ManualOverride,
   PointsState,
   ProgramCapture,
   ProgramId,
@@ -98,7 +99,39 @@ export class StateRepository {
   }
 
   clearManualOverride(programId: ProgramId): Promise<PointsState> {
-    return this.update((state) => clearManualOverride(state, programId));
+    return this.clearManualOverrides([programId]);
+  }
+
+  clearManualOverrides(
+    programIds: readonly ProgramId[],
+  ): Promise<PointsState> {
+    return this.update((state) => {
+      let next = state;
+      for (const programId of new Set(programIds)) {
+        next = clearManualOverride(next, programId);
+      }
+      return next;
+    });
+  }
+
+  clearManualOverridesIfUnchanged(
+    replacements: readonly {
+      programId: ProgramId;
+      manualOverride: ManualOverride;
+    }[],
+  ): Promise<PointsState> {
+    return this.update((state) => {
+      let next = state;
+      for (const { programId, manualOverride } of replacements) {
+        if (
+          JSON.stringify(next.records[programId].manualOverride) ===
+          JSON.stringify(manualOverride)
+        ) {
+          next = clearManualOverride(next, programId);
+        }
+      }
+      return next;
+    });
   }
 
   setStatus(

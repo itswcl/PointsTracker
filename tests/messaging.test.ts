@@ -12,6 +12,13 @@ describe('typed extension messaging', () => {
         programId: 'united',
       }),
     ).toBe(true);
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.REFRESH_PROGRAM,
+        programId: 'united',
+        replaceManualOverride: true,
+      }),
+    ).toBe(true);
   });
 
   it('rejects unknown programs and incomplete page observations', () => {
@@ -19,6 +26,13 @@ describe('typed extension messaging', () => {
       isPointsTrackerMessage({
         type: MESSAGE_TYPES.REFRESH_PROGRAM,
         programId: 'unknown-airline',
+      }),
+    ).toBe(false);
+    expect(
+      isPointsTrackerMessage({
+        type: MESSAGE_TYPES.REFRESH_PROGRAM,
+        programId: 'united',
+        replaceManualOverride: 'yes',
       }),
     ).toBe(false);
     expect(

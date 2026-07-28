@@ -50,18 +50,12 @@ export function usePointsState() {
     [repository],
   );
 
-  const clearManualOverride = useCallback(
-    (programId: ProgramId) => repository.clearManualOverride(programId),
-    [repository],
-  );
-
   const replaceState = useCallback(
     (nextState: PointsState) => repository.setState(nextState),
     [repository],
   );
 
   return {
-    clearManualOverride,
     loadError,
     replaceState,
     saveManualOverride,

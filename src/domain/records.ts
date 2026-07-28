@@ -43,6 +43,11 @@ const RECORD_STATUSES = [
 
 const EXPIRATION_TYPE_VALUES: ReadonlySet<string> = new Set(EXPIRATION_TYPES);
 const RECORD_STATUS_VALUES: ReadonlySet<string> = new Set(RECORD_STATUSES);
+const ZERO_BALANCE_EXPIRATION = Object.freeze({
+  type: 'never',
+  date: null,
+  note: 'N/A because a zero balance has nothing to expire',
+} as const satisfies Expiration);
 
 interface ValidAutomaticRecord {
   balance: number | null;
@@ -79,6 +84,15 @@ function cloneExpiration(expiration: Expiration): NormalizedExpiration {
     inactivityMonths: expiration.inactivityMonths ?? null,
     note: expiration.note ?? null,
   };
+}
+
+function normalizeExpirationForBalance(
+  balance: number | null,
+  expiration: Expiration,
+): NormalizedExpiration {
+  return cloneExpiration(
+    balance === 0 ? ZERO_BALANCE_EXPIRATION : expiration,
+  );
 }
 
 export function createEmptyRecord(program: ProgramDefinition): ProgramRecord {
@@ -278,7 +292,10 @@ export function normalizeState(candidate: unknown): PointsState {
         memberNumber: normalizeMemberNumber(
           candidateRecord.automatic.memberNumber,
         ),
-        expiration: cloneExpiration(candidateRecord.automatic.expiration),
+        expiration: normalizeExpirationForBalance(
+          candidateRecord.automatic.balance,
+          candidateRecord.automatic.expiration,
+        ),
         updatedOn: candidateRecord.automatic.updatedOn,
       };
     }
@@ -289,7 +306,10 @@ export function normalizeState(candidate: unknown): PointsState {
         memberNumber: normalizeMemberNumber(
           candidateRecord.manualOverride.memberNumber,
         ),
-        expiration: cloneExpiration(candidateRecord.manualOverride.expiration),
+        expiration: normalizeExpirationForBalance(
+          candidateRecord.manualOverride.balance,
+          candidateRecord.manualOverride.expiration,
+        ),
         editedOn: candidateRecord.manualOverride.editedOn,
       };
     }
@@ -323,7 +343,10 @@ export function applyAutomaticCapture(
     automatic: {
       balance: capture.balance,
       memberNumber: capture.memberNumber ?? previousMemberNumber,
-      expiration: cloneExpiration(capture.expiration),
+      expiration: normalizeExpirationForBalance(
+        capture.balance,
+        capture.expiration,
+      ),
       updatedOn: toDateKey(date),
     },
     status: 'fresh',
@@ -396,7 +419,10 @@ export function applyManualOverride(
     manualOverride: {
       balance: candidate.balance,
       memberNumber: normalizeMemberNumber(candidate.memberNumber),
-      expiration: cloneExpiration(candidate.expiration),
+      expiration: normalizeExpirationForBalance(
+        candidate.balance,
+        candidate.expiration,
+      ),
       editedOn: candidate.editedOn,
     },
   };
@@ -468,7 +494,10 @@ export function getDisplayRecord(record: ProgramRecord): DisplayRecord {
     memberNumber:
       record.manualOverride?.memberNumber ??
       record.automatic.memberNumber,
-    expiration: cloneExpiration(source.expiration),
+    expiration: normalizeExpirationForBalance(
+      source.balance,
+      source.expiration,
+    ),
     updatedOn: record.manualOverride?.editedOn ?? record.automatic.updatedOn,
     source: record.manualOverride ? 'manual' : 'automatic',
     status: record.status,

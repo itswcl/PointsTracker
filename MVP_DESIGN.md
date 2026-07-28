@@ -10,8 +10,8 @@ Points Tracker is a private, personal Chrome extension that consolidates airline
 ## Understanding Summary
 
 - The MVP is for one person using one Chrome profile.
-- It supports twenty-one airline, hotel, and Credit Card rewards programs
-  represented by twenty-four independently tracked ledger rows.
+- It supports twenty-four airline, hotel, and Credit Card rewards programs
+  represented by twenty-seven independently tracked ledger rows.
 - The toolbar popup shows the current balance and, where applicable, a loyalty member number and expiration status or date.
 - Dates use `MM/DD/YYYY`; no relative timestamps or time of day are displayed.
 - The user signs in normally on each official website. The extension never requests or stores credentials.
@@ -116,16 +116,26 @@ References:
 
 ## Manual Override Rules
 
-The latest automatic capture and an optional manual override remain separate. When an override exists, the popup displays it with a manual label while continuing to record later successful automatic captures. The user can compare the values and remove the override by selecting the automatic value.
+The latest automatic capture and an optional manual override remain separate.
+When an override exists, the popup displays it and ignores passive account-page
+observations for that program. No additional row action identifies or removes
+the override.
 
-An automatic refresh must never silently erase a manual correction.
+An explicit row refresh asks whether the user wants to replace manual data. If
+the user cancels, nothing happens. If the user agrees, the normal automatic
+capture runs, but the manual value is removed only after a new automatic
+capture succeeds. Login, parsing, verification, and timeout failures preserve
+the manual value. On shared United and Southwest pages, manual protection is
+evaluated independently for every row.
 
 ## Refresh Rules
 
 - Start an automatic capture on the first authenticated visit to each supported program in a Chrome session.
 - Start another capture after a newly completed login.
 - Apply a short cooldown to repeated page events to prevent tab loops.
-- Allow an explicit popup refresh at any time.
+- Allow an explicit popup refresh at any time, with confirmation before
+  replacing a manual value.
+- Ignore passive capture for programs that currently have manual data.
 - When an extension-owned refresh reaches a login page, reveal it immediately and continue observing for up to three minutes so the user can sign in.
 - Do not navigate to program websites when the user makes a manual edit.
 - Time out a capture instead of waiting indefinitely.

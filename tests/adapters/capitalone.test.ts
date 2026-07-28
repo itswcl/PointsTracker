@@ -57,6 +57,27 @@ describe('Capital One Miles adapter', () => {
     });
   });
 
+  it('captures a negative Miles balance when the sign is rendered separately', () => {
+    const result = inspectCapitalOne(
+      page(
+        balanceContainer(
+          'Miles',
+          `
+            <span class="primary-detail__balances-balance--sign">−</span>
+            <span class="primary-detail__balances-balance-dollar">424</span>
+          `,
+        ),
+      ),
+      CAPITAL_ONE_URL,
+    );
+
+    expect(result).toMatchObject({
+      kind: 'success',
+      authState: 'authenticated',
+      capture: { balance: -424, memberNumber: null },
+    });
+  });
+
   it('deduplicates matching responsive balance containers', () => {
     const result = inspectCapitalOne(
       page(`
@@ -97,6 +118,19 @@ describe('Capital One Miles adapter', () => {
           <aside>Earn 75,000 bonus miles</aside>
         </section>
       `),
+      CAPITAL_ONE_URL,
+    );
+
+    expect(result).toMatchObject({
+      kind: 'not_found',
+      authState: 'authenticated',
+      reason: 'balance_not_found',
+    });
+  });
+
+  it('rejects decimal Miles values', () => {
+    const result = inspectCapitalOne(
+      page(balanceContainer('Miles', '424.50')),
       CAPITAL_ONE_URL,
     );
 

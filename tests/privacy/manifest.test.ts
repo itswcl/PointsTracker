@@ -14,6 +14,7 @@ describe('extension permission boundary', () => {
       'https://www.britishairways.com/*',
       'https://stmt.cam.ana.co.jp/*',
       'https://cam.ana.co.jp/*',
+      'https://www.singaporeair.com/*',
       'https://www.delta.com/*',
       'https://www.southwest.com/*',
       'https://www.hyatt.com/*',
@@ -21,6 +22,8 @@ describe('extension permission boundary', () => {
       'https://www.marriott.com/*',
       'https://www.ihg.com/*',
       'https://www.wyndhamhotels.com/*',
+      'https://www.choicehotels.com/*',
+      'https://www.lhw.com/*',
       'https://global.americanexpress.com/*',
       'https://myaccounts.capitalone.com/*',
       'https://ultimaterewardspoints.chase.com/*',
@@ -49,11 +52,20 @@ describe('extension permission boundary', () => {
     ).not.toContain('https://api.github.com/*');
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).toContain('https://www.singaporeair.com/*');
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://www.ihg.com/*');
     expect(manifest.host_permissions).not.toContain('https://apis.ihg.com/*');
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://www.wyndhamhotels.com/*');
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).toContain('https://www.choicehotels.com/*');
+    expect(
+      manifest.content_scripts.flatMap(({ matches }) => matches),
+    ).toContain('https://www.lhw.com/*');
     expect(
       manifest.content_scripts.flatMap(({ matches }) => matches),
     ).toContain('https://global.americanexpress.com/*');

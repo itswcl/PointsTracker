@@ -260,6 +260,57 @@ Remaining end-to-end checks:
 
 The final URL, scoped traversal, and synthetic regression fixture are recorded in `src/programs.ts`, `src/adapters/ana.ts`, and `tests/adapters/adapters.test.ts`. No production markup or real member number is stored in the repository.
 
+## Singapore Airlines KrisFlyer acceptance — header and empty state confirmed 07/28/2026
+
+Confirmed account URLs:
+
+- Miles validity:
+  `https://www.singaporeair.com/krisflyer/miles/expiring-miles/`
+- Statements:
+  `https://www.singaporeair.com/krisflyer/miles/statements/`
+
+Confirmed production structure:
+
+- Member number: the rendered KrisFlyer membership line in the account masthead
+- Balance: the rendered masthead value ending in `KrisFlyer Miles`
+- Validity root: `#typeInfoText`
+- Validity heading: `#typeInfoTextTitle`, rendered as `Miles validity`
+- Empty state: the page explicitly reports when no KrisFlyer miles expire in
+  the next six months
+
+The available account has zero miles, so the balance, member-number, loading,
+and empty-validity states are confirmed live. The adapter waits for the Miles
+validity section before saving and displays `N/A` when no tranche is shown. A
+non-zero fixture verifies that the earliest rendered tranche is stored with its
+amount and month, then displayed as `amount · MM/YYYY`, but that row structure
+still needs live acceptance on an account with expiring miles. Active PPS Club
+status displays `N/A` because miles do not expire while that status remains
+active.
+
+Singapore Airlines states that KrisFlyer miles generally expire at the end of
+the equivalent earning month after three years, while PPS Club miles do not
+expire during active PPS membership. A first expiry can be extended for six
+months for a Basic member or twelve months for an Elite member. Points Tracker
+does not calculate or extend dates; it records the current tranche rendered by
+Singapore Airlines. See the
+[official KrisFlyer terms](https://www.singaporeair.com/en_UK/br/ppsclub-krisflyer/termsconditions-kf/).
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the Singapore Airlines host
+  permission.
+- Refresh Singapore and confirm the balance and last-four member-number suffix
+  match the account masthead.
+- On an account with expiring miles, confirm the ledger matches the earliest
+  amount and month shown under Miles validity.
+- Confirm a zero-mile or no-tranche account displays `N/A`.
+- Confirm the extension-created tab closes after capture succeeds.
+
+The final URL, scoped traversal, and synthetic regression fixtures are recorded
+in `src/programs.ts`, `src/adapters/krisflyer.ts`, and
+`tests/adapters/krisflyer.test.ts`. No production markup, account activity, or
+real member number is stored in the repository.
+
 ## Delta SkyMiles acceptance — selectors confirmed 07/24/2026
 
 Confirmed overview URL:
@@ -474,6 +525,79 @@ The final URL, selectors, and synthetic regression fixtures are recorded in
 `tests/adapters/wyndham.test.ts`. No production markup, real member number,
 cookie, token, or network response is stored in the repository.
 
+## Choice Privileges acceptance — structure confirmed 07/28/2026
+
+Confirmed account URL:
+
+`https://www.choicehotels.com/choice-privileges/account`
+
+Confirmed production structure:
+
+- Account scope: `div.cp-member-info-card.choice`
+- Balance scope: `.cp-member-info-card.choice .points-container`
+- Balance candidate: a scoped `div` whose normalized text is exactly
+  `{number} points`
+- Member number: `.cp-member-info-card.choice p.member-number`
+- Active tier only:
+  `.cp-member-info-card.choice .member-tier-ribbon.choice span.membership-tier`
+- History trigger:
+  `button#myStaysActivityModalBtn.choice-button.text_link_dark` with exact text
+  `See points history`
+- History dialogs: `My stay & points statement` and `My statements`
+- Qualifying tables: accessibility names `Points earned` and
+  `Points redeemed`
+- Confirmed empty states: `No points earned for this time period.` and
+  `No points redeemed for this time period.`
+
+The adapter deliberately ignores `.member-level-label`, which displays
+progress labels for Member, Gold, Platinum, Diamond, and Titanium rather than
+the account's active tier. Active Gold, Platinum, Diamond, or Titanium status
+displays `N/A`. A non-elite account adds 18 months to the newest exact date
+rendered inside the Points earned or Points redeemed tables. The confirmed
+account has zero points and no activity, so it displays `N/A` because there are
+no points to expire. A positive balance without a rendered activity date keeps
+the 18-month inactivity policy without inventing a date.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the Choice host permission.
+- Refresh Choice and confirm the ledger matches the account-card balance and
+  displayed member number.
+- With an active Elite account, confirm Expiration displays `N/A`.
+- With a dated earn or redeem row, confirm Expiration is 18 months after the
+  newest qualifying activity.
+
+## Leading Hotels of the World acceptance — structure confirmed 07/28/2026
+
+Confirmed Points Activity URL:
+
+`https://www.lhw.com/account/points-activity`
+
+Confirmed production structure:
+
+- Balance: `#point-counter`
+- Account proof: `#rewardsActivityApp` or `section.reward-activity`
+- Activity rows: `#rewardsActivityApp .reward-list-table tbody tr`
+- Activity date: the first exact date cell in each scoped activity row
+- Member ID when rendered: `.col.user-info` containing `Member ID …`
+
+The adapter adds 24 months to the newest exact activity date and never uses the
+extension refresh date as activity. The confirmed account has zero points and
+no activity, so the popup displays `N/A` because there are no points to expire.
+A positive balance without a rendered activity date keeps the 24-month
+inactivity policy without inventing a date. The account menu's confirmed
+trigger has a personalized accessible label, so the content script does not click it automatically;
+member ID is captured only when the allowlisted `.col.user-info` markup is
+already rendered, with manual correction remaining available.
+
+Remaining end-to-end checks:
+
+- Reload the rebuilt extension and approve the LHW host permission.
+- Refresh LHW and confirm the ledger matches `#point-counter`.
+- With a dated activity row, confirm Expiration is 24 months after the newest
+  qualifying activity.
+- Confirm member ID is captured when the account menu markup is rendered.
+
 ## American Express Membership Rewards acceptance — structure confirmed 07/25/2026
 
 Confirmed rewards URL:
@@ -509,11 +633,13 @@ Confirmed production structure:
 
 - Rewards scope: `.primary-detail__balances`
 - Balance rows: `.primary-detail__balances-container`
-- Whole-number value: `.primary-detail__balances-number-container`
+- Signed whole-number value:
+  `.primary-detail__balances-number-container`; Capital One may render the
+  minus sign and digits in separate child elements
 - Exact currency label: `.labels` with `Miles`
 - Excluded neighboring row: `.labels` with `Rewards cash`
 
-The adapter accepts one consistent whole-number balance paired with the exact
+The adapter accepts one consistent signed whole-number balance paired with the exact
 Miles label. It rejects Rewards cash, promotional miles, form controls, and
 conflicting duplicate Miles rows. It does not collect a member number,
 expiration, card details, account identifiers, or transaction data.

@@ -203,7 +203,7 @@ function Hero() {
       <div className="site-shell">
         <div className="hero-grid">
           <div className="reveal">
-            <p className="eyebrow">Local-only Chrome extension · v1.6.0</p>
+            <p className="eyebrow">Local-only Chrome extension · v1.7.0</p>
             <h1>Every balance. One private ledger.</h1>
             <p className="hero-copy">
               See airline miles, hotel points, card rewards, member numbers,
@@ -230,7 +230,7 @@ function Hero() {
               src={assetPath('points-tracker-demo.png')}
               alt="Points Tracker extension showing fictional credit-card, airline, and hotel balances in three columns"
               width="1600"
-              height="998"
+              height="1200"
             />
             <figcaption>
               <span>Three ledgers. One compact popup.</span>
@@ -242,11 +242,11 @@ function Hero() {
         <div className="route-strip reveal" aria-label="Product facts">
           <div className="route-grid">
             <div className="route-stat">
-              <strong>24</strong>
+              <strong>27</strong>
               <span>ledger rows</span>
             </div>
             <div className="route-stat">
-              <strong>21</strong>
+              <strong>24</strong>
               <span>rewards programs</span>
             </div>
             <div className="route-stat">
@@ -378,7 +378,7 @@ const FEATURES = [
     number: '02 / Edit',
     title: 'Keep a manual fallback',
     copy:
-      'If a rewards site changes, use the pencil to keep a current balance. You can return to automatic data at any time.',
+      'If a rewards site changes, use the pencil to keep a current balance. Passive visits leave it alone, and refresh asks before replacing it.',
   },
   {
     number: '03 / Backup',
@@ -392,6 +392,35 @@ function Features() {
   return (
     <section className="section" id="features">
       <div className="site-shell">
+        <aside
+          className="release-update reveal"
+          aria-labelledby="release-update-title"
+        >
+          <div className="release-update__stamp" aria-hidden="true">
+            <span>What’s new</span>
+            <strong>1.7.0</strong>
+          </div>
+          <div className="release-update__copy">
+            <h2 id="release-update-title">
+              Three more programs. Safer manual values.
+            </h2>
+            <ul>
+              <li>
+                Added KrisFlyer, Choice Privileges, and Leading Hotels of the
+                World.
+              </li>
+              <li>
+                Passive account-page visits preserve manual values. Refresh
+                asks before replacing one and keeps it if capture fails.
+              </li>
+              <li>
+                Zero-balance rows now show <strong>N/A</strong> expiration, and
+                Capital One capture handles signed Miles totals.
+              </li>
+            </ul>
+          </div>
+        </aside>
+
         <p className="section-kicker reveal">Built for ordinary use</p>
         <h2 className="section-heading reveal">
           Useful controls. No account system.
@@ -417,8 +446,8 @@ function Features() {
             <img
               src={assetPath('points-tracker-settings.png')}
               alt="Points Tracker settings screen showing fictional program visibility choices"
-              width="1600"
-              height="1060"
+              width="800"
+              height="600"
               loading="lazy"
             />
           </div>
@@ -467,7 +496,7 @@ function SupportedSites() {
       <div className="site-shell">
         <div className="support-head reveal">
           <div>
-            <p className="section-kicker">Coverage in v1.6.0</p>
+            <p className="section-kicker">Coverage in v1.7.0</p>
             <h2 className="section-heading">Supported account sites</h2>
           </div>
           <div className="filters" aria-label="Filter supported programs">
@@ -489,7 +518,7 @@ function SupportedSites() {
           <table className="support-table">
             <caption>
               Rewards programs and official account sites supported by Points
-              Tracker version 1.6.0
+              Tracker version 1.7.0
             </caption>
             <thead>
               <tr>
@@ -673,8 +702,8 @@ export function PrivacyPage() {
               </div>
             </div>
             <div className="page-meta">
-              <span>Effective July 26, 2026</span>
-              <span>Applies to version 1.6.0</span>
+              <span>Effective July 28, 2026</span>
+              <span>Applies to version 1.7.0</span>
             </div>
           </div>
         </header>

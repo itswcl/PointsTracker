@@ -16,6 +16,7 @@ import {
 import { App } from '../../entrypoints/popup/App.jsx';
 import {
   applyAutomaticCapture,
+  applyManualOverride,
   createInitialState,
   STORAGE_KEY,
 } from '../../src/domain/records.js';
@@ -23,6 +24,7 @@ import {
   LATEST_RELEASE_URL,
   UPDATE_CACHE_KEY,
 } from '../../src/update-check.js';
+import { MESSAGE_TYPES } from '../../src/messaging.js';
 import { createFakeStorageArea } from '../helpers/fake-storage.js';
 import type { FakeStorageArea } from '../helpers/fake-storage.js';
 
@@ -200,6 +202,22 @@ describe('popup', () => {
     );
     state = applyAutomaticCapture(
       state,
+      'krisflyer',
+      {
+        balance: 52400,
+        memberNumber: 'SQ000019',
+        expiration: {
+          type: 'fixed_date',
+          date: null,
+          month: '2027-11',
+          amount: 900,
+          note: 'Earliest expiring mileage tranche shown by KrisFlyer',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
       'delta',
       {
         balance: 119300,
@@ -315,6 +333,36 @@ describe('popup', () => {
     );
     state = applyAutomaticCapture(
       state,
+      'choice',
+      {
+        balance: 68000,
+        memberNumber: 'CP000017',
+        expiration: {
+          type: 'activity_based',
+          date: '2027-08-10',
+          inactivityMonths: 18,
+          note: 'Derived from the newest Choice Privileges points activity',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
+      'lhw',
+      {
+        balance: 15000,
+        memberNumber: 'LH000018',
+        expiration: {
+          type: 'activity_based',
+          date: '2028-04-02',
+          inactivityMonths: 24,
+          note: 'Derived from the newest qualifying points activity shown by LHW',
+        },
+      },
+      new Date(2026, 6, 17),
+    );
+    state = applyAutomaticCapture(
+      state,
       'amex',
       {
         balance: 112233,
@@ -424,6 +472,7 @@ describe('popup', () => {
     expect(screen.getByText('96,575')).toBeInTheDocument();
     expect(screen.getByText('42,300')).toBeInTheDocument();
     expect(screen.getByText('77,500')).toBeInTheDocument();
+    expect(screen.getByText('52,400')).toBeInTheDocument();
     expect(screen.getByText('119,300')).toBeInTheDocument();
     expect(screen.getByText('22,000')).toBeInTheDocument();
     expect(screen.getByText('$125.50')).toBeInTheDocument();
@@ -434,6 +483,8 @@ describe('popup', () => {
     expect(screen.getByText('340,000')).toBeInTheDocument();
     expect(screen.getByText('25,000')).toBeInTheDocument();
     expect(screen.getByText('42,500')).toBeInTheDocument();
+    expect(screen.getByText('68,000')).toBeInTheDocument();
+    expect(screen.getByText('15,000')).toBeInTheDocument();
     expect(screen.getByText('112,233')).toBeInTheDocument();
     expect(screen.getByText('445,566')).toBeInTheDocument();
     expect(screen.getByText('700,000')).toBeInTheDocument();
@@ -446,21 +497,24 @@ describe('popup', () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/\d+ programs?/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,560,208',
+      'Total1,612,608',
     );
     expect(screen.getByLabelText('Hotel total balance')).toHaveTextContent(
-      'Total642,500',
+      'Total725,500',
     );
     expect(screen.getByLabelText('Credit Card total balance')).toHaveTextContent(
       'Total1,500,288',
     );
     expect(screen.getByText('50 · 07/2028')).toBeInTheDocument();
+    expect(screen.getByText('900 · 11/2027')).toBeInTheDocument();
     expect(screen.getByText('10/2028')).toBeInTheDocument();
     expect(screen.queryByText('07/17/2026')).not.toBeInTheDocument();
     expect(screen.getByText('12/14/2026')).toBeInTheDocument();
     expect(screen.getByText('05/15/2027')).toBeInTheDocument();
     expect(screen.getByText('01/01/2029')).toBeInTheDocument();
     expect(screen.getByText('07/05/2028')).toBeInTheDocument();
+    expect(screen.getByText('08/10/2027')).toBeInTheDocument();
+    expect(screen.getByText('04/02/2028')).toBeInTheDocument();
     expect(screen.getByText('24 mo inactivity')).toBeInTheDocument();
     expect(screen.getByText('18 mo inactivity')).toBeInTheDocument();
     expect(screen.getAllByText('N/A')).toHaveLength(9);
@@ -471,11 +525,17 @@ describe('popup', () => {
     expect(screen.getByText('0013')).toBeInTheDocument();
     expect(screen.getByText('0014')).toBeInTheDocument();
     expect(screen.getByText('0015')).toBeInTheDocument();
+    expect(screen.getByText('0017')).toBeInTheDocument();
+    expect(screen.getByText('0018')).toBeInTheDocument();
+    expect(screen.getByText('0019')).toBeInTheDocument();
     expect(screen.queryByText('UA000001')).not.toBeInTheDocument();
     expect(screen.queryByText('CX000002')).not.toBeInTheDocument();
     expect(screen.queryByText('MB000013')).not.toBeInTheDocument();
     expect(screen.queryByText('IHG000014')).not.toBeInTheDocument();
     expect(screen.queryByText('WR000015')).not.toBeInTheDocument();
+    expect(screen.queryByText('CP000017')).not.toBeInTheDocument();
+    expect(screen.queryByText('LH000018')).not.toBeInTheDocument();
+    expect(screen.queryByText('SQ000019')).not.toBeInTheDocument();
     expect(screen.getByText('v1.3.0')).toHaveAttribute(
       'aria-label',
       'Version 1.3.0',
@@ -517,7 +577,7 @@ describe('popup', () => {
     expect(
       screen.queryByRole('status', { name: 'Update available' }),
     ).not.toBeInTheDocument();
-    expect(container.querySelectorAll('.program-name')).toHaveLength(24);
+    expect(container.querySelectorAll('.program-name')).toHaveLength(27);
     expect(container.querySelector('[data-program-icon]')).not.toBeInTheDocument();
     expect(container.querySelector('[aria-labelledby="united-name"] .program-name')).toHaveTextContent('UA Miles');
     expect(container.querySelector('[aria-labelledby="unitedpool-name"] .program-name')).toHaveTextContent('UA Pool');
@@ -525,9 +585,12 @@ describe('popup', () => {
     expect(container.querySelector('[aria-labelledby="southwest-name"] .program-name')).toHaveTextContent('Southwest');
     expect(container.querySelector('[aria-labelledby="southwestcredit-name"] .program-name')).toHaveTextContent('SW Credit');
     expect(container.querySelector('[aria-labelledby="evaair-name"] .program-name')).toHaveTextContent('EVA');
+    expect(container.querySelector('[aria-labelledby="krisflyer-name"] .program-name')).toHaveTextContent('KrisFlyer');
     expect(container.querySelector('[aria-labelledby="hyatt-name"] .program-name')).toHaveTextContent('Hyatt');
     expect(container.querySelector('[aria-labelledby="ihg-name"] .program-name')).toHaveTextContent('IHG');
     expect(container.querySelector('[aria-labelledby="wyndham-name"] .program-name')).toHaveTextContent('Wyndham');
+    expect(container.querySelector('[aria-labelledby="choice-name"] .program-name')).toHaveTextContent('Choice');
+    expect(container.querySelector('[aria-labelledby="lhw-name"] .program-name')).toHaveTextContent('LHW');
     expect(container.querySelector('[aria-labelledby="amex-name"] .program-name')).toHaveTextContent('Amex');
     expect(container.querySelector('[aria-labelledby="capitalone-name"] .program-name')).toHaveTextContent('Capital One');
     expect(container.querySelector('[aria-labelledby="chase-name"] .program-name')).toHaveTextContent('Chase');
@@ -602,6 +665,11 @@ describe('popup', () => {
       screen.getByRole('button', { name: 'Refresh ANA Mileage Club' }),
     ).toBeInTheDocument();
     expect(
+      screen.getByRole('button', {
+        name: 'Refresh Singapore Airlines KrisFlyer',
+      }),
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole('button', { name: 'Refresh Delta SkyMiles' }),
     ).toBeInTheDocument();
     expect(
@@ -618,6 +686,14 @@ describe('popup', () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Refresh Wyndham Rewards' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Refresh Choice Privileges' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Refresh Leading Hotels of the World Leaders Club',
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', {
@@ -681,6 +757,7 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'krisflyer-name',
       'delta-name',
       'southwest-name',
       'unitedtravelbank-name',
@@ -690,6 +767,8 @@ describe('popup', () => {
       'marriott-name',
       'ihg-name',
       'wyndham-name',
+      'choice-name',
+      'lhw-name',
     ];
     expect(rowOrder()).toEqual(originalOrder);
     expect(airlineSection.lastElementChild).toHaveClass('ledger-total-row');
@@ -710,6 +789,7 @@ describe('popup', () => {
       'cathay-name',
       'airfrance-name',
       'unitedtravelbank-name',
+      'krisflyer-name',
       'southwestcredit-name',
       'evaair-name',
       'ana-name',
@@ -726,6 +806,8 @@ describe('popup', () => {
       'marriott-name',
       'ihg-name',
       'wyndham-name',
+      'choice-name',
+      'lhw-name',
     ]);
     expect(airlineSection.lastElementChild).toHaveClass('ledger-total-row');
     expect(hotelSection.lastElementChild).toHaveClass('ledger-total-row');
@@ -758,6 +840,7 @@ describe('popup', () => {
       'evaair-name',
       'cathay-name',
       'ana-name',
+      'krisflyer-name',
       'britishairways-name',
       'unitedpool-name',
       'southwest-name',
@@ -768,6 +851,8 @@ describe('popup', () => {
       'marriott-name',
       'ihg-name',
       'wyndham-name',
+      'choice-name',
+      'lhw-name',
     ]);
     expect(
       screen.getByRole('button', { name: 'Restore original Airline order' }),
@@ -797,15 +882,18 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'krisflyer-name',
       'delta-name',
       'southwest-name',
       'unitedtravelbank-name',
       'southwestcredit-name',
       'marriott-name',
       'hilton-name',
+      'choice-name',
       'hyatt-name',
       'wyndham-name',
       'ihg-name',
+      'lhw-name',
     ]);
     expect(
       screen.getByRole('button', { name: 'Restore original Hotel order' }),
@@ -835,10 +923,13 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'krisflyer-name',
       'delta-name',
       'southwest-name',
       'unitedtravelbank-name',
       'southwestcredit-name',
+      'choice-name',
+      'lhw-name',
       'marriott-name',
       'hyatt-name',
       'hilton-name',
@@ -872,10 +963,13 @@ describe('popup', () => {
       'evaair-name',
       'britishairways-name',
       'ana-name',
+      'krisflyer-name',
       'delta-name',
       'southwest-name',
       'unitedtravelbank-name',
       'southwestcredit-name',
+      'choice-name',
+      'lhw-name',
       'marriott-name',
       'hyatt-name',
       'hilton-name',
@@ -920,7 +1014,7 @@ describe('popup', () => {
 
     expect(await screen.findByText('125,400')).toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,560,208',
+      'Total1,612,608',
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Setting' }));
@@ -943,7 +1037,7 @@ describe('popup', () => {
       screen.queryByRole('heading', { name: 'United Pooled Miles' }),
     ).not.toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,538,208',
+      'Total1,590,608',
     );
     expect(storageArea.snapshot()).toMatchObject({
       pointsTrackerSettings: {
@@ -975,7 +1069,7 @@ describe('popup', () => {
       await screen.findByRole('heading', { name: 'United Pooled Miles' }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,560,208',
+      'Total1,612,608',
     );
   });
 
@@ -1071,6 +1165,54 @@ describe('popup', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('confirms before refreshing a manual value without adding another row action', async () => {
+    const manualState = applyManualOverride(
+      storageArea.snapshot()[STORAGE_KEY],
+      'united',
+      {
+        balance: 130000,
+        memberNumber: 'UA000099',
+        expiration: { type: 'never', date: null, note: 'No expiration' },
+      },
+      new Date(2026, 6, 18),
+    );
+    await storageArea.set({ [STORAGE_KEY]: manualState });
+    render(<App />);
+
+    const refreshButton = await screen.findByRole('button', {
+      name: 'Refresh United MileagePlus',
+    });
+    expect(
+      screen.queryByRole('button', {
+        name: 'Use automatic value for United MileagePlus',
+      }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(refreshButton);
+    expect(
+      screen.getByRole('dialog', { name: 'Replace UA Miles?' }),
+    ).toBeInTheDocument();
+    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Keep manual value' }),
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled();
+
+    fireEvent.click(refreshButton);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Replace and refresh' }),
+    );
+    await waitFor(() => {
+      expect(chrome.runtime.sendMessage).toHaveBeenCalledWith({
+        type: MESSAGE_TYPES.REFRESH_PROGRAM,
+        programId: 'united',
+        replaceManualOverride: true,
+      });
+    });
+  });
+
   it('uses a balance-only manual editor for Amex', async () => {
     render(<App />);
     expect(await screen.findByText('112,233')).toBeInTheDocument();
@@ -1149,7 +1291,7 @@ describe('popup', () => {
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Airline total balance')).toHaveTextContent(
-      'Total1,560,208',
+      'Total1,612,608',
     );
   });
 

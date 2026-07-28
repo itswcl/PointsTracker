@@ -14,13 +14,16 @@ import { inspectBilt, prepareBilt } from './bilt.js';
 import { inspectCapitalOne } from './capitalone.js';
 import { inspectCathay } from './cathay.js';
 import { inspectChase } from './chase.js';
+import { inspectChoice, prepareChoice } from './choice.js';
 import { inspectCiti } from './citi.js';
 import { inspectDelta } from './delta.js';
 import { inspectEvaAir } from './evaair.js';
 import { inspectHyatt } from './hyatt.js';
 import { inspectHilton } from './hilton.js';
 import { inspectIhg } from './ihg.js';
+import { inspectLhw } from './lhw.js';
 import { inspectMarriott, prepareMarriott } from './marriott.js';
+import { inspectKrisFlyer } from './krisflyer.js';
 import { inspectSouthwest } from './southwest.js';
 import {
   inspectSouthwestCredit,
@@ -45,6 +48,7 @@ const INSPECTORS = {
   [PROGRAM_IDS.EVA_AIR]: inspectEvaAir,
   [PROGRAM_IDS.BRITISH_AIRWAYS]: inspectBritishAirways,
   [PROGRAM_IDS.ANA]: inspectAna,
+  [PROGRAM_IDS.KRISFLYER]: inspectKrisFlyer,
   [PROGRAM_IDS.DELTA]: inspectDelta,
   [PROGRAM_IDS.SOUTHWEST]: inspectSouthwest,
   [PROGRAM_IDS.SOUTHWEST_CREDIT]: inspectSouthwestCredit,
@@ -53,6 +57,8 @@ const INSPECTORS = {
   [PROGRAM_IDS.MARRIOTT]: inspectMarriott,
   [PROGRAM_IDS.IHG]: inspectIhg,
   [PROGRAM_IDS.WYNDHAM]: inspectWyndham,
+  [PROGRAM_IDS.CHOICE]: inspectChoice,
+  [PROGRAM_IDS.LHW]: inspectLhw,
   [PROGRAM_IDS.AMEX]: inspectAmex,
   [PROGRAM_IDS.CAPITAL_ONE]: inspectCapitalOne,
   [PROGRAM_IDS.CHASE]: inspectChase,
@@ -62,6 +68,7 @@ const INSPECTORS = {
 
 const PREPARERS: Partial<Record<ProgramId, ProgramPreparer>> = {
   [PROGRAM_IDS.MARRIOTT]: prepareMarriott,
+  [PROGRAM_IDS.CHOICE]: prepareChoice,
   [PROGRAM_IDS.BILT]: prepareBilt,
   [PROGRAM_IDS.SOUTHWEST_CREDIT]: prepareSouthwestCredit,
 };

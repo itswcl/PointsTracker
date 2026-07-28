@@ -45,6 +45,19 @@ describe('content-script observation policy', () => {
     expect(shouldFinishObservation(balanceOnly, false, true)).toBe(true);
   });
 
+  it('keeps observing when a member number renders before the balance', () => {
+    const memberNumberOnly: InspectionResult = {
+      kind: 'member_number_found',
+      authState: 'authenticated',
+      capture: { memberNumber: 'CP000021' },
+      reason: null,
+    };
+
+    expect(shouldFinishObservation(memberNumberOnly, false, false)).toBe(false);
+    expect(shouldFinishObservation(memberNumberOnly, true, false)).toBe(true);
+    expect(shouldFinishObservation(memberNumberOnly, false, true)).toBe(true);
+  });
+
   it('extends only login-required observations', () => {
     const loginRequired: InspectionResult = {
       kind: 'login_required',

@@ -83,6 +83,55 @@ describe('program records', () => {
     });
   });
 
+  it('shows N/A for zero balances in every automatic and manual record', () => {
+    const legacyState = createInitialState();
+    for (const record of Object.values(legacyState.records)) {
+      record.automatic.balance = 0;
+      record.automatic.expiration = {
+        type: 'fixed_date',
+        date: '2029-01-01',
+        month: null,
+        amount: 500,
+        inactivityMonths: null,
+        note: 'Stale automatic expiration',
+      };
+      record.manualOverride = {
+        balance: 0,
+        memberNumber: null,
+        expiration: {
+          type: 'activity_based',
+          date: '2029-02-01',
+          month: null,
+          amount: null,
+          inactivityMonths: 18,
+          note: 'Stale manual expiration',
+        },
+        editedOn: '2026-07-28',
+      };
+    }
+
+    const normalized = normalizeState(legacyState);
+    for (const record of Object.values(normalized.records)) {
+      expect(record.automatic.expiration).toEqual({
+        type: 'never',
+        date: null,
+        month: null,
+        amount: null,
+        inactivityMonths: null,
+        note: 'N/A because a zero balance has nothing to expire',
+      });
+      expect(record.manualOverride?.expiration).toEqual({
+        type: 'never',
+        date: null,
+        month: null,
+        amount: null,
+        inactivityMonths: null,
+        note: 'N/A because a zero balance has nothing to expire',
+      });
+      expect(getDisplayRecord(record).expiration.type).toBe('never');
+    }
+  });
+
   it('rejects state with unexpected private fields during import', () => {
     const state = createInitialState();
     Reflect.set(state.records.united, 'username', 'should-not-be-here');

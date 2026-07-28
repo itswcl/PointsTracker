@@ -468,6 +468,61 @@ h1 {
   font-size: 1.05rem;
 }
 
+.release-update {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.3fr) minmax(0, 1fr);
+  gap: clamp(28px, 6vw, 76px);
+  margin-bottom: clamp(72px, 9vw, 112px);
+  padding: clamp(28px, 5vw, 52px);
+  border: 1px solid var(--ink);
+  background: var(--paper-light);
+  box-shadow: 12px 14px 0 var(--paper-deep);
+}
+
+.release-update__stamp {
+  display: flex;
+  min-height: 150px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  border: 1px solid var(--signal-dark);
+  color: var(--signal-dark);
+  background: var(--signal-soft);
+}
+
+.release-update__stamp span {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.release-update__stamp strong {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  line-height: 0.9;
+}
+
+.release-update__copy h2 {
+  max-width: 720px;
+  margin-bottom: 22px;
+  font-size: clamp(2.15rem, 4.5vw, 4rem);
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+}
+
+.release-update__copy ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--ink-soft);
+}
+
+.release-update__copy strong {
+  color: var(--ink);
+}
+
 .first-use {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
@@ -1227,6 +1282,14 @@ h1 {
 
   .feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .release-update {
+    grid-template-columns: 1fr;
+  }
+
+  .release-update__stamp {
+    min-height: 118px;
   }
 
   .feature {

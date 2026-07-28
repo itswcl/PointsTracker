@@ -203,15 +203,6 @@ function EditIcon() {
   );
 }
 
-function RestoreIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 8V4M5 4h4" />
-      <path d="M5.5 4.5A8 8 0 1 1 4 14" />
-    </svg>
-  );
-}
-
 function SettingsIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -285,7 +276,6 @@ interface ProgramRowProps {
   onCopyMemberNumber: MemberNumberCopyAction;
   onEdit: ProgramAction;
   onRefresh: ProgramAction;
-  onUseAutomatic: ProgramAction;
 }
 
 function ProgramRow({
@@ -294,7 +284,6 @@ function ProgramRow({
   onCopyMemberNumber,
   onEdit,
   onRefresh,
-  onUseAutomatic,
 }: ProgramRowProps) {
   const display = getDisplayRecord(record);
   const memberNumber = display.memberNumber;
@@ -383,14 +372,6 @@ function ProgramRow({
         >
           <EditIcon />
         </ActionButton>
-        {record.manualOverride ? (
-          <ActionButton
-            label={`Use automatic value for ${program.name}`}
-            onClick={() => onUseAutomatic(program.id)}
-          >
-            <RestoreIcon />
-          </ActionButton>
-        ) : null}
       </div>
 
       {errorText ? <p className="error-note">{errorText}</p> : null}
@@ -468,7 +449,6 @@ interface LedgerSectionProps {
   onCopyMemberNumber: MemberNumberCopyAction;
   onEdit: ProgramAction;
   onRefresh: ProgramAction;
-  onUseAutomatic: ProgramAction;
 }
 
 function LedgerSection({
@@ -480,7 +460,6 @@ function LedgerSection({
   onCopyMemberNumber,
   onEdit,
   onRefresh,
-  onUseAutomatic,
 }: LedgerSectionProps) {
   const showsMemberNumber = programs.some(programShowsMemberNumber);
   const showsExpiration = programs.some(programShowsExpiration);
@@ -513,7 +492,6 @@ function LedgerSection({
           onCopyMemberNumber={onCopyMemberNumber}
           onEdit={onEdit}
           onRefresh={onRefresh}
-          onUseAutomatic={onUseAutomatic}
         />
       ))}
       <div className="ledger-total-row" aria-label={`${group.label} total balance`}>
@@ -720,6 +698,60 @@ function EditPanel({
   );
 }
 
+interface RefreshConfirmationProps {
+  program: ProgramDefinition;
+  onCancel: () => void;
+  onConfirm: () => void | Promise<void>;
+}
+
+function RefreshConfirmation({
+  program,
+  onCancel,
+  onConfirm,
+}: RefreshConfirmationProps) {
+  return (
+    <div className="sheet-backdrop" role="presentation">
+      <section
+        className="edit-sheet confirmation-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="refresh-confirmation-title"
+      >
+        <div className="sheet-heading">
+          <div>
+            <p className="eyebrow">Manual value</p>
+            <h2 id="refresh-confirmation-title">Replace {program.displayName}?</h2>
+          </div>
+          <button
+            className="sheet-close-button"
+            type="button"
+            onClick={onCancel}
+            aria-label="Close replacement confirmation"
+          >
+            ×
+          </button>
+        </div>
+        <p className="confirmation-copy">
+          Refresh will replace the manually entered value only after a new
+          automatic update succeeds.
+        </p>
+        <div className="sheet-actions">
+          <button className="secondary-button" type="button" onClick={onCancel}>
+            Keep manual value
+          </button>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => void onConfirm()}
+          >
+            Replace and refresh
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 interface SettingsViewProps {
   settings: PointsTrackerSettings;
   onChange: (programId: ProgramId, enabled: boolean) => void | Promise<void>;
@@ -826,7 +858,6 @@ function SettingsPage({
 
 export function App() {
   const {
-    clearManualOverride,
     loadError,
     replaceState,
     saveManualOverride,
@@ -838,6 +869,8 @@ export function App() {
     settingsError,
   } = usePointsSettings();
   const [editingProgramId, setEditingProgramId] = useState<ProgramId | null>(null);
+  const [refreshConfirmationProgramId, setRefreshConfirmationProgramId] =
+    useState<ProgramId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [sortModes, setSortModes] = useState<SortModes>({
@@ -849,12 +882,16 @@ export function App() {
   const extensionVersion = chrome.runtime.getManifest().version;
   const availableUpdateVersion = useUpdateCheck(extensionVersion);
 
-  async function refreshProgram(programId: ProgramId): Promise<void> {
+  async function refreshProgram(
+    programId: ProgramId,
+    replaceManualOverride = false,
+  ): Promise<void> {
     setNotice(null);
     try {
       const result: unknown = await chrome.runtime.sendMessage({
         type: MESSAGE_TYPES.REFRESH_PROGRAM,
         programId,
+        ...(replaceManualOverride ? { replaceManualOverride: true } : {}),
       });
       if (
         result === null ||
@@ -862,10 +899,21 @@ export function App() {
         Reflect.get(result, 'ok') !== true
       ) {
         setNotice('The account page could not be opened.');
+      } else if (Reflect.get(result, 'skipped') === 'manual_override') {
+        setNotice('Manual value kept.');
       }
     } catch {
       setNotice('The extension background service is unavailable.');
     }
+  }
+
+  function requestRefresh(programId: ProgramId): void {
+    setNotice(null);
+    if (state?.records[programId].manualOverride) {
+      setRefreshConfirmationProgramId(programId);
+      return;
+    }
+    void refreshProgram(programId);
   }
 
   async function saveOverride(
@@ -879,11 +927,6 @@ export function App() {
     } catch {
       setNotice('The manual value could not be saved.');
     }
-  }
-
-  async function useAutomatic(programId: ProgramId): Promise<void> {
-    await clearManualOverride(programId);
-    setNotice('Automatic value restored.');
   }
 
   async function copyMemberNumber(memberNumber: string): Promise<boolean> {
@@ -973,6 +1016,9 @@ export function App() {
   const editingProgram = PROGRAM_LIST.find(
     (program) => program.id === editingProgramId,
   );
+  const refreshConfirmationProgram = PROGRAM_LIST.find(
+    (program) => program.id === refreshConfirmationProgramId,
+  );
   const groupedPrograms = PROGRAM_GROUPS.map((group) => ({
     group,
     programs: cashProgramsLast(
@@ -1000,6 +1046,7 @@ export function App() {
             data-tooltip="Setting"
             onClick={() => {
               setEditingProgramId(null);
+              setRefreshConfirmationProgramId(null);
               setSettingsOpen(true);
             }}
           >
@@ -1055,8 +1102,7 @@ export function App() {
             onChangeSort={(mode) => changeGroupSort(group.id, mode)}
             onCopyMemberNumber={copyMemberNumber}
             onEdit={setEditingProgramId}
-            onRefresh={refreshProgram}
-            onUseAutomatic={useAutomatic}
+            onRefresh={requestRefresh}
           />
         ))}
       </section>
@@ -1088,6 +1134,18 @@ export function App() {
           record={state.records[editingProgram.id]}
           onCancel={() => setEditingProgramId(null)}
           onSave={saveOverride}
+        />
+      ) : null}
+
+      {refreshConfirmationProgram ? (
+        <RefreshConfirmation
+          program={refreshConfirmationProgram}
+          onCancel={() => setRefreshConfirmationProgramId(null)}
+          onConfirm={async () => {
+            const programId = refreshConfirmationProgram.id;
+            setRefreshConfirmationProgramId(null);
+            await refreshProgram(programId, true);
+          }}
         />
       ) : null}
     </main>

@@ -532,6 +532,19 @@ button:disabled {
   animation: sheet-in 160ms ease-out both;
 }
 
+.confirmation-sheet {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.confirmation-copy {
+  max-width: 54ch;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .settings-view-header {
   display: flex;
   align-items: flex-start;

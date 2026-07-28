@@ -191,6 +191,23 @@ const PROGRAM_DEFINITIONS = {
       note: 'Expiry month shown for the latest activity when available',
     },
   },
+  [PROGRAM_IDS.KRISFLYER]: {
+    id: PROGRAM_IDS.KRISFLYER,
+    category: PROGRAM_CATEGORIES.AIRLINE,
+    name: 'Singapore Airlines KrisFlyer',
+    displayName: 'KrisFlyer',
+    currencyName: 'miles',
+    accountUrl:
+      'https://www.singaporeair.com/krisflyer/miles/expiring-miles/',
+    loginUrl:
+      'https://www.singaporeair.com/krisflyer/miles/expiring-miles/',
+    hosts: ['www.singaporeair.com'],
+    defaultExpiration: {
+      type: 'unknown',
+      date: null,
+      note: 'Earliest expiring mileage tranche shown under Miles validity',
+    },
+  },
   [PROGRAM_IDS.DELTA]: {
     id: PROGRAM_IDS.DELTA,
     category: PROGRAM_CATEGORIES.AIRLINE,
@@ -321,6 +338,40 @@ const PROGRAM_DEFINITIONS = {
       date: null,
       inactivityMonths: 18,
       note: 'Points may expire after 18 months of inactivity and four years after posting',
+    },
+  },
+  [PROGRAM_IDS.CHOICE]: {
+    id: PROGRAM_IDS.CHOICE,
+    category: PROGRAM_CATEGORIES.HOTEL,
+    name: 'Choice Privileges',
+    displayName: 'Choice',
+    currencyName: 'points',
+    accountUrl:
+      'https://www.choicehotels.com/choice-privileges/account',
+    loginUrl:
+      'https://www.choicehotels.com/choice-privileges/account',
+    hosts: ['www.choicehotels.com'],
+    defaultExpiration: {
+      type: 'activity_based',
+      date: null,
+      inactivityMonths: 18,
+      note: 'Expires after 18 consecutive months without qualifying activity unless active Elite status is shown',
+    },
+  },
+  [PROGRAM_IDS.LHW]: {
+    id: PROGRAM_IDS.LHW,
+    category: PROGRAM_CATEGORIES.HOTEL,
+    name: 'Leading Hotels of the World Leaders Club',
+    displayName: 'LHW',
+    currencyName: 'points',
+    accountUrl: 'https://www.lhw.com/account/points-activity',
+    loginUrl: 'https://www.lhw.com/account/points-activity',
+    hosts: ['www.lhw.com'],
+    defaultExpiration: {
+      type: 'activity_based',
+      date: null,
+      inactivityMonths: 24,
+      note: 'Expires after 24 consecutive months without qualifying earn or redeem activity',
     },
   },
   [PROGRAM_IDS.AMEX]: {

@@ -1,10 +1,10 @@
-import { parseBalance } from '../domain/balances.js';
+import { parseSignedBalance } from '../domain/balances.js';
 import {
+  firstAllowedText,
   hasAllowedElement,
   inspectionResult,
   pageHasVerification,
   pathIncludes,
-  readBalance,
 } from './shared.js';
 
 const SYNTHETIC_BALANCE_SELECTORS = Object.freeze([
@@ -15,7 +15,8 @@ const BALANCE_CONTAINER_SELECTOR = '.primary-detail__balances-container';
 const BALANCE_NUMBER_SELECTOR = '.primary-detail__balances-number-container';
 const BALANCE_LABEL_SELECTOR = '.labels';
 const MILES_LABEL = 'Miles';
-const WHOLE_NUMBER_PATTERN = /^\d{1,3}(?:,\d{3})*$|^\d+$/;
+const SIGNED_WHOLE_NUMBER_PATTERN =
+  /^(?:-|\u2212)?\s*(?:\d{1,3}(?:,\d{3})*|\d+)$/;
 const MAX_BALANCE_CONTAINERS = 20;
 
 const ACCOUNT_SELECTORS = Object.freeze([
@@ -46,10 +47,18 @@ function normalizedDisplayText(
   return element.textContent?.replace(/\s+/g, ' ').trim() ?? null;
 }
 
+function parseRenderedWholeNumber(text: string | null): number | null {
+  if (!text || !SIGNED_WHOLE_NUMBER_PATTERN.test(text)) return null;
+
+  const canonicalText = text
+    .replace(/\u2212/g, '-')
+    .replace(/^-\s+/, '-');
+  return parseSignedBalance(canonicalText);
+}
+
 function readRenderedMilesBalance(document: Document): number | null {
-  const syntheticBalance = readBalance(
-    document,
-    SYNTHETIC_BALANCE_SELECTORS,
+  const syntheticBalance = parseRenderedWholeNumber(
+    firstAllowedText(document, SYNTHETIC_BALANCE_SELECTORS),
   );
   if (syntheticBalance !== null) return syntheticBalance;
 
@@ -67,9 +76,8 @@ function readRenderedMilesBalance(document: Document): number | null {
     const numberText = normalizedDisplayText(
       container.querySelector(BALANCE_NUMBER_SELECTOR),
     );
-    if (!numberText || !WHOLE_NUMBER_PATTERN.test(numberText)) continue;
 
-    const balance = parseBalance(numberText);
+    const balance = parseRenderedWholeNumber(numberText);
     if (balance !== null) balances.add(balance);
   }
 

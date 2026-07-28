@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.7.0 — 2026-07-28
+
+### Added
+
+- Added Choice Privileges with balance, member number, and expiration tracking.
+- Added Leading Hotels of the World with balance, member number, and expiration
+  tracking.
+- Added Singapore Airlines KrisFlyer with balance, member number, and earliest
+  expiring miles tracking.
+
+### Changed
+
+- Manual values are no longer changed when you visit a supported account page.
+- Refreshing a manual value now asks for confirmation before replacing it.
+- Removed the extra `Use automatic value` action from manually edited rows.
+- Improved Capital One Miles balance updates.
+- Renamed the Singapore Airlines ledger row to `KrisFlyer`.
+- Every program now displays `N/A` expiration when its balance is zero.
+
 ## 1.6.0 — 2026-07-26
 
 ### Added

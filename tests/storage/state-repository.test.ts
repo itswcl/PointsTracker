@@ -110,4 +110,43 @@ describe('StateRepository', () => {
       },
     });
   });
+
+  it('clears selected manual overrides in one state update', async () => {
+    const storage = createFakeStorageArea();
+    const repository = new StateRepository(storage);
+    await repository.saveManualOverride(
+      'delta',
+      {
+        balance: 119300,
+        memberNumber: 'DL000010',
+        expiration: { type: 'never', date: null, note: 'No expiration' },
+      },
+      new Date(2026, 6, 17),
+    );
+
+    await repository.saveAutomaticCapture(
+      'delta',
+      {
+        balance: 120500,
+        memberNumber: 'DL000010',
+        expiration: { type: 'never', date: null, note: 'No expiration' },
+      },
+      new Date(2026, 6, 18),
+    );
+    await repository.clearManualOverrides(['delta']);
+
+    expect(storage.snapshot()[STORAGE_KEY]).toMatchObject({
+      records: {
+        delta: {
+          automatic: {
+            balance: 120500,
+            updatedOn: '2026-07-18',
+          },
+          manualOverride: null,
+          status: 'fresh',
+          error: null,
+        },
+      },
+    });
+  });
 });

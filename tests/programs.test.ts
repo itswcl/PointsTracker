@@ -89,6 +89,27 @@ describe('program account targets', () => {
     expect(delta.loginUrl).toBe('https://www.delta.com/myskymiles/overview');
   });
 
+  it('registers Singapore Airlines KrisFlyer on the Miles validity page', () => {
+    const krisFlyer = getProgram(PROGRAM_IDS.KRISFLYER);
+    if (!krisFlyer) throw new Error('KrisFlyer program is missing');
+
+    expect(krisFlyer).toMatchObject({
+      category: PROGRAM_CATEGORIES.AIRLINE,
+      accountUrl:
+        'https://www.singaporeair.com/krisflyer/miles/expiring-miles/',
+      loginUrl:
+        'https://www.singaporeair.com/krisflyer/miles/expiring-miles/',
+      hosts: ['www.singaporeair.com'],
+      defaultExpiration: {
+        type: 'unknown',
+        date: null,
+      },
+    });
+    expect(
+      detectProgramsFromUrl(krisFlyer.accountUrl).map(({ id }) => id),
+    ).toEqual([PROGRAM_IDS.KRISFLYER]);
+  });
+
   it('opens the confirmed IHG One Rewards account page', () => {
     const ihg = getProgram(PROGRAM_IDS.IHG);
     if (!ihg) throw new Error('IHG program is missing');
@@ -119,6 +140,45 @@ describe('program account targets', () => {
       date: null,
       inactivityMonths: 18,
     });
+  });
+
+  it('registers Choice Privileges and LHW as activity-based Hotel programs', () => {
+    const choice = getProgram(PROGRAM_IDS.CHOICE);
+    const lhw = getProgram(PROGRAM_IDS.LHW);
+    if (!choice || !lhw) {
+      throw new Error('A new Hotel program is missing');
+    }
+
+    expect(choice).toMatchObject({
+      category: PROGRAM_CATEGORIES.HOTEL,
+      accountUrl:
+        'https://www.choicehotels.com/choice-privileges/account',
+      loginUrl:
+        'https://www.choicehotels.com/choice-privileges/account',
+      hosts: ['www.choicehotels.com'],
+      defaultExpiration: {
+        type: 'activity_based',
+        date: null,
+        inactivityMonths: 18,
+      },
+    });
+    expect(lhw).toMatchObject({
+      category: PROGRAM_CATEGORIES.HOTEL,
+      accountUrl: 'https://www.lhw.com/account/points-activity',
+      loginUrl: 'https://www.lhw.com/account/points-activity',
+      hosts: ['www.lhw.com'],
+      defaultExpiration: {
+        type: 'activity_based',
+        date: null,
+        inactivityMonths: 24,
+      },
+    });
+    expect(
+      detectProgramsFromUrl(choice.accountUrl).map(({ id }) => id),
+    ).toEqual([PROGRAM_IDS.CHOICE]);
+    expect(
+      detectProgramsFromUrl(lhw.accountUrl).map(({ id }) => id),
+    ).toEqual([PROGRAM_IDS.LHW]);
   });
 
   it('registers Amex as a balance-only Credit Card program', () => {

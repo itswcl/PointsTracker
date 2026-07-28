@@ -17,7 +17,9 @@ export function shouldFinishObservation(
   final: boolean,
   hasSecondaryMemberPage: boolean,
 ): boolean {
-  if (result.kind === 'member_number_found') return true;
+  if (result.kind === 'member_number_found') {
+    return final || hasSecondaryMemberPage;
+  }
   if (result.kind !== 'success') return false;
 
   return (

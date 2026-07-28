@@ -1,6 +1,6 @@
 # Points Tracker
 
-A local-only Chrome extension for viewing airline, hotel, and credit-card rewards balances in one compact three-column popup, with loyalty member numbers and expiration information where applicable. It supports United MileagePlus miles, pooled miles, and TravelBank; Southwest Rapid Rewards points and Flight Credits; Cathay Asia Miles; Air France Flying Blue; Virgin Atlantic Flying Club; Alaska Airlines Atmos Rewards; American AAdvantage; EVA Air Infinity MileageLands; British Airways Club; ANA Mileage Club; Delta SkyMiles; World of Hyatt; Hilton Honors; Marriott Bonvoy; IHG One Rewards; Wyndham Rewards; American Express Membership Rewards; Capital One Miles; Chase Ultimate Rewards; Citi ThankYou Rewards; and Bilt Rewards.
+A local-only Chrome extension for viewing airline, hotel, and credit-card rewards balances in one compact three-column popup, with loyalty member numbers and expiration information where applicable. It supports United MileagePlus miles, pooled miles, and TravelBank; Southwest Rapid Rewards points and Flight Credits; Cathay Asia Miles; Air France Flying Blue; Virgin Atlantic Flying Club; Alaska Airlines Atmos Rewards; American AAdvantage; EVA Air Infinity MileageLands; British Airways Club; ANA Mileage Club; Singapore Airlines KrisFlyer; Delta SkyMiles; World of Hyatt; Hilton Honors; Marriott Bonvoy; IHG One Rewards; Wyndham Rewards; Choice Privileges; Leading Hotels of the World Leaders Club; American Express Membership Rewards; Capital One Miles; Chase Ultimate Rewards; Citi ThankYou Rewards; and Bilt Rewards.
 
 The extension never asks for or stores usernames, passwords, cookies, authentication tokens, member names, card details, per-card balances, individual Flight Credit details, or transaction history. It stores only the displayed loyalty member number when applicable, program-level ledger values, enabled/disabled program preferences, and a non-personal update-check timestamp and latest public release version in the current Chrome profile.
 
@@ -81,7 +81,7 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 
 ## Privacy boundary
 
-- Exact host access only for United, Southwest, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Amex, Capital One, Chase, Citi, Bilt, and GitHub's public release API
+- Exact host access only for United, Southwest, Cathay, Air France, Virgin Atlantic, Alaska Airlines, American Airlines, EVA Air, British Airways, ANA, Singapore Airlines, Delta, Hyatt, Hilton, Marriott, IHG, Wyndham, Choice, LHW, Amex, Capital One, Chase, Citi, Bilt, and GitHub's public release API
 - No cookie, password, history, or network interception permissions
 - No backend, analytics, or data uploads
 - No raw account-page HTML stored
@@ -102,9 +102,13 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
   the upper-right, shows only the installed version in the upper-left, keeps
   cash-related Airline rows last by default, and consolidates the project
   documentation by task.
-- React popup, local records, separate airline, hotel, and Credit Card balance totals, manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
-- All twenty-four program-row adapters have tested parser contracts.
-- Production member-number sources have been confirmed for all sixteen member-number-bearing airline and hotel rows. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.
+- Version 1.7.0 adds Choice Privileges, Leading Hotels of the World, and
+  KrisFlyer; protects manual values from passive capture; asks before a refresh
+  replaces manual data; improves Capital One; and displays `N/A` expiration for
+  every zero-balance row.
+- React popup, local records, separate airline, hotel, and Credit Card balance totals, protected manual overrides, import/export, capture coordination, and privacy safeguards are implemented.
+- All twenty-seven program-row adapters have tested parser contracts.
+- Production member-number sources have been confirmed for all nineteen member-number-bearing airline and hotel rows. Flying Blue, British Airways, and ANA use one extension-owned tab in sequence because their member numbers appear on a different official account page from the balance or expiration details.
 - United's My United account URL and production MileagePlus balance selector are confirmed. The shared-page adapters separately read pooled miles and the TravelBank total, while all three rows display the same MileagePlus number; TravelBank is formatted as USD and excluded from the Airline points total.
 - Cathay's authenticated account URL and production selectors are confirmed; remaining rebuilt-extension checks are tracked in [docs/LIVE_ACCEPTANCE.md](./docs/LIVE_ACCEPTANCE.md).
 - Air France Flying Blue's authenticated miles-overview data and membership-card number are confirmed.
@@ -114,6 +118,10 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 - EVA Air's self-award balance and expiring-mileage table structure are confirmed.
 - British Airways' Avios balance and newest statement-month structure are confirmed.
 - ANA's total-mileage definition list and latest-activity expiry column are confirmed.
+- Singapore Airlines KrisFlyer's account header balance and member number plus
+  the Miles validity empty state are confirmed. The adapter records the
+  earliest displayed expiring-mile tranche as `amount · MM/YYYY`; a non-zero
+  production tranche still needs live acceptance.
 - Delta SkyMiles' overview balance selector is confirmed; SkyMiles display expiration as `N/A`.
 - Southwest reads the rendered `Available Points` total and member number. Its separate Flight Credit row displays the same member number, sums the rendered credit amounts, uses the earliest real expiration date, displays `N/A` when every credit says `None` or no expiration detail is shown, and is excluded from the Airline points total.
 - World of Hyatt's `Current Point Balance` layout is confirmed; this personal cardholder profile is configured to display expiration as `N/A`.
@@ -121,13 +129,19 @@ Release history is recorded in [CHANGELOG.md](./CHANGELOG.md).
 - Marriott Bonvoy's member-status balance and `All Qualifying` activity filter are confirmed; expiration is derived by adding 24 months to the newest qualifying activity, while Lifetime Elite displays `N/A`.
 - IHG One Rewards' rendered balance, member number, and Elite-tier marker are confirmed; expiration displays `N/A` only for an active Silver, Gold, Platinum, or Diamond Elite profile.
 - Wyndham Rewards' rendered balance, member number, and no-recent-activity state are confirmed. Zero points plus the exact empty state displays `N/A`; a positive balance retains the 18-month inactivity rule and separate four-year per-point note.
+- Choice Privileges' rendered balance, member number, Member status, and Points History modal are confirmed. Active Gold, Platinum, Diamond, or Titanium status and a zero balance display `N/A`; otherwise expiration is derived from the newest rendered points activity when available.
+- Leading Hotels of the World reads the rendered `#point-counter`, member ID, and newest Points Activity date. A zero balance displays `N/A`; otherwise expiration is derived by adding 24 months to the newest rendered earn or redeem activity.
 - Amex reads the rendered `Available Points` total for Membership Rewards.
-- Capital One reads only the rendered whole-number balance paired with the exact `Miles` label on the authenticated account-summary page.
+- Capital One reads only the rendered signed whole-number balance paired with the exact `Miles` label on the authenticated account-summary page.
 - Chase sums every rendered card balance on the Ultimate Rewards account-selector page and stores only the combined program total.
 - Citi reads the rendered `Total ThankYou® Points` value from the signed-in dashboard.
 - Bilt reads the exact signed whole-number balance from the `Your Points` menu; the Credit Card category supports a negative program balance without relaxing airline or hotel validation.
 - When refresh reaches a signed-out page, the extension brings that tab forward immediately and keeps watching for up to three minutes so the user can sign in or complete ordinary login steps.
-- Manual entry remains the fallback if a supported website changes.
+- Manual entry remains the fallback if a supported website changes. Passive
+  website visits cannot replace a manual value; an explicit refresh asks first
+  and removes manual data only after a confirmed automatic update succeeds.
+- Every program displays expiration as `N/A` whenever its effective balance is
+  zero, including automatic captures, manual values, and older imported data.
 
 ## License
 

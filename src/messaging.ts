@@ -32,6 +32,7 @@ export interface LegacyPageObservedMessage {
 export interface RefreshProgramMessage {
   type: typeof MESSAGE_TYPES.REFRESH_PROGRAM;
   programId: ProgramId;
+  replaceManualOverride?: boolean;
 }
 
 export interface RefreshAllMessage {
@@ -91,7 +92,11 @@ export function isPointsTrackerMessage(
 
   if (message.type === MESSAGE_TYPES.REFRESH_ALL) return true;
   if (message.type === MESSAGE_TYPES.REFRESH_PROGRAM) {
-    return isProgramId(message.programId);
+    return (
+      isProgramId(message.programId) &&
+      (message.replaceManualOverride === undefined ||
+        typeof message.replaceManualOverride === 'boolean')
+    );
   }
   if (message.type !== MESSAGE_TYPES.PAGE_OBSERVED) return false;
 

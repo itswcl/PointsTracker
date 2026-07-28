@@ -7,6 +7,7 @@ const MONTH_NAME_PATTERN =
   /^(\d{1,2})\s+([a-z]{3,9})\s+(\d{4})$|^([a-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})$/i;
 const DISPLAYED_MONTH_PATTERN = /^([a-z]{3,9})\.?\s+(\d{4})$/i;
 const YEAR_MONTH_SLASH_PATTERN = /^(\d{4})\/(\d{1,2})$/;
+const MONTH_YEAR_SLASH_PATTERN = /^(\d{1,2})\/(\d{4})$/;
 
 const MONTHS = new Map<string, number>([
   ['jan', 1],
@@ -99,6 +100,14 @@ export function parseDisplayedMonth(value: unknown): MonthKey | null {
   if (slashMatch) {
     const yearText = slashMatch[1];
     const month = Number(slashMatch[2]);
+    const key = yearText ? `${yearText}-${pad(month)}` : null;
+    return key && isValidMonthKey(key) ? key : null;
+  }
+
+  const monthYearMatch = normalized.match(MONTH_YEAR_SLASH_PATTERN);
+  if (monthYearMatch) {
+    const month = Number(monthYearMatch[1]);
+    const yearText = monthYearMatch[2];
     const key = yearText ? `${yearText}-${pad(month)}` : null;
     return key && isValidMonthKey(key) ? key : null;
   }

@@ -94,6 +94,23 @@ current source and every reachable Git commit:
 - The production build contains 17 runtime files and no source maps, TypeScript
   source, test files, account data, or development configuration.
 
+### v1.7.0 release audit — July 28, 2026
+
+The v1.7.0 release gate repeated the source, privacy, dependency, and package
+checks after adding Choice, LHW, and KrisFlyer:
+
+- Current source and reachable Git history contained no high-confidence
+  secrets, real account identifiers, or machine-specific paths.
+- `npm ci` and `npm audit --audit-level=moderate` reported zero
+  vulnerabilities.
+- `npm run check` passed type checking, lint, 256 tests, the extension build,
+  and the public-site build.
+- The production manifest is version 1.7.0, requests only `storage`, and limits
+  host access to the supported account sites plus GitHub's public release API.
+- The production build contains 17 runtime files and no source maps, TypeScript
+  source, tests, account data, or development configuration.
+- The README image uses only synthetic member numbers, balances, and dates.
+
 ## Developer account
 
 - [ ] Choose the permanent Google account that will own the extension. Google advises using an address that is monitored regularly; changing the owner later requires a transfer.
@@ -107,7 +124,7 @@ Official references: [register the developer account](https://developer.chrome.c
 ## Extension package
 
 - [x] Manifest V3 is used.
-- [x] Version is `1.6.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
+- [x] Version is `1.7.0` in `manifest.config.ts`, `package.json`, and `package-lock.json`.
 - [x] The manifest description is fewer than 132 characters.
 - [x] Required 16, 32, 48, and 128 pixel extension icons are bundled locally.
 - [x] Runtime logic, fonts, and artwork are bundled locally; the extension does not load remote executable code.
@@ -127,7 +144,7 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 - [x] Single purpose: show airline, hotel, and credit-card rewards balances in a local ledger, with loyalty member numbers and expiration information where applicable.
 - [x] Chrome API permission is limited to `storage`.
 - [x] No `cookies`, `history`, `webRequest`, `debugger`, password, or network-interception permission is requested.
-- [x] Host access is restricted to twenty-two exact account-host patterns for the twenty-one supported rewards programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
+- [x] Host access is restricted to twenty-five exact account-host patterns for the twenty-four supported rewards programs plus the exact GitHub API host rather than `<all_urls>`; ANA requires separate official statement and member-number hosts.
 - [ ] Add the following permission explanations to the Privacy tab or listing:
 
 | Permission | Store justification |
@@ -143,14 +160,17 @@ Official reference: [prepare the extension package](https://developer.chrome.com
 | EVA Air host | Reads the Infinity MileageLands member number, balance, and expiring-mile table from the user's logged-in account page. |
 | British Airways host | Reads the Avios balance and latest qualifying activity, then reuses the same extension tab for the membership number when needed. |
 | ANA hosts | Reads the Mileage Club balance and expiration details from the official statement host, then reuses the same extension tab for the member number on ANA's separate official reference host. |
+| Singapore Airlines host | Reads the KrisFlyer member number and balance plus the earliest displayed expiring-mile tranche from the logged-in Miles validity page. |
 | Delta host | Reads the SkyMiles member number and balance from the user's logged-in SkyMiles overview page. |
 | Hyatt host | Reads the World of Hyatt member number and balance from the user's logged-in account overview. |
 | Hilton host | Reads the Honors member number, `totalPointsFmt`, and `pointsExpiration` from the logged-in account summary, with focused visible-page fallbacks. |
 | Marriott host | Reads the Bonvoy member number, balance, and newest qualifying activity from the user's logged-in activity page. |
 | IHG host | Reads the One Rewards member number, balance, and exact Elite-tier marker from the user's logged-in account page. |
 | Wyndham host | Reads the Rewards member number, balance, and exact no-recent-activity state from the user's logged-in activity page. |
+| Choice host | Reads the Privileges member number, balance, active status, and newest rendered points activity needed to apply the 18-month inactivity rule. |
+| LHW host | Reads the Leaders Club member ID, total points, and newest rendered earn or redeem activity needed to apply the 24-month inactivity rule. |
 | Amex host | Reads the Membership Rewards `Available Points` total from the user's logged-in rewards page. |
-| Capital One host | Reads only the whole-number total paired with the exact `Miles` label on the user's logged-in account summary. |
+| Capital One host | Reads only the signed whole-number total paired with the exact `Miles` label on the user's logged-in account summary. |
 | Chase host | Reads every visible Ultimate Rewards card balance on the account-selector page, computes one total locally, and stores no card-level details. |
 | Citi host | Reads the `Total ThankYou® Points` value from the user's logged-in dashboard. |
 | Bilt host | Opens the account points menu when needed and reads the exact `Your Points` total from the user's logged-in rewards page. |

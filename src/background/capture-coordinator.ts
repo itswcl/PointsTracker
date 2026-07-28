@@ -15,6 +15,7 @@ import { isProgramEnabled } from '../domain/settings.js';
 import type {
   PointsTrackerSettings,
   PointsState,
+  ManualOverride,
   ProgramCapture,
   ProgramId,
   RecordStatus,
@@ -40,6 +41,7 @@ interface BrowserApiLike {
 }
 
 interface StateRepositoryLike {
+  getState(): Promise<PointsState>;
   saveAutomaticCaptures(
     captures: readonly ProgramCapture[],
   ): Promise<PointsState>;
@@ -56,6 +58,15 @@ interface StateRepositoryLike {
     programIds: readonly ProgramId[],
     status: RecordStatus,
     error?: string | null,
+  ): Promise<PointsState>;
+  clearManualOverrides(
+    programIds: readonly ProgramId[],
+  ): Promise<PointsState>;
+  clearManualOverridesIfUnchanged(
+    replacements: readonly {
+      programId: ProgramId;
+      manualOverride: ManualOverride;
+    }[],
   ): Promise<PointsState>;
 }
 
@@ -93,10 +104,14 @@ interface ActiveCapture {
   stage: 'primary' | 'member_number';
   waitingForLogin: boolean;
   pendingProgramIds: Set<ProgramId>;
+  replaceManualOverrideProgramIds: Set<ProgramId>;
+  replacedManualOverrides: Map<ProgramId, ManualOverride>;
+  successfulReplacementProgramIds: Set<ProgramId>;
 }
 
 interface RefreshOptions {
   force?: boolean;
+  replaceManualOverride?: boolean;
 }
 
 interface FailureOptions {
@@ -106,7 +121,10 @@ interface FailureOptions {
 export type RefreshResult =
   | { ok: true; tabId: number }
   | { ok: true; alreadyRunning: true }
-  | { ok: true; skipped: 'cooldown' | 'disabled' }
+  | {
+      ok: true;
+      skipped: 'cooldown' | 'disabled' | 'manual_override';
+    }
   | { ok: false; error: string };
 
 export function createCaptureCoordinator({
@@ -167,13 +185,32 @@ export function createCaptureCoordinator({
     return null;
   }
 
+  async function clearSuccessfulManualOverrides(
+    capture: ActiveCapture,
+    excludedProgramIds: ReadonlySet<ProgramId> = new Set(),
+  ): Promise<void> {
+    const replacements = [...capture.successfulReplacementProgramIds]
+      .filter((programId) => !excludedProgramIds.has(programId))
+      .flatMap((programId) => {
+        const manualOverride = capture.replacedManualOverrides.get(programId);
+        return manualOverride ? [{ programId, manualOverride }] : [];
+      });
+    if (replacements.length > 0) {
+      await stateRepository.clearManualOverridesIfUnchanged(replacements);
+    }
+  }
+
   async function closeOwnedTab(programId: ProgramId): Promise<void> {
     const capture = clearCapture(programId);
     if (!capture) return;
     try {
-      await browserApi.tabs.remove(capture.tabId);
-    } catch {
-      // The user may already have closed the extension-owned tab.
+      await clearSuccessfulManualOverrides(capture);
+    } finally {
+      try {
+        await browserApi.tabs.remove(capture.tabId);
+      } catch {
+        // The user may already have closed the extension-owned tab.
+      }
     }
   }
 
@@ -196,6 +233,10 @@ export function createCaptureCoordinator({
       reason,
     );
     if (!capture) return;
+    await clearSuccessfulManualOverrides(
+      capture,
+      capture.pendingProgramIds,
+    );
 
     if (reveal) {
       try {
@@ -215,7 +256,10 @@ export function createCaptureCoordinator({
 
   async function refreshProgram(
     requestedProgramId: unknown,
-    { force = false }: RefreshOptions = {},
+    {
+      force = false,
+      replaceManualOverride = false,
+    }: RefreshOptions = {},
   ): Promise<RefreshResult> {
     const program = getProgram(requestedProgramId);
     if (!program) return { ok: false, error: 'unsupported_program' };
@@ -223,6 +267,27 @@ export function createCaptureCoordinator({
     if ((await enabledProgramIds([programId])).length === 0) {
       return { ok: true, skipped: 'disabled' };
     }
+    const captureGroupProgramIds = await enabledProgramIds(
+      programsInCaptureGroup(program).map((candidate) => candidate.id),
+    );
+    const currentState = await stateRepository.getState();
+    const replaceManualOverrideProgramIds = new Set<ProgramId>();
+    const replacedManualOverrides = new Map<ProgramId, ManualOverride>();
+    if (currentState.records[programId].manualOverride) {
+      if (!replaceManualOverride) {
+        return { ok: true, skipped: 'manual_override' };
+      }
+      replaceManualOverrideProgramIds.add(programId);
+      replacedManualOverrides.set(
+        programId,
+        currentState.records[programId].manualOverride,
+      );
+    }
+    const writableProgramIds = captureGroupProgramIds.filter(
+      (candidateProgramId) =>
+        !currentState.records[candidateProgramId].manualOverride ||
+        replaceManualOverrideProgramIds.has(candidateProgramId),
+    );
     const groupKey = captureGroupKey(programId);
     if (
       openingCaptureGroups.has(groupKey) ||
@@ -244,10 +309,7 @@ export function createCaptureCoordinator({
       }
 
       await sessionRepository.markTriggered(programId, timestamp);
-      const captureGroupProgramIds = await enabledProgramIds(
-        programsInCaptureGroup(program).map((candidate) => candidate.id),
-      );
-      await stateRepository.setStatuses(captureGroupProgramIds, 'updating');
+      await stateRepository.setStatuses(writableProgramIds, 'updating');
 
       const tab = await browserApi.tabs.create({
         url: program.accountUrl,
@@ -262,16 +324,16 @@ export function createCaptureCoordinator({
         }, timeoutMs),
         stage: 'primary',
         waitingForLogin: false,
-        pendingProgramIds: new Set(captureGroupProgramIds),
+        pendingProgramIds: new Set(writableProgramIds),
+        replaceManualOverrideProgramIds,
+        replacedManualOverrides,
+        successfulReplacementProgramIds: new Set(),
       };
       activeCaptures.set(programId, capture);
       return { ok: true, tabId: tab.id };
     } catch {
-      const captureGroupProgramIds = await enabledProgramIds(
-        programsInCaptureGroup(program).map((candidate) => candidate.id),
-      );
       await stateRepository.setStatuses(
-        captureGroupProgramIds,
+        writableProgramIds,
         'error',
         'tab_open_failed',
       );
@@ -291,13 +353,13 @@ export function createCaptureCoordinator({
         receivedObservations.map(({ programId }) => programId),
       ),
     );
-    const observations = receivedObservations.filter(({ programId }) =>
+    const enabledObservations = receivedObservations.filter(({ programId }) =>
       enabledIds.has(programId),
     );
-    if (observations.length === 0) {
+    if (enabledObservations.length === 0) {
       return { ok: true, captured: false, skipped: 'disabled' };
     }
-    const observedPrograms = observations.map(({ programId }) =>
+    const observedPrograms = enabledObservations.map(({ programId }) =>
       getProgram(programId),
     );
     if (observedPrograms.some((program) => !program)) {
@@ -307,6 +369,19 @@ export function createCaptureCoordinator({
     const senderTabId = sender.tab?.id;
     const owned =
       typeof senderTabId === 'number' ? findCaptureByTab(senderTabId) : null;
+    const currentState = await stateRepository.getState();
+    const observations = enabledObservations.filter(
+      ({ programId }) =>
+        !currentState.records[programId].manualOverride ||
+        owned?.capture.replaceManualOverrideProgramIds.has(programId),
+    );
+    if (observations.length === 0) {
+      return {
+        ok: true,
+        captured: false,
+        skipped: 'manual_override',
+      };
+    }
     const ownerObservation = owned
       ? observations.find(
           (observation) => observation.programId === owned.programId,
@@ -345,6 +420,15 @@ export function createCaptureCoordinator({
       await stateRepository.saveAutomaticCaptures(successfulCaptures);
       if (owned) {
         for (const { programId } of successfulCaptures) {
+          if (
+            owned.capture.replaceManualOverrideProgramIds.has(programId)
+          ) {
+            owned.capture.successfulReplacementProgramIds.add(programId);
+          }
+        }
+      }
+      if (owned) {
+        for (const { programId } of successfulCaptures) {
           owned.capture.pendingProgramIds.delete(programId);
         }
       }
@@ -356,7 +440,6 @@ export function createCaptureCoordinator({
         observation.programId,
         observation.result.capture.memberNumber,
       );
-      owned?.capture.pendingProgramIds.delete(observation.programId);
     }
 
     const failedObservations = observations.filter(
@@ -378,13 +461,8 @@ export function createCaptureCoordinator({
           'login_required',
           true,
         );
-        const ownerProgram = getProgram(owned.programId);
         await stateRepository.setStatuses(
-          ownerProgram
-            ? programsInCaptureGroup(ownerProgram).map(
-                (candidate) => candidate.id,
-              )
-            : [owned.programId],
+          [...owned.capture.pendingProgramIds],
           'updating',
         );
         try {
@@ -431,8 +509,16 @@ export function createCaptureCoordinator({
     }
 
     if (ownerResult.kind === 'member_number_found') {
-      await closeOwnedTab(owned.programId);
-      return { ok: true, captured: true };
+      if (message.final) {
+        await failCapture(owned.programId, 'balance_not_found');
+        return { ok: false, error: 'balance_not_found' };
+      }
+      await stateRepository.setStatus(owned.programId, 'updating');
+      return {
+        ok: true,
+        captured: true,
+        continued: 'balance_wait',
+      };
     }
 
     if (
@@ -502,6 +588,10 @@ export function createCaptureCoordinator({
       );
       if (capture) {
         try {
+          await clearSuccessfulManualOverrides(
+            capture,
+            new Set(failedObservations.map(({ programId }) => programId)),
+          );
           if (reveal) {
             await browserApi.tabs.update(capture.tabId, { active: true });
           } else {
@@ -539,7 +629,10 @@ export function createCaptureCoordinator({
       return handlePageObserved(message, sender);
     }
     if (message.type === MESSAGE_TYPES.REFRESH_PROGRAM) {
-      return refreshProgram(message.programId, { force: true });
+      return refreshProgram(message.programId, {
+        force: true,
+        replaceManualOverride: message.replaceManualOverride === true,
+      });
     }
     if (message.type === MESSAGE_TYPES.REFRESH_ALL) {
       const enabledIds = new Set(
@@ -574,11 +667,19 @@ export function createCaptureCoordinator({
         : program
           ? programsInCaptureGroup(program).map((candidate) => candidate.id)
           : [owned.programId];
-    void stateRepository.setStatuses(
-      pendingProgramIds,
-      'error',
-      'capture_tab_closed',
-    );
+    void (async () => {
+      await stateRepository.setStatuses(
+        pendingProgramIds,
+        'error',
+        'capture_tab_closed',
+      );
+      if (capture) {
+        await clearSuccessfulManualOverrides(
+          capture,
+          capture.pendingProgramIds,
+        );
+      }
+    })();
   }
 
   function destroy(): void {

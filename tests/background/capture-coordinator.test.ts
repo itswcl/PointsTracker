@@ -141,6 +141,466 @@ describe('capture coordinator', () => {
     });
   });
 
+  it('does not passively update a program with a manual value', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('delta', {
+      balance: 119300,
+      memberNumber: 'DL000010',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+
+    await expect(
+      coordinator.handleMessage({
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'delta',
+        pageUrl: 'https://www.delta.com/myskymiles/overview',
+        final: true,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 120500,
+            memberNumber: 'DL000010',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      captured: false,
+      skipped: 'manual_override',
+    });
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        delta: {
+          automatic: { balance: null },
+          manualOverride: { balance: 119300 },
+          status: 'not_updated',
+        },
+      },
+    });
+    expect(browserApi.tabs.create).not.toHaveBeenCalled();
+    coordinator.destroy();
+  });
+
+  it('requires authorization before replacing a manual value on refresh', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('delta', {
+      balance: 119300,
+      memberNumber: 'DL000010',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+
+    await expect(
+      coordinator.refreshProgram('delta', { force: true }),
+    ).resolves.toEqual({ ok: true, skipped: 'manual_override' });
+    expect(browserApi.tabs.create).not.toHaveBeenCalled();
+
+    const refresh = await coordinator.refreshProgram('delta', {
+      force: true,
+      replaceManualOverride: true,
+    });
+    const tabId = tabIdFrom(refresh);
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'delta',
+        pageUrl: 'https://www.delta.com/myskymiles/overview',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 120500,
+            memberNumber: 'DL000010',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        delta: {
+          automatic: { balance: 120500 },
+          manualOverride: null,
+          status: 'fresh',
+          error: null,
+        },
+      },
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('keeps manual data when a confirmed multi-page refresh fails later', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('britishairways', {
+      balance: 42000,
+      memberNumber: 'BA000008',
+      expiration: {
+        type: 'activity_based',
+        date: '2029-01-01',
+        note: 'Manual expiration',
+      },
+    });
+    const refresh = await coordinator.refreshProgram('britishairways', {
+      force: true,
+      replaceManualOverride: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'britishairways',
+        pageUrl:
+          'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/executive-statements/',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 42300,
+            memberNumber: null,
+            expiration: {
+              type: 'activity_based',
+              date: '2029-02-01',
+              note: 'Derived from newest activity',
+            },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'britishairways',
+        pageUrl:
+          'https://www.britishairways.com/nx/b/customerhub/en/usa/your-account/',
+        final: true,
+        result: {
+          kind: 'not_found',
+          authState: 'authenticated',
+          capture: null,
+          reason: 'balance_not_found',
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        britishairways: {
+          automatic: {
+            balance: 42300,
+            expiration: { date: '2029-02-01' },
+          },
+          manualOverride: {
+            balance: 42000,
+            memberNumber: 'BA000008',
+            expiration: { date: '2029-01-01' },
+          },
+          status: 'error',
+          error: 'balance_not_found',
+        },
+      },
+    });
+    coordinator.destroy();
+  });
+
+  it('protects a manual row while refreshing another row on the same page', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('southwestcredit', {
+      balance: 5000,
+      memberNumber: 'RR000016',
+      expiration: { type: 'never', date: null, note: 'No expiration shown' },
+    });
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 20383,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 69796,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'fixed_date',
+                  date: '2028-01-15',
+                  note: 'Earliest Southwest Flight Credit expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: {
+          automatic: { balance: 20383 },
+          status: 'fresh',
+        },
+        southwestcredit: {
+          automatic: { balance: null },
+          manualOverride: { balance: 5000 },
+          status: 'not_updated',
+        },
+      },
+    });
+    coordinator.destroy();
+  });
+
+  it('does not mark a protected shared-page row as updating during login', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('southwestcredit', {
+      balance: 5000,
+      memberNumber: 'RR000016',
+      expiration: { type: 'never', date: null, note: 'No expiration shown' },
+    });
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+    });
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'login_required',
+              authState: 'signed_out',
+              capture: null,
+              reason: 'login_required',
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'login_required',
+              authState: 'signed_out',
+              capture: null,
+              reason: 'login_required',
+            },
+          },
+        ],
+      },
+      { tab: { id: tabIdFrom(refresh) } },
+    );
+
+    expect(await stateRepository.getState()).toMatchObject({
+      records: {
+        southwest: { status: 'updating' },
+        southwestcredit: {
+          manualOverride: { balance: 5000 },
+          status: 'not_updated',
+        },
+      },
+    });
+    coordinator.destroy();
+  });
+
+  it('waits for the balance when a one-page member number renders first', async () => {
+    const { browserApi, coordinator, stateRepository } = setup();
+    const refresh = await coordinator.refreshProgram('choice', { force: true });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'choice',
+        pageUrl: 'https://www.choicehotels.com/choice-privileges/account',
+        final: false,
+        result: {
+          kind: 'member_number_found',
+          authState: 'authenticated',
+          capture: { memberNumber: 'CP000021' },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect(browserApi.tabs.remove).not.toHaveBeenCalled();
+    expect((await stateRepository.getState()).records.choice).toMatchObject({
+      automatic: { balance: null, memberNumber: 'CP000021' },
+      status: 'updating',
+    });
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'choice',
+        pageUrl: 'https://www.choicehotels.com/choice-privileges/account',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 45500,
+            memberNumber: 'CP000021',
+            expiration: {
+              type: 'activity_based',
+              date: '2027-11-01',
+              note: '18 mo inactivity',
+            },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect((await stateRepository.getState()).records.choice).toMatchObject({
+      automatic: { balance: 45500, memberNumber: 'CP000021' },
+      status: 'fresh',
+    });
+    expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('preserves a newer manual edit made during a confirmed refresh', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('delta', {
+      balance: 119300,
+      memberNumber: 'DL000010',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+    const refresh = await coordinator.refreshProgram('delta', {
+      force: true,
+      replaceManualOverride: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await stateRepository.saveManualOverride('delta', {
+      balance: 121000,
+      memberNumber: 'DL000010',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        programId: 'delta',
+        pageUrl: 'https://www.delta.com/myskymiles/overview',
+        final: false,
+        result: {
+          kind: 'success',
+          authState: 'authenticated',
+          capture: {
+            balance: 120500,
+            memberNumber: 'DL000010',
+            expiration: { type: 'never', date: null, note: 'No expiration' },
+          },
+          reason: null,
+        },
+      },
+      { tab: { id: tabId } },
+    );
+
+    expect((await stateRepository.getState()).records.delta).toMatchObject({
+      automatic: { balance: 120500 },
+      manualOverride: { balance: 121000 },
+    });
+    coordinator.destroy();
+  });
+
+  it('replaces a completed manual row when another shared-page row fails', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('southwest', {
+      balance: 19000,
+      memberNumber: 'RR000016',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+      replaceManualOverride: true,
+    });
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: true,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 20383,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'not_found',
+              authState: 'authenticated',
+              capture: null,
+              reason: 'balance_not_found',
+            },
+          },
+        ],
+      },
+      { tab: { id: tabIdFrom(refresh) } },
+    );
+
+    expect((await stateRepository.getState()).records.southwest).toMatchObject({
+      automatic: { balance: 20383 },
+      manualOverride: null,
+      status: 'fresh',
+    });
+    coordinator.destroy();
+  });
+
   it('reveals a login page and keeps the capture active for the longer login window', async () => {
     const { browserApi, coordinator, stateRepository } = setup({
       timeoutMs: 30_000,
@@ -697,6 +1157,69 @@ describe('capture coordinator', () => {
       },
     });
     expect(browserApi.tabs.remove).toHaveBeenCalledWith(tabId);
+    coordinator.destroy();
+  });
+
+  it('keeps a completed shared-page replacement when the user closes the tab', async () => {
+    const { coordinator, stateRepository } = setup();
+    await stateRepository.saveManualOverride('southwest', {
+      balance: 19000,
+      memberNumber: 'RR000016',
+      expiration: { type: 'never', date: null, note: 'No expiration' },
+    });
+    const refresh = await coordinator.refreshProgram('southwest', {
+      force: true,
+      replaceManualOverride: true,
+    });
+    const tabId = tabIdFrom(refresh);
+
+    await coordinator.handleMessage(
+      {
+        type: MESSAGE_TYPES.PAGE_OBSERVED,
+        pageUrl: 'https://www.southwest.com/loyalty/myaccount/',
+        final: false,
+        observations: [
+          {
+            programId: 'southwest',
+            result: {
+              kind: 'success',
+              authState: 'authenticated',
+              capture: {
+                balance: 20383,
+                memberNumber: 'RR000016',
+                expiration: {
+                  type: 'never',
+                  date: null,
+                  note: 'No expiration',
+                },
+              },
+              reason: null,
+            },
+          },
+          {
+            programId: 'southwestcredit',
+            result: {
+              kind: 'not_found',
+              authState: 'authenticated',
+              capture: null,
+              reason: 'expiration_not_found',
+            },
+          },
+        ],
+      },
+      { tab: { id: tabId } },
+    );
+
+    coordinator.handleTabRemoved(tabId);
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await Promise.resolve();
+    }
+
+    expect((await stateRepository.getState()).records.southwest).toMatchObject({
+      automatic: { balance: 20383 },
+      manualOverride: null,
+      status: 'fresh',
+    });
     coordinator.destroy();
   });
 });
